@@ -1,111 +1,70 @@
 # HDL Helper <img src="images/icon.png" height="40" align="top"/>
 
-**The Ultimate All-in-One Tool for FPGA & IC Engineers.**
+**The Ultimate All-in-One Professional IDE for FPGA & IC Development.**
 
-**HDL Helper V2.3.5 is here!** 🚀
+**HDL Helper V3.0.0 is here!** 🚀
 
-Stop treating VS Code like a text editor—turn it into a lightweight IDE. **HDL Helper** combines powerful project management, hierarchy visualization, and smart code generation into one seamless extension.
+Stop treating VS Code like a text editor—turn it into a full-featured HDL IDE. **HDL Helper** combines industry-standard Linters, High-performance Simulation drivers, Waveform visualization, and Advanced Code Generation into one seamless extension.
 
-### 🌟 What's New in V2.3.5? (Architecture Overhaul)
+---
 
-We have completely redesigned the interaction between components to eliminate conflicts and provide a rock-solid experience:
+## 🌟 What's New in V3.0.0? (The "IDE" Milestone)
 
-* **🛡️ The "Firewall" Architecture**: We successfully separated the roles of **Linter**, **Formatter**, and **Language Server (LSP)**.
-* **LSP**: Dedicated solely to Navigation (Go-to-Definition, Hover) and Auto-completion. No more annoying "ghost errors" or duplicate reporting.
-* **Custom Linter**: The single source of truth for diagnostics. Fully respects your configuration (e.g., `line-length: 150`).
-* **Custom Formatter**: Independent, quiet, and robust formatting engine.
+We have evolved from a simple assistant into a comprehensive development environment:
 
-
-* **🔓 Open Configuration**: You are no longer limited to a fixed set of rules. You can now add **ANY** Verible rule in the settings.
-* **✅ Standardized Flags**: Formatter flags now use the standard VS Code array format for better usability.
+* **🔬 Multi-Engine Linter Hub**: Choose between **Verilator**, **Verible**, and **Vivado xvlog**. Get real-time feedback from the same engines used in production.
+* **⚡ Unified Code Generation**: Generate AXI4-Lite/Stream interfaces, Memory IPs (FIFO/RAM), and complex Register Maps directly from CSV/JSON definitions.
+* **🌊 Simulation & Waveform Core**: Run simulations (Icarus Verilog supported) with one click via **CodeLens**. View **FST/VCD** waveforms directly in VS Code using the integrated high-performance Surfer viewer.
+* **📊 FSM Visualization**: Instantly generate **Mermaid state diagrams** from your RTL `always` blocks to visualize complex state machines.
+* **📦 IP Explorer & Project Management**: Browse Xilinx IPs (`.xci`) and manage complex multi-project hierarchies with **Smart Top Module** detection.
 
 ---
 
 ## ✨ Key Features
 
 ### 🌳 Project Intelligence & Hierarchy
+* **Live Tree View**: Dynamic instantiation hierarchy in the Side Bar.
+* **LSP Navigation**: High-accuracy Go-to-Definition, Find References, and Symbol Renaming powered by an optimized AST parser.
+* **Rich Hover**: View module port definitions and header comments instantly while hovering over instances.
 
-Visualize your design structure like never before!
+### 🛠️ Advanced Code Generation (`Ctrl+Alt+G`)
+* **AXI Generator**: Guided wizards for AXI4-Lite, Full, and Stream (Master/Slave).
+* **Memory IP**: Generate synthesizable Sync/Async FIFOs and parameterized RAMs.
+* **Register Map**: Import CSV/JSON tables to generate **SystemVerilog RTL**, **C Headers**, and **Markdown documentation** in one go.
+* **Smart Snippets**: Reorganized granular snippet library for RTL, UVM, SVA, and Constraints (XDC/SDC).
 
-* **Live Tree View**: See the complete instantiation hierarchy in the Side Bar.
-* **Smart Navigation**: Click any module or instance in the tree to jump instantly to its definition.
-* **Top Module Management**: Right-click any module to **"Set as Top"**, automatically filtering the view.
-
-### ⚡ One-Click Code Generation
-
-Right-click any module in the Hierarchy View (or use shortcuts) to access powerful tools:
-
-* **📝 Copy Instantiation Template**: Automatically generates a perfectly formatted instantiation block with **Parameters** and **Ports**, ready to paste.
-* **🧪 Generate Testbench**: Instantly creates a `tb_filename.sv` template with clock generation, reset logic, and DUT instantiation.
-* **🔌 Auto-Declare Signals**: Select an instantiation block, press `Ctrl+Alt+W`, and watch the wires declare themselves!
-
-### 🎨 Advanced Formatting
-
-Powered by a hardened **Verible Formatter** integration.
-
-* **Conflict-Free**: Formatting logic is isolated from the syntax checker to prevent blocking.
-* **Fully Customizable**: Control indentation, alignment, and wrapping via VS Code Settings.
-* **Array-Based Config**: Easily manage arguments like `["--indentation_spaces=4", "--column_limit=150"]`.
-
-### 🔍 Precision Linting
-
-Support for dual engines with a robust configuration system:
-
-1. **Verible Lint**: Checks for style guide compliance and syntax.
-* *New:* Supports adding custom rules dynamically in settings.
-
-
-2. **Vivado xvlog**: (Optional) Checks for synthesis errors using the Xilinx compiler.
+### 🔍 Professional Quality Control
+* **Lint Quick Fixes**: One-click fixes for common style issues (e.g., trailing spaces, `always @(*)` to `always_comb`).
+* **Interface Checking**: Automatic detection of port mismatches (missing or extra ports) between module definitions and instantiations.
+* **Vivado Bridge**: Launch Vivado Synthesis and Implementation directly from VS Code and view utilization/timing reports.
 
 ---
 
 ## ⚙️ Configuration Guide
 
-To unlock the full potential, configure the external tools in **Settings** (`Ctrl + ,` -> Search `HDL Helper`).
+### 1. External Tools (Recommended)
+To unlock the full potential, install and set paths for these tools:
 
-### 1. Tool Paths (Essential)
-
-| Setting ID | Description | Example (Windows) |
+| Tool | Usage | Setting ID |
 | --- | --- | --- |
-| `hdl-helper.formatter.executablePath` | Path to `verible-verilog-format` | `D:\tools\verible\verible-verilog-format.exe` |
-| `hdl-helper.languageServer.path` | Path to `verible-verilog-ls` | `D:\tools\verible\verible-verilog-ls.exe` |
-| `hdl-helper.linter.veriblePath` | Path to `verible-verilog-lint` | `D:\tools\verible\verible-verilog-lint.exe` |
+| **Verilator** | High-perf Linter | `hdl-helper.linter.verilatorPath` |
+| **Verible** | Style/Format/LSP | `hdl-helper.linter.veriblePath` |
+| **Vivado** | Synth/Impl/Fix | `hdl-helper.vivado.path` |
+| **Icarus Verilog**| Simulation | `hdl-helper.simulation.iverilogPath` |
 
-> **⚠️ Note:** Please use **Absolute Paths** for all executables. On Windows, `.exe` extension is automatically handled but recommended.
-
-### 2. Custom Linter Rules (New in V2.3.5)
-
-You can now enable, disable, or configure **any** Verible rule.
-
-* **Enable**: Set value to `true`.
-* **Disable**: Set value to `false`.
-* **Configure**: Set value to a string (e.g., `"length:150"`).
-
-**Example `settings.json`:**
-
+### 2. Simulation Setup
+Create a `.vscode/hdl_tasks.json` in your workspace to define simulation profiles:
 ```json
-"hdl-helper.linter.rules": {
-    "line-length": "length:150",         // Custom length
-    "no-tabs": true,                     // Enforce no tabs
-    "parameter-name-style": false,       // Disable naming check
-    "always-comb": true                  // Enable specific check
+{
+  "tasks": [
+    {
+      "name": "Run Base TB",
+      "target": "tb_top",
+      "files": ["rtl/*.v", "tb/*.v"],
+      "wave": "dump.fst"
+    }
+  ]
 }
-
-```
-
-### 3. Formatter Flags
-
-Pass arguments directly to the formatter using a string array.
-
-**Example `settings.json`:**
-
-```json
-"hdl-helper.formatter.flags": [
-    "--indentation_spaces=4",
-    "--column_limit=150",
-    "--assignment_statement_alignment=preserve" 
-]
-
 ```
 
 ---
@@ -114,25 +73,27 @@ Pass arguments directly to the formatter using a string array.
 
 | Shortcut | Action | Description |
 | --- | --- | --- |
-| **`Ctrl + Alt + T`** | Generate TB | Generate Testbench for the current file. |
-| **`Ctrl + Alt + I`** | Instantatiate | Copy Instantiation template for the current module. |
+| **`F12`** | Go to Definition | Jump to signal or module definition. |
+| **`F2`** | Rename | Smart rename symbol across the project. |
+| **`Ctrl + Alt + I`** | Instantiate | Copy Instantiation template. |
 | **`Ctrl + Alt + W`** | Auto Wire | Auto-declare signals for selected instance. |
-| **`Shift + Alt + F`** | Format | Format document using configured rules. |
+| **`Ctrl + Alt + T`** | Generate TB | Quick testbench generation. |
+| **`Shift + Alt + F`** | Format | Format document using Verible rules. |
 
 ---
 
 ## ❓ FAQ
 
-**Q: I set `line-length` to 150, but I still see errors for 100 characters?**
-A: This was a known issue in older versions where the Language Server (LSP) conflicted with the Linter. **In V2.3.5, this is fixed.** We physically disable the LSP's internal checks so only your configured Linter rules apply. Please restart VS Code to ensure old processes are terminated.
+**Q: How do I view waveforms?**
+A: After running a simulation via the **"Run Simulation"** CodeLens (appears above testbench modules), click the **"View Waveform"** CodeLens or use the command `HDL: View Waveform`.
 
-**Q: How do I find the list of available Linter rules?**
-A: Open the Command Palette (`Ctrl+Shift+P`) and run **`HDL Helper: List All Linter Rules`**. This will extract the help documentation from your installed Verible tool and show it in a new editor.
+**Q: Can I use different linting rules for different projects?**
+A: Yes! Use VS Code **Workspace Settings** to override tool paths or active engines per project.
 
-**Q: My Hierarchy View is empty?**
-A: Make sure your files end with `.v` or `.sv`. The project scanner runs automatically. You can force a refresh by running `HDL Helper: Refresh Project Index`.
+**Q: Why Verilator?**
+A: Verilator is incredibly fast at catching "lint" errors that are actually "hardware" bugs (e.g., bit-width mismatches, undriven nets) which style-checkers like Verible might miss.
 
 ---
 
-**Enjoy coding with HDL Helper!**
-If you find bugs or have feature requests, feel free to open an issue on GitHub. Happy FPGA coding! 🎉
+**Enjoy coding with HDL Helper!** 🚀
+If you find bugs or have feature requests, please report them on GitHub. Happy FPGA coding! 🎉

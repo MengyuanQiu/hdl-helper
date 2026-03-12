@@ -1,0 +1,62 @@
+{
+    "Three-Segment Standard FSM": {
+        "prefix": "fsm_core",
+        "body": [
+            "// Module: ${5:fsm_name}",
+            "// Purpose: 3-Segment FSM Skeleton",
+            "// Trigger: fsm_core",
+            "",
+            "// --- 1. State Definition ---",
+            "typedef enum logic [${1:1}:0] {",
+            "    ${2:IDLE},",
+            "    ${3:ACTIVE}",
+            "} ${4:state}_t;",
+            "",
+            "${4:state}_t current_state, next_state;",
+            "",
+            "// --- 2. Sequential State Register ---",
+            "always_ff @(posedge clk or negedge rst_n) begin",
+            "    if (!rst_n) current_state <= ${2:IDLE};",
+            "    else        current_state <= next_state;",
+            "end",
+            "",
+            "// --- 3. Combinational Next State Logic ---",
+            "always_comb begin",
+            "    next_state = current_state; // Default Hold",
+            "    case (current_state)",
+            "        ${2:IDLE}: begin",
+            "            if (${6:start_condition}) next_state = ${3:ACTIVE};",
+            "        end",
+            "        ${3:ACTIVE}: begin",
+            "            if (${7:done_condition}) next_state = ${2:IDLE};",
+            "        end",
+            "        default: next_state = ${2:IDLE};",
+            "    endcase",
+            "end",
+            "",
+            "// --- 4. Registered Output ---",
+            "always_ff @(posedge clk or negedge rst_n) begin : ${4:state}_output_logic",
+            "    if (!rst_n) begin",
+            "        ${8:out_signal} <= 1'b0;",
+            "    end else begin",
+            "        // Output logic based on current_state / next_state",
+            "        if (next_state == ${3:ACTIVE}) begin",
+            "            ${8:out_signal} <= 1'b1;",
+            "        end else begin",
+            "            ${8:out_signal} <= 1'b0;",
+            "        end",
+            "    end",
+            "end$0"
+        ],
+        "description": "Standard 3-segment FSM with Enums and Registered Outputs"
+    },
+    "FSM Case Branch": {
+        "prefix": "fsm_case_branch",
+        "body": [
+            "${1:STATE_NAME}: begin",
+            "    if (${2:condition}) next_state = ${3:NEXT_STATE};",
+            "end$0"
+        ],
+        "description": "Individual case branch to dynamically expand FSMs"
+    }
+}

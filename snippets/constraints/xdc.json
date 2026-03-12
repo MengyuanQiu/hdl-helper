@@ -1,0 +1,103 @@
+{
+    "Create Primary Clock": {
+        "prefix": "xdc_create_clock",
+        "body": [
+            "create_clock -period ${1:10.000} -name ${2:sys_clk} -waveform {0.000 ${3:5.000}} [get_ports ${4:clk_in}]$0"
+        ],
+        "description": "Define a primary clock for the synthesis and timing engine"
+    },
+    "Create Generated Clock": {
+        "prefix": "xdc_create_generated_clock",
+        "body": [
+            "create_generated_clock -name ${1:clk_div2} -source [get_pins ${2:master_clk_reg/C}] -divide_by ${3:2} [get_pins ${4:divider_reg/Q}]$0"
+        ],
+        "description": "Define a generated/divided clock with explicit source pin"
+    },
+    "Set Async Clock Group": {
+        "prefix": "xdc_async_group",
+        "body": [
+            "set_clock_groups -asynchronous -group [get_clocks ${1:clk_a}] -group [get_clocks ${2:clk_b}]$0"
+        ],
+        "description": "Declare two clocks as completely asynchronous (CDC)"
+    },
+    "Set Input Delay (Max/Min)": {
+        "prefix": "xdc_input_delay",
+        "body": [
+            "set_input_delay -clock [get_clocks ${1:sys_clk}] -max ${2:2.0} [get_ports ${3:data_in}]",
+            "set_input_delay -clock [get_clocks $1] -min ${4:0.5} [get_ports $3]$0"
+        ],
+        "description": "Specify input delay to account for external Tco and PCB routing"
+    },
+    "Set Output Delay (Max/Min)": {
+        "prefix": "xdc_output_delay",
+        "body": [
+            "set_output_delay -clock [get_clocks ${1:sys_clk}] -max ${2:1.5} [get_ports ${3:data_out}]",
+            "set_output_delay -clock [get_clocks $1] -min ${4:0.0} [get_ports $3]$0"
+        ],
+        "description": "Specify output delay to account for external Tsu/Th requirements"
+    },
+    "Set Multicycle Path (Setup & Hold)": {
+        "prefix": "xdc_multicycle_path",
+        "body": [
+            "set_multicycle_path -setup ${1:2} -from [get_cells ${2:regA}] -to [get_cells ${3:regB}]",
+            "set_multicycle_path -hold ${4:1} -from [get_cells $2] -to [get_cells $3]$0"
+        ],
+        "description": "Relax timing for paths taking multiple cycles (remember to adjust hold!)"
+    },
+    "Set Max Delay Datapath Only (CDC)": {
+        "prefix": "xdc_max_delay_datapath",
+        "body": [
+            "set_max_delay -datapath_only -from [get_cells ${1:src_ff_reg}] -to [get_cells ${2:dest_sync_ff_reg}] ${3:5.0}$0"
+        ],
+        "description": "Limit datapath delay for async CDC, ignoring clock phase differences"
+    },
+    "Set False Path": {
+        "prefix": "xdc_false_path",
+        "body": [
+            "set_false_path -from [get_ports ${1:reset_n}] -to [all_registers]$0"
+        ],
+        "description": "Ignore timing analysis for specific paths (e.g., async resets)"
+    },
+    "Get Cells Hierarchical (Object Query)": {
+        "prefix": "xdc_get_cells",
+        "body": [
+            "get_cells -hierarchical -filter {NAME =~ *${1:my_fifo}*}$0"
+        ],
+        "description": "Query database for specific cell instances"
+    },
+    "Get Pins Best Practice (Object Query)": {
+        "prefix": "xdc_get_pins_safe",
+        "body": [
+            "get_pins -of_objects [get_cells -hierarchical *${1:my_reg}*] -filter {REF_PIN_NAME == ${2:CLK}}$0"
+        ],
+        "description": "Safely query pins by finding cells first (avoids global pin traversal hangs)"
+    },
+    "Set Property Package Pin": {
+        "prefix": "xdc_package_pin",
+        "body": [
+            "set_property PACKAGE_PIN ${1:AB11} [get_ports ${2:port_name}]$0"
+        ],
+        "description": "Map generic port to physical FPGA package pin"
+    },
+    "Set Property IO Standard": {
+        "prefix": "xdc_iostandard",
+        "body": [
+            "set_property IOSTANDARD ${1:LVCMOS33} [get_ports ${2:port_name}]$0"
+        ],
+        "description": "Set the I/O electrical standard for a port"
+    },
+    "Set Dont Touch (Anti-Optimization)": {
+        "prefix": "xdc_dont_touch",
+        "body": [
+            "set_property DONT_TOUCH true [get_cells ${1:dbg_sync_reg*}]$0"
+        ],
+        "description": "Prevent synthesis/implementation from optimizing away logic"
+    },
+    "Set Mark Debug (ILA Probe)": {
+        "prefix": "xdc_mark_debug",
+        "body": [
+            "set_property MARK_DEBUG true [get_nets ${1:control_bus*}]$0"
+        ],
+        "description": "Preserve nets specifically for ILA debugging"
+    }
+}

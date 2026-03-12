@@ -339,14 +339,22 @@
       ]
     },
     "snippets": [
-      {
-        "language": "verilog",
-        "path": "./snippets/hdl.json"
-      },
-      {
-        "language": "systemverilog",
-        "path": "./snippets/hdl.json"
-      }
+      { "language": "verilog", "path": "./snippets/rtl/basic.json" },
+      { "language": "verilog", "path": "./snippets/rtl/loops.json" },
+      { "language": "verilog", "path": "./snippets/rtl/axi.json" },
+      { "language": "verilog", "path": "./snippets/rtl/fifo.json" },
+      { "language": "verilog", "path": "./snippets/rtl/fsm/fsm_core.json" },
+      { "language": "verilog", "path": "./snippets/rtl/fsm/fsm_onehot.json" },
+      { "language": "systemverilog", "path": "./snippets/rtl/basic.json" },
+      { "language": "systemverilog", "path": "./snippets/rtl/loops.json" },
+      { "language": "systemverilog", "path": "./snippets/rtl/axi.json" },
+      { "language": "systemverilog", "path": "./snippets/rtl/fifo.json" },
+      { "language": "systemverilog", "path": "./snippets/rtl/fsm/fsm_core.json" },
+      { "language": "systemverilog", "path": "./snippets/rtl/fsm/fsm_onehot.json" },
+      { "language": "systemverilog", "path": "./snippets/uvm/base_classes.json" },
+      { "language": "systemverilog", "path": "./snippets/sva/assertions.json" },
+      { "language": "sdc", "path": "./snippets/constraints/sdc.json" },
+      { "language": "xdc", "path": "./snippets/constraints/xdc.json" }
     ],
     "languages": [
       {
