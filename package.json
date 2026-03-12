@@ -92,6 +92,11 @@
         "title": "HDL: Refresh IP Explorer",
         "category": "HDL Helper",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "hdl-helper.generateFsm",
+        "title": "HDL: Visualize FSM (Mermaid)",
+        "category": "HDL Helper"
       }
     ],
     "configuration": {
@@ -258,6 +263,11 @@
         {
           "command": "hdl-helper.generateTB",
           "group": "hdl-group@3",
+          "when": "editorTextFocus && (resourceLangId == verilog || resourceLangId == systemverilog)"
+        },
+        {
+          "command": "hdl-helper.generateFsm",
+          "group": "hdl-group@4",
           "when": "editorTextFocus && (resourceLangId == verilog || resourceLangId == systemverilog)"
         }
       ],

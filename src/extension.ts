@@ -7,6 +7,7 @@ import * as cp from 'child_process';
 import { generateTestbench } from './commands/generateTB';
 import { instantiateModule } from './commands/instantiateModule';
 import { autoDeclareSignals } from './commands/autoDeclare';
+import { visualizeFsm } from './commands/generateFsm';
 import { activateLanguageServer, deactivateLanguageServer } from './languageClient';
 // 引入 V2.0 工程核心
 import { ProjectManager } from './project/projectManager';
@@ -26,6 +27,7 @@ import { XdcCompletionProvider } from './providers/xdcCompletionProvider';
 import { CodeGenerator } from './utils/codeGenerator'
 import { DocGenerator } from './utils/docGenerator'
 import { IpCatalogProvider } from './providers/ipCatalogProvider';
+import { HdlCodeActionProvider } from './providers/codeActionProvider';
 
 
 // 全局变量，方便 deactivate 使用
@@ -109,6 +111,12 @@ export function activate(context: vscode.ExtensionContext) {
         try { await autoDeclareSignals(); } catch (e) { vscode.window.showErrorMessage(`${e}`); }
     });
     context.subscriptions.push(autoWireCmd);
+
+    // --- C.5 状态机可视化 (FSM Visualization) ---
+    const fsmCmd = vscode.commands.registerCommand('hdl-helper.generateFsm', async () => {
+        try { await visualizeFsm(); } catch (e) { vscode.window.showErrorMessage(`${e}`); }
+    });
+    context.subscriptions.push(fsmCmd);
 
     // D. 复制实例化模板 (树节点右键)
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.copyInstantiation', async (item: HdlModule) => {
@@ -194,6 +202,19 @@ export function activate(context: vscode.ExtensionContext) {
             completionProvider,
             '.', // trigger character
             '`'  // optional trigger character for macros
+        )
+    );
+    // =========================================================================
+    // 7. 注册 Quick Fix (Code Actions)
+    // =========================================================================
+    const codeActionProvider = new HdlCodeActionProvider();
+    context.subscriptions.push(
+        vscode.languages.registerCodeActionsProvider(
+            ['verilog', 'systemverilog'],
+            codeActionProvider,
+            {
+                providedCodeActionKinds: HdlCodeActionProvider.providedCodeActionKinds
+            }
         )
     );
 

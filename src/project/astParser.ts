@@ -92,6 +92,18 @@ export class AstParser {
     }
 
     /**
+     * 获取完整 AST 树对象，用于高级分析 (如 FSM)
+     */
+    public static getTree(text: string): any {
+        if (!AstParser.ready) return null;
+        try {
+            return AstParser.parser.parse(text);
+        } catch (err) {
+            return null;
+        }
+    }
+
+    /**
      * 使用 Tree-sitter 解析文件文本，返回所有模块定义
      * @param text 文件内容（已解码的字符串）
      * @param uri 文件 URI（用于构造 Range 和 HdlModule）
