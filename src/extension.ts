@@ -18,6 +18,9 @@ import { VerilogOutlineProvider } from './providers/outlineProvider';
 import { VerilogReferenceProvider } from './providers/referenceProvider';
 import { VerilogRenameProvider } from './providers/renameProvider';
 import { VerilogCompletionProvider } from './providers/completionProvider';
+import { SimCodeLensProvider } from './providers/simCodeLensProvider';
+import { SimManager } from './simulation/simManager';
+import { WaveformViewer } from './simulation/waveformViewer';
 import { CodeGenerator } from './utils/codeGenerator'
 import { DocGenerator } from './utils/docGenerator'
 
@@ -181,6 +184,38 @@ export function activate(context: vscode.ExtensionContext) {
             '`'  // optional trigger character for macros
         )
     );
+
+    // =========================================================================
+    // 7. 注册仿真与 CodeLens (Phase 6)
+    // =========================================================================
+    const simCodeLensProvider = new SimCodeLensProvider(projectManager);
+    context.subscriptions.push(
+        vscode.languages.registerCodeLensProvider(
+            ['verilog', 'systemverilog'],
+            simCodeLensProvider
+        )
+    );
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runSimulation', async (moduleName: string) => {
+        if (!moduleName) {
+            vscode.window.showErrorMessage('No module selected for simulation.');
+            return;
+        }
+        
+        // 尝试获取任务配置
+        const task = await SimManager.getDefaultTaskForModule(moduleName, projectManager);
+        
+        // 执行任务
+        await SimManager.runTask(task, projectManager);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.viewWaveform', (waveformPath: string) => {
+        if (!waveformPath) {
+            vscode.window.showErrorMessage('No waveform file provided.');
+            return;
+        }
+        WaveformViewer.show(context.extensionUri, waveformPath);
+    }));
 
     // --- F. 调试命令 ---
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.debugProject', () => {
