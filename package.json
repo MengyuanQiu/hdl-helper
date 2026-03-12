@@ -86,6 +86,12 @@
         "command": "hdl-helper.runVivadoImpl",
         "title": "HDL: Run Vivado Implementation",
         "category": "HDL Helper"
+      },
+      {
+        "command": "hdl-helper.refreshIpExplorer",
+        "title": "HDL: Refresh IP Explorer",
+        "category": "HDL Helper",
+        "icon": "$(refresh)"
       }
     ],
     "configuration": {
@@ -209,6 +215,11 @@
           "id": "hdl-hierarchy-view",
           "name": "Module Hierarchy",
           "icon": "images/icon_min.png"
+        },
+        {
+          "id": "ip-explorer-view",
+          "name": "IP Explorer",
+          "icon": "$(server)"
         }
       ]
     },
@@ -254,6 +265,11 @@
         {
           "command": "hdl-helper.clearTopModule",
           "when": "view == hdl-hierarchy-view",
+          "group": "navigation"
+        },
+        {
+          "command": "hdl-helper.refreshIpExplorer",
+          "when": "view == ip-explorer-view",
           "group": "navigation"
         }
       ],

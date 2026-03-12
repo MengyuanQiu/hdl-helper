@@ -4,37 +4,36 @@ import { VeribleEngine } from './engines/VeribleEngine';
 import { VivadoEngine } from './engines/VivadoEngine';
 import { VerilatorEngine } from './engines/VerilatorEngine';
 import { ProjectManager } from '../project/projectManager';
+import { InterfaceChecker } from './InterfaceChecker';
 
 /**
  * LintManager - 多引擎 Linter 中枢调度器
- * 
- * 职责:
- *   1. 监听文件保存/打开事件（带防抖）
- *   2. 根据用户 activeEngines 配置，用 Promise.all() 并发调用多个引擎
- *   3. 聚合所有引擎的诊断结果，合并推送到 VS Code Problems 面板
- *   4. 在状态栏显示 Linting 动画和完成提示
  */
 export class LintManager implements vscode.Disposable {
     private diagnosticCollection: vscode.DiagnosticCollection;
     private outputChannel: vscode.OutputChannel;
     private timer: NodeJS.Timeout | undefined;
+    private interfaceChecker: InterfaceChecker | undefined;
 
-    // 引擎注册表 (在构造函数中初始化，以便传入 projectManager)
+    // 引擎注册表
     private readonly engineRegistry: Map<string, ILinterEngine>;
-
-    // 防抖时间 (多引擎并发，适当延长到 800ms)
     private readonly DEBOUNCE_MS = 800;
 
     constructor(private projectManager?: ProjectManager) {
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection('hdl-linter');
         this.outputChannel = vscode.window.createOutputChannel('HDL Helper Log');
-        // 在此处创建引擎实例，确保 projectManager 已赋值
+        
+        if (this.projectManager) {
+            this.interfaceChecker = new InterfaceChecker(this.projectManager);
+        }
+
         this.engineRegistry = new Map<string, ILinterEngine>([
             ['verible',   new VeribleEngine()],
             ['vivado',    new VivadoEngine()],
             ['verilator', new VerilatorEngine(this.projectManager)],
         ]);
     }
+
 
     public activate(subscriptions: vscode.Disposable[]): void {
         subscriptions.push(this);
@@ -113,10 +112,17 @@ export class LintManager implements vscode.Disposable {
                 )
             );
 
-            // 聚合所有诊断结果
-            const allDiagnostics = results.flat();
-            this.diagnosticCollection.set(doc.uri, allDiagnostics);
+            // 聚合所有异步引擎的诊断结果
+            let allDiagnostics = results.flat();
 
+            // 附加本地纯净的接口检查 (Interface Checker)
+            if (this.interfaceChecker) {
+                const interfaceDiags = this.interfaceChecker.checkInterfaces(doc);
+                allDiagnostics = allDiagnostics.concat(interfaceDiags);
+            }
+
+            this.diagnosticCollection.set(doc.uri, allDiagnostics);
+            
             const errorCount   = allDiagnostics.filter(d => d.severity === vscode.DiagnosticSeverity.Error).length;
             const warningCount = allDiagnostics.filter(d => d.severity === vscode.DiagnosticSeverity.Warning).length;
 

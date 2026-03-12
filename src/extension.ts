@@ -25,6 +25,7 @@ import { VivadoBridge } from './eda/vivadoBridge';
 import { XdcCompletionProvider } from './providers/xdcCompletionProvider';
 import { CodeGenerator } from './utils/codeGenerator'
 import { DocGenerator } from './utils/docGenerator'
+import { IpCatalogProvider } from './providers/ipCatalogProvider';
 
 
 // 全局变量，方便 deactivate 使用
@@ -51,12 +52,21 @@ export function activate(context: vscode.ExtensionContext) {
 
     // C. 初始化 Tree Provider
     const treeProvider = new HdlTreeProvider(projectManager);
-    
+    const ipCatalogProvider = new IpCatalogProvider();
+
     // D. 注册侧边栏视图
     vscode.window.registerTreeDataProvider(
         'hdl-hierarchy-view', 
         treeProvider
     );
+    vscode.window.registerTreeDataProvider(
+        'ip-explorer-view',
+        ipCatalogProvider
+    );
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.refreshIpExplorer', () => {
+        ipCatalogProvider.refresh();
+    }));
 
     // =========================================================================
     // 2. 注册 Formatter (格式化)

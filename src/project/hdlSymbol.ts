@@ -64,7 +64,8 @@ export class HdlInstance {
         public type: string,  // 实例化的模块名 (模板)
         public name: string,  // 实例名
         public range: vscode.Range, // 代码中的位置
-        public fileUri: vscode.Uri  // 所在文件
+        public fileUri: vscode.Uri, // 所在文件
+        public portConnections: string[] = [] // 记录实例化时连接的端口名
     ) {}
 }
 

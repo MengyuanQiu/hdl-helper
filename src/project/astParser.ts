@@ -221,7 +221,19 @@ export class AstParser {
                             child.startPosition.row,
                             child.startPosition.column + instName.length
                         );
-                        hdlModule.addInstance(new HdlInstance(type, instName, range, uri));
+                        // 提取连接的端口
+                        const connectedPorts: string[] = [];
+                        const portList = child.children.find((c: any) => c.type === 'list_of_port_connections');
+                        if (portList) {
+                            AstParser.walkNode(portList, (pNode: any) => {
+                                if (pNode.type === 'named_port_connection') {
+                                    const portId = pNode.children.find((c: any) => c.type === 'port_identifier');
+                                    if (portId) connectedPorts.push(portId.text);
+                                }
+                            });
+                        }
+
+                        hdlModule.addInstance(new HdlInstance(type, instName, range, uri, connectedPorts));
                     }
                 }
             }
