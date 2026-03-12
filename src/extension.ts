@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import VerilogLinter from './linter/linter';
+import { LintManager } from './linter/LintManager';
 import VerilogFormatter from './formatter';
 import * as cp from 'child_process';
 // 引入原有的功能函数
@@ -27,13 +27,18 @@ export function activate(context: vscode.ExtensionContext) {
     // 1. 核心初始化 (顺序很重要！)
     // =========================================================================
     
-    // A. 启动 Linter
-    const linter = new VerilogLinter();
-    linter.activate(context.subscriptions);
+    // A. 初始化工程管理器（先于 LintManager，供 VerilatorEngine 查询工程目录）
+    const logChannel = vscode.window.createOutputChannel('HDL Helper AST');
+    projectManager = new ProjectManager(context.extensionUri, logChannel);
 
-    // B. 初始化工程管理器 (只初始化一次！)
-    projectManager = new ProjectManager();
+    // A2. 在后台异步初始化 Tree-sitter AST 引擎（不阻塞主流程）
+    projectManager.initAstParser();
     projectManager.scanWorkspace(); // 启动后台扫描
+
+    // B. 启动多引擎 Linter，传入 projectManager（供 Verilator 注入 Include 路径）
+    const lintManager = new LintManager(projectManager);
+    lintManager.activate(context.subscriptions);
+
 
     // C. 初始化 Tree Provider
     const treeProvider = new HdlTreeProvider(projectManager);

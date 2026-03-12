@@ -17,3 +17,4 @@ push.ps1
 cmd.txt
 !snippets/*.json
 !images/icon_min.png
+!resources/**

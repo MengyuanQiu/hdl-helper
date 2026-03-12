@@ -2,7 +2,7 @@
   "name": "hdl-helper",
   "displayName": "HDL Helper",
   "description": "FPGA/IC 全能助手：双引擎语法检查 (Vivado/Verible)、一键格式化、自动 Testbench、智能例化、LSP 跳转与大纲。",
-  "version": "2.3.5",
+  "version": "3.0.0",
   "publisher": "Cyrus",
   "engines": {
     "vscode": "^1.108.0"
@@ -50,12 +50,12 @@
         "command": "hdl-helper.clearTopModule",
         "title": "HDL: Clear Top Module",
         "category": "HDL Helper",
-        "icon": "$(clear-all)" 
+        "icon": "$(clear-all)"
       },
       {
-         "command": "hdl-helper.copyInstantiation",
-         "title": "HDL: Copy Instantiation Template",
-         "category": "HDL Helper"
+        "command": "hdl-helper.copyInstantiation",
+        "title": "HDL: Copy Instantiation Template",
+        "category": "HDL Helper"
       },
       {
         "command": "hdl-helper.generateDoc",
@@ -65,7 +65,7 @@
       {
         "command": "hdl-helper.listLintRules",
         "title": "HDL: List All Linter Rules",
-        "category": "HDL Helper" 
+        "category": "HDL Helper"
       }
     ],
     "configuration": {
@@ -81,6 +81,28 @@
           "default": "logic",
           "description": "自动声明信号时使用的类型 (Auto-declare signal type)"
         },
+        "hdl-helper.project.excludeDirs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "node_modules",
+            ".srcs",
+            ".sim",
+            "ip"
+          ],
+          "description": "解析工程结构时排除的目录名 (Directories to exclude when scanning the project)"
+        },
+        "hdl-helper.linter.activeEngines": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["verible", "vivado", "verilator"]
+          },
+          "default": ["verible"],
+          "description": "激活的 Lint 引擎列表（可多选，并发执行）。可选: 'verible', 'vivado', 'verilator'"
+        },
         "hdl-helper.linter.tool": {
           "type": "string",
           "enum": [
@@ -88,12 +110,24 @@
             "verible-lint"
           ],
           "default": "xvlog",
-          "description": "选择语法检查工具 (Select Linter Tool): 'xvlog' (Vivado) or 'verible-lint' (Google Verible)."
+          "markdownDeprecationMessage": "**已废弃**: 请使用 `hdl-helper.linter.activeEngines` 代替。",
+          "description": "[已废弃] 选择语法检查工具"
         },
         "hdl-helper.linter.veriblePath": {
           "type": "string",
           "default": "verible-verilog-lint",
           "description": "Path to verible-verilog-lint executable."
+        },
+        "hdl-helper.linter.verilatorPath": {
+          "type": "string",
+          "default": "verilator",
+          "description": "Verilator 可执行文件路径 (Path to verilator executable). 如已在 PATH 中，保持默认值即可。"
+        },
+        "hdl-helper.linter.verilatorFlags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "传递给 Verilator 的额外参数 (Extra flags for Verilator)，例如: [\"-Wno-WIDTH\", \"--bbox-sys\"]。"
         },
         "hdl-helper.linter.executablePath": {
           "type": "string",
@@ -145,7 +179,7 @@
         {
           "id": "hdl-explorer",
           "title": "HDL Explorer",
-          "icon": "$(chip)" 
+          "icon": "$(chip)"
         }
       ]
     },
@@ -207,7 +241,7 @@
         {
           "command": "hdl-helper.setTopModule",
           "when": "view == hdl-hierarchy-view && viewItem == module",
-          "group": "1_modification" 
+          "group": "1_modification"
         },
         {
           "command": "hdl-helper.clearTopModule",
@@ -291,8 +325,11 @@
     "test": "vscode-test"
   },
   "dependencies": {
+    "iconv-lite": "^0.7.2",
+    "jschardet": "^3.1.4",
     "vscode-jsonrpc": "^8.2.0",
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^9.0.1",
+    "web-tree-sitter": "^0.26.6"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

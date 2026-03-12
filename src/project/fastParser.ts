@@ -22,69 +22,76 @@ export class FastParser {
      * 解析单个文件的内容
      * @param document VS Code 文档对象 (或者只是提供 text 和 uri)
      */
-    public static parse(text: string, uri: vscode.Uri): HdlModule | null {
+    public static parse(text: string, uri: vscode.Uri): HdlModule[] {
         const cleanText = this.removeComments(text);
+        const modules: HdlModule[] = [];
 
         // 1. 提取模块定义
-        const moduleRegex = /\bmodule\s+(\w+)/;
-        const moduleMatch = moduleRegex.exec(cleanText);
-        if (!moduleMatch) return null;
+        const moduleRegex = /\bmodule\s+(\w+)/g;
+        let moduleMatch;
+        while ((moduleMatch = moduleRegex.exec(cleanText)) !== null) {
+            const moduleName = moduleMatch[1];
+            const startIndex = moduleMatch.index;
+            
+            // 找到下一个 module 或者 EOF，限定当前模块的作用域
+            const nextModuleMatch = /\bmodule\s+\w+/.exec(cleanText.substring(moduleRegex.lastIndex));
+            const endIndex = nextModuleMatch ? moduleRegex.lastIndex + nextModuleMatch.index : cleanText.length;
+            
+            const moduleText = cleanText.substring(startIndex, endIndex);
 
-        const moduleName = moduleMatch[1];
-        const definitionRange = this.findRange(text, moduleName, 0); 
-        const hdlModule = new HdlModule(moduleName, uri, definitionRange);
+            const definitionRange = this.findRange(text, moduleName, startIndex); 
+            const hdlModule = new HdlModule(moduleName, uri, definitionRange);
 
-        // --- 🔥 核心正则升级 🔥 ---
-        // 目标：同时捕获 参数块(Group 1) 和 端口块(Group 2)
-        // 结构: module name #( ...params... ) ( ...ports... );
-        // (?:#\s*\(([\s\S]*?)\))?  --> 非捕获组匹配 #(...)，其中 Group 1 是内容。问号表示可选。
-        // \s*\(([\s\S]*?)\)        --> 匹配端口括号 (...)，其中 Group 2 是内容。
-        const headerRegex = /\bmodule\s+\w+\s*(?:#\s*\(([\s\S]*?)\))?\s*\(([\s\S]*?)\)\s*;/;
-        const headerMatch = headerRegex.exec(cleanText);
-        
-        if (headerMatch) {
-            // ---> A. 处理参数 (Group 1)
-            const paramBlock = headerMatch[1]; // 可能为 undefined (如果没参数)
-            if (paramBlock) {
-                // 匹配: parameter type NAME = value
-                // 简化正则: parameter (忽略类型) (名字) = (值)
-                // 排除 localparam，只抓 parameter
-                const paramRegex = /\bparameter\s+(?:\w+\s+)?(\w+)\s*=\s*([^,)]+)/g;
-                let m;
-                while ((m = paramRegex.exec(paramBlock)) !== null) {
-                    const name = m[1];
-                    const val = m[2].trim();
-                    hdlModule.addParam(new HdlParam(name, val));
+            // --- 🔥 核心正则升级 🔥 ---
+            // 目标：同时捕获 参数块(Group 1) 和 端口块(Group 2)
+            // 结构: module name #( ...params... ) ( ...ports... );
+            const headerRegex = /\bmodule\s+\w+\s*(?:#\s*\(([\s\S]*?)\))?\s*\(([\s\S]*?)\)\s*;/;
+            const headerMatch = headerRegex.exec(moduleText);
+            
+            if (headerMatch) {
+                // ---> A. 处理参数 (Group 1)
+                const paramBlock = headerMatch[1]; 
+                if (paramBlock) {
+                    const paramRegex = /\bparameter\s+(?:\w+\s+)?(\w+)\s*=\s*([^,)]+)/g;
+                    let m;
+                    while ((m = paramRegex.exec(paramBlock)) !== null) {
+                        const name = m[1];
+                        const val = m[2].trim();
+                        hdlModule.addParam(new HdlParam(name, val));
+                    }
+                }
+
+                // ---> B. 处理端口 (Group 2)
+                const portsBlock = headerMatch[2];
+                if (portsBlock) {
+                    const portRegex = /\b(input|output|inout)\s+(?:(wire|reg|logic)\s+)?(?:(\[.*?\])\s+)?(\w+)/g;
+                    let m;
+                    while ((m = portRegex.exec(portsBlock)) !== null) {
+                        const dir = m[1];
+                        const type = (m[2] || '') + (m[3] ? ' ' + m[3] : '');
+                        const name = m[4];
+                        hdlModule.addPort(new HdlPort(name, dir, type.trim()));
+                    }
                 }
             }
 
-            // ---> B. 处理端口 (Group 2)
-            const portsBlock = headerMatch[2];
-            if (portsBlock) {
-                const portRegex = /\b(input|output|inout)\s+(?:(wire|reg|logic)\s+)?(?:(\[.*?\])\s+)?(\w+)/g;
-                let m;
-                while ((m = portRegex.exec(portsBlock)) !== null) {
-                    const dir = m[1];
-                    const type = (m[2] || '') + (m[3] ? ' ' + m[3] : '');
-                    const name = m[4];
-                    hdlModule.addPort(new HdlPort(name, dir, type.trim()));
-                }
+            // 3. 提取实例化 (保持不变)
+            const instRegex = /\b([a-zA-Z_]\w*)\s+(?:#\s*\([^;]*?\)\s*)?([a-zA-Z_]\w*)\s*\(/g;
+            let match;
+            while ((match = instRegex.exec(moduleText)) !== null) {
+                const type = match[1];
+                const name = match[2];
+                if (this.reservedKeywords.has(type)) continue;
+
+                // 计算实例化在原文件中的真实位置
+                const range = this.findRange(text, name, startIndex + match.index);
+                hdlModule.addInstance(new HdlInstance(type, name, range, uri));
             }
+
+            modules.push(hdlModule);
         }
 
-        // 3. 提取实例化 (保持不变)
-        const instRegex = /\b([a-zA-Z_]\w*)\s+(?:#\s*\([^;]*?\)\s*)?([a-zA-Z_]\w*)\s*\(/g;
-        let match;
-        while ((match = instRegex.exec(cleanText)) !== null) {
-            const type = match[1];
-            const name = match[2];
-            if (this.reservedKeywords.has(type)) continue;
-
-            const range = this.findRange(text, name, match.index);
-            hdlModule.addInstance(new HdlInstance(type, name, range, uri));
-        }
-
-        return hdlModule;
+        return modules;
     }
 
     /**

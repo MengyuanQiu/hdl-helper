@@ -15,11 +15,20 @@ export async function instantiateModule() {
 
     // 1. 使用 V2.0 的 FastParser 解析当前文本
     // 即使文件还没保存，FastParser 也能解析内存中的文本
-    const hdlModule = FastParser.parse(code, uri);
+    const hdlModules = FastParser.parse(code, uri);
 
-    if (!hdlModule) {
+    if (!hdlModules || hdlModules.length === 0) {
         vscode.window.showErrorMessage('无法识别模块定义，请检查 module 关键字');
         return;
+    }
+
+    // 智能选择光标所在的 module
+    let hdlModule = hdlModules[0];
+    const cursorLine = editor.selection.active.line;
+    for (const m of hdlModules) {
+        if (m.range.start.line <= cursorLine) {
+            hdlModule = m;
+        }
     }
 
     // 2. 使用统一生成器 (开启 withComments = true，保留你喜欢的注释风格)

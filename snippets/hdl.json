@@ -13,14 +13,14 @@
         ],
         "description": "Standard File Header"
     },
-    "Module (Modern)": {
+    "Module # (With Parameters)": {
         "prefix": "module",
         "body": [
             "module ${1:module_name} #(",
             "    parameter int ${2:DATA_WIDTH} = 32",
             ") (",
-            "    input  logic                      clk,",
-            "    input  logic                      rst_n,",
+            "    input  logic                      clk_i,",
+            "    input  logic                      rst_ni,",
             ");",
             "",
             "    $0",
@@ -29,9 +29,11 @@
         ],
         "description": "SystemVerilog Module with Parameters"
     },
-    "Module (No parameter)": {
+    "Module (No Parameters)": {
         "prefix": "module",
         "body": [
+            "`resetall",
+            "`timescale 1ns/1ps",
             "module ${1:moduleName} (",
             "    input  ${2:clk},",
             "    input  ${3:rst_n},",
@@ -77,8 +79,8 @@
     "Always FF (Sequential)": {
         "prefix": "always_ff",
         "body": [
-            "always_ff @(posedge ${1:clk} or negedge ${2:rst_n}) begin : ${3:blk_name}",
-            "    if (!${2:rst_n}) begin",
+            "always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin : ${3:blk_name}",
+            "    if (!${2:rst_ni}) begin",
             "        $0",
             "    end",
             "    else begin",
@@ -339,6 +341,10 @@
             "`endif"
         ]
     },
+    "Resetall": {
+        "prefix": "resetall",
+        "body": "`resetall"
+    },
     "Timescale": {
         "prefix": "timescale",
         "body": "`timescale ${1:1ns}/${2:1ps}"
@@ -346,6 +352,10 @@
     "Default Nettype": {
         "prefix": "default_nettype",
         "body": "`default_nettype ${1:none}"
+    },
+    "Reset All": {
+        "prefix": "resetall",
+        "body": "`resetall ${1:none}"
     },
     "Class": {
         "prefix": "class",
@@ -455,22 +465,22 @@
         "description": "UVM Analysis Port Definition"
     },
     "UVM Info": {
-        "prefix": "uinfo",
+        "prefix": "uvm_info",
         "body": "`uvm_info(\"${1:ID}\", \\$sformatf(\"${2:Msg: %d}\", ${3:val}), UVM_LOW)"
     },
     "UVM Error": {
-        "prefix": "uerror",
+        "prefix": "uvm_error",
         "body": "`uvm_error(\"${1:ID}\", \\$sformatf(\"${2:Error: %s}\", ${3:msg}))"
     },
     "UVM Fatal": {
-        "prefix": "ufatal",
+        "prefix": "uvm_fatal",
         "body": "`uvm_fatal(\"${1:ID}\", \"${2:Fatal Error!}\")"
     },
     "Assert Property": {
         "prefix": "assert property",
         "body": [
             "property ${1:p_name};",
-            "    @(posedge clk) disable iff (!rst_n)",
+            "    @(posedge clk_i) disable iff (!rst_n)",
             "        ${2:req} |-> ##${3:1} ${4:ack};",
             "endproperty",
             "",
@@ -481,6 +491,10 @@
     "Display": {
         "prefix": "display",
         "body": "\\$display(\"${1:Time: %0t} ${2:Msg}\", \\$time, ${3:args});"
+    },
+    "Error": {
+        "prefix": "error",
+        "body": "\\$error(\"some errors happened\");"
     },
     "System CLOG2 (Log Base 2)": {
         "prefix": "clog2",

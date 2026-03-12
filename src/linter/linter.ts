@@ -80,22 +80,43 @@ export default class VerilogLinter implements vscode.Disposable {
         // 文件名必须加引号，防止空格
         args.push(`"${doc.fileName}"`);
 
-        // 3. 构造命令 (exec 需要手动处理引号)
-        const cmd = `"${binPath}" ${args.join(' ')}`;
+        // 3. 构造命令 (改为 spawn 流式处理)
+        this.outputChannel.appendLine(`[Vivado Spawn] "${binPath}" ${args.join(' ')}`);
 
-        this.outputChannel.appendLine(`[Vivado Exec] ${cmd}`);
+        // shell: true 保证能正常调用 .bat
+        const child = cp.spawn(binPath, args, { 
+            cwd: path.dirname(doc.fileName), 
+            shell: true 
+        });
 
-        cp.exec(cmd, { cwd: path.dirname(doc.fileName) }, (error, stdout, stderr) => {
-            const output = stdout.toString() + stderr.toString();
-            
-            if (error) {
-                if ((error as any).code === 'ENOENT' || error.code === 127 || output.includes('is not recognized')) {
-                    this.outputChannel.appendLine(`[Error] Vivado executable not found: ${binPath}`);
-                    if (path.isAbsolute(binPath)) {
-                        vscode.window.showErrorMessage(`无法找到 Vivado (xvlog)。请检查设置中的路径。`);
-                    }
-                    return;
+        let output = '';
+        
+        child.stdout.on('data', (data) => {
+            output += data.toString();
+        });
+
+        child.stderr.on('data', (data) => {
+            output += data.toString();
+        });
+
+        child.on('error', (error: any) => {
+            if (error.code === 'ENOENT' || error.code === 127) {
+                this.outputChannel.appendLine(`[Error] Vivado executable not found: ${binPath}`);
+                if (path.isAbsolute(binPath)) {
+                    vscode.window.showErrorMessage(`无法找到 Vivado (xvlog)。请检查设置中的路径。`);
                 }
+            } else {
+                this.outputChannel.appendLine(`[Error] failed to spawn Vivado: ${error.message}`);
+            }
+        });
+
+        child.on('close', (code) => {
+            if (output.includes('is not recognized')) {
+                this.outputChannel.appendLine(`[Error] Vivado executable not found: ${binPath}`);
+                if (path.isAbsolute(binPath)) {
+                    vscode.window.showErrorMessage(`无法找到 Vivado (xvlog)。请检查设置中的路径。`);
+                }
+                return;
             }
 
             if (output.trim().length > 0) {

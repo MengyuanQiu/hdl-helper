@@ -16,11 +16,20 @@ export async function generateTestbench() {
     const uri = doc.uri;
 
     // 1. 使用 FastParser 解析
-    const hdlModule = FastParser.parse(code, uri);
+    const hdlModules = FastParser.parse(code, uri);
     
-    if (!hdlModule) {
+    if (!hdlModules || hdlModules.length === 0) {
         vscode.window.showErrorMessage('无法解析模块定义，请检查 module 关键字');
         return;
+    }
+
+    // 智能选择光标所在的 module
+    let hdlModule = hdlModules[0];
+    const cursorLine = editor.selection.active.line;
+    for (const m of hdlModules) {
+        if (m.range.start.line <= cursorLine) {
+            hdlModule = m;
+        }
     }
 
     // 2. 生成 TB 内容
