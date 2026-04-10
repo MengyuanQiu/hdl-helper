@@ -33,44 +33,44 @@ export class FastParser {
             const moduleName = moduleMatch[1];
             const startIndex = moduleMatch.index;
             
-            // 找到下一个 module 或者 EOF，限定当前模块的作用域
-            const nextModuleMatch = /\bmodule\s+\w+/.exec(cleanText.substring(moduleRegex.lastIndex));
-            const endIndex = nextModuleMatch ? moduleRegex.lastIndex + nextModuleMatch.index : cleanText.length;
+            // P9 Fix: 使用 endmodule 关键字作为模块边界，而非"下一个 module"
+            const endmoduleRegex = /\bendmodule\b/g;
+            endmoduleRegex.lastIndex = moduleRegex.lastIndex;
+            const endmoduleMatch = endmoduleRegex.exec(cleanText);
+            const endIndex = endmoduleMatch ? endmoduleMatch.index + endmoduleMatch[0].length : cleanText.length;
             
             const moduleText = cleanText.substring(startIndex, endIndex);
 
             const definitionRange = this.findRange(text, moduleName, startIndex); 
             const hdlModule = new HdlModule(moduleName, uri, definitionRange);
 
-            // --- 🔥 核心正则升级 🔥 ---
-            // 目标：同时捕获 参数块(Group 1) 和 端口块(Group 2)
-            // 结构: module name #( ...params... ) ( ...ports... );
-            const headerRegex = /\bmodule\s+\w+\s*(?:#\s*\(([\s\S]*?)\))?\s*\(([\s\S]*?)\)\s*;/;
-            const headerMatch = headerRegex.exec(moduleText);
-            
-            if (headerMatch) {
-                // ---> A. 处理参数 (Group 1)
-                const paramBlock = headerMatch[1]; 
-                if (paramBlock) {
-                    const paramRegex = /\bparameter\s+(?:\w+\s+)?(\w+)\s*=\s*([^,)]+)/g;
-                    let m;
-                    while ((m = paramRegex.exec(paramBlock)) !== null) {
-                        const name = m[1];
-                        const val = m[2].trim();
-                        hdlModule.addParam(new HdlParam(name, val));
-                    }
-                }
+            // 优先解析模块头，避免把 signed/unsigned 等类型关键字误当端口名
+            const header = this.extractHeaderInfo(moduleText, moduleName);
 
-                // ---> B. 处理端口 (Group 2)
-                const portsBlock = headerMatch[2];
-                if (portsBlock) {
-                    const portRegex = /\b(input|output|inout)\s+(?:(wire|reg|logic)\s+)?(?:(\[.*?\])\s+)?(\w+)/g;
-                    let m;
-                    while ((m = portRegex.exec(portsBlock)) !== null) {
-                        const dir = m[1];
-                        const type = (m[2] || '') + (m[3] ? ' ' + m[3] : '');
-                        const name = m[4];
-                        hdlModule.addPort(new HdlPort(name, dir, type.trim()));
+            for (const p of header.params) {
+                hdlModule.addParam(new HdlParam(p.name, p.defaultValue));
+            }
+            for (const p of header.ports) {
+                hdlModule.addPort(new HdlPort(p.name, p.dir, p.type));
+            }
+
+            // 非 ANSI 端口风格兜底：module m(a,b); input a; output b;
+            if (hdlModule.ports.length === 0 && header.bodyText) {
+                const bodyPortRegex = /\b(input|output|inout)\s+([^;]+);/g;
+                let m;
+                while ((m = bodyPortRegex.exec(header.bodyText)) !== null) {
+                    const dir = m[1];
+                    const decl = m[2];
+                    const chunks = this.splitTopLevelComma(decl);
+                    let inheritedType = '';
+
+                    for (const raw of chunks) {
+                        const parsed = this.parsePortChunk(raw, dir, inheritedType);
+                        if (!parsed) {
+                            continue;
+                        }
+                        inheritedType = parsed.type || inheritedType;
+                        hdlModule.addPort(new HdlPort(parsed.name, parsed.dir, parsed.type));
                     }
                 }
             }
@@ -99,6 +99,196 @@ export class FastParser {
      */
     private static removeComments(text: string): string {
         return text.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1');
+    }
+
+    private static extractHeaderInfo(moduleText: string, moduleName: string): {
+        params: HdlParam[];
+        ports: HdlPort[];
+        bodyText: string;
+    } {
+        const params: HdlParam[] = [];
+        const ports: HdlPort[] = [];
+
+        const moduleNameRegex = new RegExp('\\bmodule\\s+' + moduleName + '\\b');
+        const mm = moduleNameRegex.exec(moduleText);
+        if (!mm) {
+            return { params, ports, bodyText: moduleText };
+        }
+
+        let i = mm.index + mm[0].length;
+        while (i < moduleText.length && /\s/.test(moduleText[i])) {
+            i++;
+        }
+
+        if (moduleText[i] === '#') {
+            i++;
+            while (i < moduleText.length && /\s/.test(moduleText[i])) {
+                i++;
+            }
+            if (moduleText[i] === '(') {
+                const pClose = this.findMatchingParen(moduleText, i);
+                if (pClose > i) {
+                    const paramHeader = moduleText.slice(i + 1, pClose);
+                    for (const raw of this.splitTopLevelComma(paramHeader)) {
+                        const parsed = this.parseParamChunk(raw);
+                        if (parsed) {
+                            params.push(parsed);
+                        }
+                    }
+                    i = pClose + 1;
+                }
+            }
+        }
+
+        while (i < moduleText.length && /\s/.test(moduleText[i])) {
+            i++;
+        }
+
+        if (moduleText[i] === '(') {
+            const lClose = this.findMatchingParen(moduleText, i);
+            if (lClose > i) {
+                const portHeader = moduleText.slice(i + 1, lClose);
+                let currentDir = 'input';
+                let currentType = '';
+                let hasAnsiDir = false;
+
+                for (const raw of this.splitTopLevelComma(portHeader)) {
+                    const parsed = this.parsePortChunk(raw, currentDir, currentType);
+                    if (!parsed) {
+                        continue;
+                    }
+
+                    if (parsed.hasExplicitDir) {
+                        hasAnsiDir = true;
+                        currentDir = parsed.dir;
+                        currentType = parsed.type;
+                    } else if (!hasAnsiDir) {
+                        // 非 ANSI 风格端口头，忽略，交给 body 兜底解析
+                        continue;
+                    }
+
+                    ports.push(new HdlPort(parsed.name, parsed.dir, parsed.type));
+                }
+
+                const bodyStart = moduleText.indexOf(';', lClose);
+                const bodyText = bodyStart >= 0 ? moduleText.slice(bodyStart + 1) : '';
+                return { params, ports, bodyText };
+            }
+        }
+
+        return { params, ports, bodyText: moduleText };
+    }
+
+    private static parseParamChunk(chunk: string): HdlParam | null {
+        let s = chunk.trim();
+        if (!s.startsWith('parameter')) {
+            return null;
+        }
+        if (s.startsWith('localparam')) {
+            return null;
+        }
+
+        s = s.replace(/^parameter\b/, '').trim();
+        const eq = s.indexOf('=');
+        if (eq < 0) {
+            return null;
+        }
+
+        const left = s.slice(0, eq).trim();
+        const right = s.slice(eq + 1).trim();
+        const nameMatch = left.match(/([A-Za-z_]\w*)\s*(?:\[[^[\]]*\]\s*)*$/);
+        if (!nameMatch) {
+            return null;
+        }
+
+        return new HdlParam(nameMatch[1], right);
+    }
+
+    private static parsePortChunk(chunk: string, inheritedDir: string, inheritedType: string): {
+        name: string;
+        dir: string;
+        type: string;
+        hasExplicitDir: boolean;
+    } | null {
+        let s = chunk.trim();
+        if (!s) {
+            return null;
+        }
+
+        let dir = inheritedDir;
+        let type = inheritedType;
+        let hasExplicitDir = false;
+
+        const dirMatch = s.match(/^(input|output|inout)\b/);
+        if (dirMatch) {
+            hasExplicitDir = true;
+            dir = dirMatch[1];
+            s = s.slice(dirMatch[0].length).trim();
+        }
+
+        const nameMatch = s.match(/([A-Za-z_]\w*)\s*(?:\[[^[\]]*\]\s*)*$/);
+        if (!nameMatch) {
+            return null;
+        }
+
+        const name = nameMatch[1];
+        if (['signed', 'unsigned', 'logic', 'wire', 'reg'].includes(name)) {
+            return null;
+        }
+
+        const typeText = s.slice(0, nameMatch.index).trim();
+        if (typeText) {
+            type = typeText;
+        }
+
+        return { name, dir, type, hasExplicitDir };
+    }
+
+    private static findMatchingParen(text: string, openIndex: number): number {
+        let depth = 0;
+        for (let i = openIndex; i < text.length; i++) {
+            const ch = text[i];
+            if (ch === '(') {
+                depth++;
+            } else if (ch === ')') {
+                depth--;
+                if (depth === 0) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private static splitTopLevelComma(text: string): string[] {
+        const out: string[] = [];
+        let start = 0;
+        let p = 0;
+        let b = 0;
+        let c = 0;
+
+        for (let i = 0; i < text.length; i++) {
+            const ch = text[i];
+            if (ch === '(') {
+                p++;
+            } else if (ch === ')') {
+                p--;
+            } else if (ch === '[') {
+                b++;
+            } else if (ch === ']') {
+                b--;
+            } else if (ch === '{') {
+                c++;
+            } else if (ch === '}') {
+                c--;
+            } else if (ch === ',' && p === 0 && b === 0 && c === 0) {
+                out.push(text.slice(start, i));
+                start = i + 1;
+            }
+        }
+
+        out.push(text.slice(start));
+        return out;
     }
 
     /**
