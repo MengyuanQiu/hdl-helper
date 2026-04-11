@@ -400,3 +400,31 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（25 passing）。
+
+## 2026-04-11 - Iteration 4 Day 3: Reopen Run Log by Active Target
+
+- 目标: 继续完善 target-driven 回看链路，支持按 active target 打开最近运行日志。
+- 变更文件:
+  - src/simulation/simManager.ts
+  - src/commands/openLastLogByTarget.ts
+  - src/commands/openLastWaveformByTarget.ts
+  - src/extension.ts
+  - src/test/extension.test.ts
+  - package.json
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - `SimManager.runTask`/`runIverilog` 结果新增 `logPath`，并落盘 `build/<top>.run.log`。
+  - `runSimulation` 写入 run record 时同步持久化 `logPath`。
+  - 新增命令 `HDL: Open Last Log (Active Target)`：
+    - 与波形命令一致按 active target/heuristic key 解析最近记录。
+    - 命中后直接打开日志文件。
+  - Quick Actions / Hierarchy Tools / Command Palette 接入新命令。
+  - 新增最小回归测试：
+    - `Get log path helper returns undefined for missing record`
+    - `Get log path helper returns log path from run record`
+  - 设置指南补充按 active target 打开最近日志的说明。
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（27 passing）。

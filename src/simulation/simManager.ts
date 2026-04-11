@@ -29,6 +29,7 @@ export interface HdlSimRunResult {
     top: string;
     buildDir: string;
     waveformPath?: string;
+    logPath?: string;
     message?: string;
 }
 
@@ -416,6 +417,13 @@ export class SimManager {
             this.outputChannel.appendLine(output);
             this.outputChannel.appendLine(`[Sim] Simulation finished.`);
 
+            const logPath = path.join(buildDir, `${task.top}.run.log`);
+            await fs.promises.writeFile(
+                logPath,
+                `Compile Command:\n${cmd}\n\nRun Command:\n${runCmd}\n\nOutput:\n${output}\n`,
+                'utf8'
+            );
+
             // 如果配置了波形自动打开
             if (waveformEnabled) {
                 const waveformPath = this.findWaveformFile(buildDir, task.top, waveformFormat);
@@ -439,16 +447,20 @@ export class SimManager {
                 taskName: task.name,
                 top: task.top,
                 buildDir,
+                logPath,
                 waveformPath: waveformEnabled ? this.findWaveformFile(buildDir, task.top, waveformFormat) : undefined
             };
 
         } catch (err: any) {
             this.outputChannel.appendLine(`[Error] Simulation failed:\n${err.message}`);
+            const logPath = path.join(buildDir, `${task.top}.run.log`);
+            await fs.promises.writeFile(logPath, `Simulation failed:\n${err?.message || 'unknown error'}\n`, 'utf8');
             return {
                 success: false,
                 taskName: task.name,
                 top: task.top,
                 buildDir,
+                logPath,
                 message: err?.message || 'Simulation failed.'
             };
         }

@@ -24,6 +24,7 @@ import { buildTargetContextDebugSnapshot } from '../commands/debugActiveTargetCo
 import { getProjectConfigPath, openProjectConfig } from '../commands/openProjectConfig';
 import { formatRunRecords } from '../commands/debugRecentRuns';
 import { pickRunRecordForTarget } from '../commands/openLastWaveformByTarget';
+import { getLogPathFromRunRecord } from '../commands/openLastLogByTarget';
 import { buildConfigIssues } from '../project/configDiagnostics';
 // import * as myExtension from '../../extension';
 
@@ -485,5 +486,20 @@ suite('Extension Test Suite', () => {
 
 		assert.strictEqual(record?.targetId, 'sim_default');
 		assert.strictEqual(record?.success, true);
+	});
+
+	test('Get log path helper returns undefined for missing record', () => {
+		assert.strictEqual(getLogPathFromRunRecord(undefined), undefined);
+	});
+
+	test('Get log path helper returns log path from run record', () => {
+		const logPath = getLogPathFromRunRecord({
+			targetId: 'sim_default',
+			timestamp: 123,
+			success: true,
+			logPath: 'C:/repo/build/tb_top.run.log'
+		});
+
+		assert.strictEqual(logPath, 'C:/repo/build/tb_top.run.log');
 	});
 });

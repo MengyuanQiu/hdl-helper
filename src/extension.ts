@@ -16,6 +16,7 @@ import { debugProjectClassification } from './commands/debugProjectClassificatio
 import { debugActiveTargetContext } from './commands/debugActiveTargetContext';
 import { debugRecentRunsByTarget } from './commands/debugRecentRuns';
 import { openLastWaveformByTarget } from './commands/openLastWaveformByTarget';
+import { openLastLogByTarget } from './commands/openLastLogByTarget';
 import { debugDualHierarchyState } from './commands/debugDualHierarchyState';
 import { openDualHierarchyRegressionChecklist } from './commands/openDualHierarchyRegressionChecklist';
 import { openProjectConfigFromWorkspace } from './commands/openProjectConfig';
@@ -300,6 +301,11 @@ export function activate(context: vscode.ExtensionContext) {
                 description: 'Open latest waveform from target-keyed run record',
                 detail: 'Diagnostics'
             },
+            {
+                label: 'Open Last Log (Active Target)',
+                description: 'Open latest simulation log from target-keyed run record',
+                detail: 'Diagnostics'
+            },
         ], {
             placeHolder: 'HDL Helper Quick Actions'
         });
@@ -366,6 +372,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
         if (action.label === 'Open Last Waveform (Active Target)') {
             await vscode.commands.executeCommand('hdl-helper.openLastWaveformByTarget');
+            return;
+        }
+        if (action.label === 'Open Last Log (Active Target)') {
+            await vscode.commands.executeCommand('hdl-helper.openLastLogByTarget');
         }
     }));
 
@@ -425,6 +435,11 @@ export function activate(context: vscode.ExtensionContext) {
                 label: '[Action] Open Last Waveform (Active Target)',
                 description: 'Open latest waveform from target-keyed run record',
                 command: 'hdl-helper.openLastWaveformByTarget'
+            },
+            {
+                label: '[Action] Open Last Log (Active Target)',
+                description: 'Open latest simulation log from target-keyed run record',
+                command: 'hdl-helper.openLastLogByTarget'
             }
         ], {
             placeHolder: 'Hierarchy Tools (Settings / Diagnostics / Action)'
@@ -734,6 +749,10 @@ export function activate(context: vscode.ExtensionContext) {
         await openLastWaveformByTarget(stateService);
     }));
 
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openLastLogByTarget', async () => {
+        await openLastLogByTarget(stateService);
+    }));
+
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runSimulation', async (moduleName: string, sourceUri?: vscode.Uri) => {
         if (!moduleName || typeof moduleName !== 'string') {
             vscode.window.showErrorMessage('No module selected for simulation.');
@@ -808,7 +827,7 @@ export function activate(context: vscode.ExtensionContext) {
                 success: runResult.success,
                 waveformPath: runResult.waveformPath,
                 buildDir: runResult.buildDir,
-                logPath: undefined
+                logPath: runResult.logPath
             });
         }
     }));
