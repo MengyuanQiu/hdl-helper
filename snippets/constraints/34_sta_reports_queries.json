@@ -1,0 +1,43 @@
+{
+	"STA report timing summary": {
+		"prefix": "sta.report.timing_summary",
+		"body": "report_timing_summary -delay_type max -report_unconstrained -max_paths ${1:20} -file ${2:reports/timing_summary.rpt}$0",
+		"description": "Generate max-delay timing summary with unconstrained paths"
+	},
+	"STA report exceptions": {
+		"prefix": "sta.report.exceptions",
+		"body": "report_exceptions -verbose -file ${1:reports/exceptions.rpt}$0",
+		"description": "Report timing exceptions"
+	},
+	"STA report clocks": {
+		"prefix": "sta.report.clocks",
+		"body": "report_clocks -attributes -file ${1:reports/clocks.rpt}$0",
+		"description": "Report clocks and attributes"
+	},
+	"STA report clock interaction": {
+		"prefix": "sta.report.clock_interaction",
+		"body": "report_clock_interaction -verbose -file ${1:reports/clock_interaction.rpt}$0",
+		"description": "Report inter-clock timing interaction"
+	},
+	"STA query specific timing path": {
+		"prefix": "sta.query.path",
+		"body": [
+			"report_timing -from [get_pins ${1:u_src_reg/Q}] \\",
+			"              -to   [get_pins ${2:u_dst_reg/D}] \\",
+			"              -delay_type ${3:max} \\",
+			"              -max_paths ${4:5} \\",
+			"              -nworst ${5:1}$0"
+		],
+		"description": "Report timing between explicit start/end pins using report_timing"
+	},
+	"STA foreach collection": {
+		"prefix": "sta.query.collection.foreach",
+		"body": [
+			"set ${1:objs} [get_cells -hier -filter {NAME =~ *${2:pattern}*}]",
+			"foreach_in_collection obj $${1:objs} {",
+			"    puts [get_property NAME $obj]",
+			"}$0"
+		],
+		"description": "Loop over a cell collection for query/debug"
+	}
+}

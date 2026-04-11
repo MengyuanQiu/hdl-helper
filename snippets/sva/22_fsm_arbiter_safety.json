@@ -1,0 +1,74 @@
+{
+	"SVA arb onehot grant": {
+		"prefix": "sva.arb.onehot",
+		"body": [
+			"property p_${1:arb}_onehot;",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    ${4:req_valid} |-> \\$onehot(${5:grant_bus});",
+			"endproperty",
+			"",
+			"assert_${1:arb}_onehot: assert property(p_${1:arb}_onehot);$0"
+		],
+		"description": "Arbiter grants are exactly one-hot when req_valid is asserted"
+	},
+	"SVA grant implies request": {
+		"prefix": "sva.arb.gnt_implies_req",
+		"body": [
+			"property p_${1:gnt_implies_req};",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    (${4:grant_bit}) |-> (${5:req_bit});",
+			"endproperty",
+			"",
+			"assert_${1:gnt_implies_req}: assert property(p_${1:gnt_implies_req});$0"
+		],
+		"description": "A granted bit implies its corresponding request bit"
+	},
+	"SVA FSM legal state": {
+		"prefix": "sva.fsm.legal_state",
+		"body": [
+			"property p_${1:fsm}_legal_state;",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    (${4:state} inside {${5:ST_IDLE}, ${6:ST_BUSY}, ${7:ST_DONE}});",
+			"endproperty",
+			"",
+			"assert_${1:fsm}_legal_state: assert property(p_${1:fsm}_legal_state);$0"
+		],
+		"description": "FSM state remains in legal set"
+	},
+	"SVA FSM legal transition": {
+		"prefix": "sva.fsm.legal_trans",
+		"body": [
+			"property p_${1:fsm}_legal_trans;",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    (${4:state} == ${5:ST_IDLE}) |-> (${6:next_state} inside {${5:ST_IDLE}, ${7:ST_BUSY}});",
+			"endproperty",
+			"",
+			"assert_${1:fsm}_legal_trans: assert property(p_${1:fsm}_legal_trans);$0"
+		],
+		"description": "Example legality check for one FSM transition case"
+	},
+	"SVA mutex": {
+		"prefix": "sva.mutex",
+		"body": [
+			"property p_${1:mutex};",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    !(${4:sig_a} && ${5:sig_b});",
+			"endproperty",
+			"",
+			"assert_${1:mutex}: assert property(p_${1:mutex});$0"
+		],
+		"description": "Mutual exclusion assertion"
+	},
+	"SVA onehot0": {
+		"prefix": "sva.onehot0",
+		"body": [
+			"property p_${1:onehot0};",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    \\$onehot0(${4:vector});",
+			"endproperty",
+			"",
+			"assert_${1:onehot0}: assert property(p_${1:onehot0});$0"
+		],
+		"description": "Vector is zero-or-one-hot"
+	}
+}

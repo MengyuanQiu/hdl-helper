@@ -1,0 +1,37 @@
+{
+	"UVM TLM put port": {
+		"prefix": "uvm.tlm.put_port",
+		"body": "uvm_blocking_put_port #(${1:type}) ${2:put_p};$0",
+		"description": "Blocking put TLM port"
+	},
+	"UVM TLM put export": {
+		"prefix": "uvm.tlm.put_export",
+		"body": "uvm_blocking_put_export #(${1:type}) ${2:put_exp};$0",
+		"description": "Blocking put TLM export"
+	},
+	"UVM analysis port": {
+		"prefix": "uvm.analysis.port",
+		"body": "uvm_analysis_port #(${1:type}) ${2:ap};$0",
+		"description": "Analysis broadcast port"
+	},
+	"UVM analysis export": {
+		"prefix": "uvm.analysis.export",
+		"body": "uvm_analysis_export #(${1:type}) ${2:aexp};$0",
+		"description": "Analysis export for pass-through/broadcast forwarding"
+	},
+	"UVM analysis imp": {
+		"prefix": "uvm.analysis.imp",
+		"body": "uvm_analysis_imp #(${1:type}, ${2:imp_class}) ${3:aimp};$0",
+		"description": "Analysis implementation endpoint; requires matching write() method"
+	},
+	"UVM analysis fifo": {
+		"prefix": "uvm.analysis.fifo",
+		"body": "uvm_tlm_analysis_fifo #(${1:type}) ${2:afifo};$0",
+		"description": "Analysis FIFO for monitor-to-scoreboard decoupling"
+	},
+	"UVM tlm fifo": {
+		"prefix": "uvm.tlm.fifo",
+		"body": "uvm_tlm_fifo #(${1:type}) ${2:tfifo};$0",
+		"description": "General TLM FIFO for transactional producer-consumer decoupling"
+	}
+}

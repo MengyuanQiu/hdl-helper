@@ -1,0 +1,38 @@
+{
+    "UVM Component": {
+        "prefix": "uvm_component",
+        "body": [
+            "class ${1:my_comp} extends ${2:uvm_component};",
+            "    `uvm_component_utils(${1:my_comp})",
+            "",
+            "    function new(string name, uvm_component parent);",
+            "        super.new(name, parent);",
+            "    endfunction",
+            "",
+            "    virtual function void build_phase(uvm_phase phase);",
+            "        super.build_phase(phase);",
+            "        $0",
+            "    endfunction",
+            "endclass : ${1:my_comp}"
+        ],
+        "description": "Standard UVM Component Base Skeleton"
+    },
+    "UVM Object": {
+        "prefix": "uvm_object",
+        "body": [
+            "class ${1:my_obj} extends ${2:uvm_sequence_item};",
+            "    // Payload variables",
+            "    rand bit [${3:31}:0] ${4:data};",
+            "",
+            "    `uvm_object_utils_begin(${1:my_obj})",
+            "        `uvm_field_int(${4:data}, UVM_ALL_ON)",
+            "    `uvm_object_utils_end",
+            "",
+            "    function new(string name = \"${1:my_obj}\");",
+            "        super.new(name);",
+            "    endfunction",
+            "endclass : ${1:my_obj}"
+        ],
+        "description": "Standard UVM Object / Sequence Item"
+    }
+}

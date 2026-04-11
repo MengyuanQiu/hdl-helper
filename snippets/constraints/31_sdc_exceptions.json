@@ -1,0 +1,37 @@
+{
+	"SDC false path": {
+		"prefix": "sdc.false_path",
+		"body": [
+			"set_false_path -from [get_pins ${1:u_src_reg/Q}] -to [get_pins ${2:u_dst_reg/D}]$0"
+		],
+		"description": "Declare false path between explicit source/destination pins"
+	},
+	"SDC multicycle path": {
+		"prefix": "sdc.multicycle",
+		"body": [
+			"set_multicycle_path -setup ${1:2} -from [get_pins ${2:u_src_reg/Q}] -to [get_pins ${3:u_dst_reg/D}]",
+			"set_multicycle_path -hold ${4:1} -from [get_pins ${2:u_src_reg/Q}] -to [get_pins ${3:u_dst_reg/D}]$0"
+		],
+		"description": "Set multicycle setup/hold constraints; adjust hold with setup"
+	},
+	"SDC max delay": {
+		"prefix": "sdc.max_delay",
+		"body": "set_max_delay ${1:5.0} -from [get_pins ${2:u_src_reg/Q}] -to [get_pins ${3:u_dst_reg/D}]$0",
+		"description": "Set max delay between explicit source/destination pins"
+	},
+	"SDC min delay": {
+		"prefix": "sdc.min_delay",
+		"body": "set_min_delay ${1:0.2} -from [get_pins ${2:u_src_reg/Q}] -to [get_pins ${3:u_dst_reg/D}]$0",
+		"description": "Set min delay between explicit source/destination pins"
+	},
+	"SDC async clock groups": {
+		"prefix": "sdc.clock_groups.async",
+		"body": "set_clock_groups -asynchronous -group [get_clocks ${1:clk_a}] -group [get_clocks ${2:clk_b}]$0",
+		"description": "Declare asynchronous clock groups"
+	},
+	"SDC datapath only": {
+		"prefix": "sdc.datapath_only",
+		"body": "set_max_delay -datapath_only ${1:5.0} -from [get_pins ${2:u_src_reg/Q}] -to [get_pins ${3:u_dst_sync_reg/D}]$0",
+		"description": "Constrain CDC datapath only; excludes clock phase relationship"
+	}
+}

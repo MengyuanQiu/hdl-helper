@@ -1,0 +1,102 @@
+{
+	"UVM component skeleton": {
+		"prefix": "uvm.comp",
+		"body": [
+			"class ${1:my_comp} extends uvm_component;",
+			"    `uvm_component_utils(${1:my_comp})",
+			"",
+			"    function new(string name = \"${1:my_comp}\", uvm_component parent = null);",
+			"        super.new(name, parent);",
+			"    endfunction : new",
+			"",
+			"    // TODO: build/connect/run phases",
+			"",
+			"endclass : ${1:my_comp}$0"
+		],
+		"description": "Basic UVM component shell"
+	},
+	"UVM component phased skeleton": {
+		"prefix": "uvm.comp.phased",
+		"body": [
+			"class ${1:my_comp} extends uvm_component;",
+			"    `uvm_component_utils(${1:my_comp})",
+			"",
+			"    function new(string name = \"${1:my_comp}\", uvm_component parent = null);",
+			"        super.new(name, parent);",
+			"    endfunction : new",
+			"",
+			"    virtual function void build_phase(uvm_phase phase);",
+			"        super.build_phase(phase);",
+			"        $0",
+			"    endfunction : build_phase",
+			"",
+			"    virtual function void connect_phase(uvm_phase phase);",
+			"        super.connect_phase(phase);",
+			"    endfunction : connect_phase",
+			"",
+			"    virtual task run_phase(uvm_phase phase);",
+			"        super.run_phase(phase);",
+			"        // TODO: add run-time behavior",
+			"    endtask : run_phase",
+			"",
+			"endclass : ${1:my_comp}"
+		],
+		"description": "UVM component skeleton with build/connect/run phase hooks"
+	},
+	"UVM object skeleton": {
+		"prefix": "uvm.obj",
+		"body": [
+			"class ${1:my_obj} extends uvm_object;",
+			"    `uvm_object_utils(${1:my_obj})",
+			"",
+			"    function new(string name = \"${1:my_obj}\");",
+			"        super.new(name);",
+			"    endfunction : new",
+			"",
+			"endclass : ${1:my_obj}$0"
+		],
+		"description": "Basic UVM object"
+	},
+	"UVM sequence item base": {
+		"prefix": "uvm.seq_item.base",
+		"body": [
+			"class ${1:my_seq_item} extends uvm_sequence_item;",
+			"    `uvm_object_utils(${1:my_seq_item})",
+			"",
+			"    function new(string name = \"${1:my_seq_item}\");",
+			"        super.new(name);",
+			"    endfunction : new",
+			"",
+			"endclass : ${1:my_seq_item}$0"
+		],
+		"description": "Base UVM sequence item skeleton"
+	},
+	"UVM new component": {
+		"prefix": "uvm.new.comp",
+		"body": [
+			"function new(string name = \"${1:comp_name}\", uvm_component parent = null);",
+			"    super.new(name, parent);",
+			"endfunction : new$0"
+		],
+		"description": "Constructor for component"
+	},
+	"UVM new object": {
+		"prefix": "uvm.new.obj",
+		"body": [
+			"function new(string name = \"${1:obj_name}\");",
+			"    super.new(name);",
+			"endfunction : new$0"
+		],
+		"description": "Constructor for object"
+	},
+	"UVM utils component": {
+		"prefix": "uvm.utils.comp",
+		"body": "`uvm_component_utils(${1:class_name})$0",
+		"description": "Register component with factory"
+	},
+	"UVM utils object": {
+		"prefix": "uvm.utils.obj",
+		"body": "`uvm_object_utils(${1:class_name})$0",
+		"description": "Register object with factory"
+	}
+}

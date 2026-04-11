@@ -74,7 +74,7 @@ export async function runVeribleFormat(
         child.stderr!.on('data', chunk => stderrChunks.push(chunk));
 
         child.on('close', (code) => {
-            if (token.isCancellationRequested) return resolve([]);
+            if (token.isCancellationRequested) {return resolve([]);}
 
             const stdout = Buffer.concat(stdoutChunks).toString('utf-8');
             const stderr = Buffer.concat(stderrChunks).toString('utf-8');
@@ -85,7 +85,7 @@ export async function runVeribleFormat(
                 formatOutputChannel.appendLine(`[Time] ${new Date().toLocaleTimeString()}`);
                 formatOutputChannel.appendLine(`[Error] Exit Code: ${code}`);
                 formatOutputChannel.appendLine(`[Command] ${binPath} ${args.join(' ')}`);
-                if (stderr) formatOutputChannel.appendLine(`[Stderr] ${stderr}`);
+                if (stderr) {formatOutputChannel.appendLine(`[Stderr] ${stderr}`);}
 
                 // UI 提示：仅针对语法错误进行温和提示
                 if (stderr.includes('syntax error')) {
@@ -97,7 +97,7 @@ export async function runVeribleFormat(
                 return resolve([]);
             }
 
-            if (!stdout) return resolve([]);
+            if (!stdout) {return resolve([]);}
 
             // --- 成功 ---
             // 可以在状态栏给一个微小的反馈，提升体验

@@ -1,0 +1,159 @@
+{
+	"SV if": {
+		"prefix": "sv.if",
+		"body": [
+			"if (${1:condition}) begin",
+			"    $0",
+			"end"
+		],
+		"description": "if control block"
+	},
+	"SV if-else": {
+		"prefix": "sv.ifelse",
+		"body": [
+			"if (${1:condition}) begin",
+			"    $0",
+			"end else begin",
+			"end"
+		],
+		"description": "if-else control block"
+	},
+	"SV case": {
+		"prefix": "sv.case",
+		"body": [
+			"case (${1:expr})",
+			"    ${2:ITEM}: begin",
+			"        $0",
+			"    end",
+			"    default: begin",
+			"        ${3:// default}",
+			"    end",
+			"endcase"
+		],
+		"description": "case statement"
+	},
+	"SV unique case": {
+		"prefix": "sv.case.unique",
+		"body": [
+			"unique case (${1:expr})",
+			"    ${2:ITEM}: begin",
+			"        $0",
+			"    end",
+			"    default: begin",
+			"        ${3:// default}",
+			"    end",
+			"endcase"
+		],
+		"description": "unique case statement"
+	},
+	"SV priority case": {
+		"prefix": "sv.case.priority",
+		"body": [
+			"priority case (${1:expr})",
+			"    ${2:ITEM}: begin",
+			"        $0",
+			"    end",
+			"    default: begin",
+			"        ${3:// default}",
+			"    end",
+			"endcase"
+		],
+		"description": "priority case statement"
+	},
+	"SV for": {
+		"prefix": "sv.for",
+		"body": [
+			"for (int ${1:i} = 0; ${1:i} < ${2:MAX}; ${1:i}++) begin",
+			"    $0",
+			"end"
+		],
+		"description": "for loop"
+	},
+	"SV foreach": {
+		"prefix": "sv.foreach",
+		"body": [
+			"foreach (${1:array}[${2:i}]) begin",
+			"    $0",
+			"end"
+		],
+		"description": "foreach loop"
+	},
+	"SV begin-end": {
+		"prefix": "sv.begin",
+		"body": [
+			"begin",
+			"    $0",
+			"end"
+		],
+		"description": "begin-end block"
+	},
+	"SV fork-join": {
+		"prefix": "sv.fork.join",
+		"body": [
+			"fork",
+			"    $0",
+			"join"
+		],
+		"description": "fork join block"
+	},
+	"SV fork-join_any": {
+		"prefix": "sv.fork.join_any",
+		"body": [
+			"fork",
+			"    $0",
+			"join_any"
+		],
+		"description": "fork join_any block"
+	},
+	"SV fork-join_none": {
+		"prefix": "sv.fork.join_none",
+		"body": [
+			"fork",
+			"    $0",
+			"join_none"
+		],
+		"description": "fork join_none block"
+	},
+	"SV fork-join blocks": {
+		"prefix": "sv.fork.join.blk",
+		"body": [
+			"fork",
+			"    begin",
+			"        ${1:// branch 1}",
+			"    end",
+			"    begin",
+			"        ${2:// branch 2}",
+			"    end",
+			"join$0"
+		],
+		"description": "fork-join with explicit begin/end branches"
+	},
+	"SV fork-join_any blocks": {
+		"prefix": "sv.fork.join_any.blk",
+		"body": [
+			"fork",
+			"    begin",
+			"        ${1:// branch 1}",
+			"    end",
+			"    begin",
+			"        ${2:// branch 2}",
+			"    end",
+			"join_any$0"
+		],
+		"description": "fork-join_any with explicit begin/end branches"
+	},
+	"SV fork-join_none blocks": {
+		"prefix": "sv.fork.join_none.blk",
+		"body": [
+			"fork",
+			"    begin",
+			"        ${1:// branch 1}",
+			"    end",
+			"    begin",
+			"        ${2:// branch 2}",
+			"    end",
+			"join_none$0"
+		],
+		"description": "fork-join_none with explicit begin/end branches"
+	}
+}

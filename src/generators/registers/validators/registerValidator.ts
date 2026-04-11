@@ -11,8 +11,8 @@ export class RegisterValidator {
         const errors: string[] = [];
         const warnings: string[] = [];
         
-        if (!map.moduleName) errors.push('RegisterMap must have a moduleName.');
-        if (!map.dataWidth || (map.dataWidth % 8 !== 0)) errors.push('dataWidth must be a multiple of 8 (e.g., 32, 64).');
+        if (!map.moduleName) {errors.push('RegisterMap must have a moduleName.');}
+        if (!map.dataWidth || (map.dataWidth % 8 !== 0)) {errors.push('dataWidth must be a multiple of 8 (e.g., 32, 64).');}
 
         const offsetSet = new Set<number>();
 

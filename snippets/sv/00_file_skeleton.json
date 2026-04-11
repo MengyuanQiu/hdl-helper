@@ -1,0 +1,57 @@
+{
+	"SV file header": {
+		"prefix": "sv.file.header",
+		"body": [
+			"// File: ${1:file_name}.sv",
+			"// Project: ${2:project_name}",
+			"// Module: ${3:module_name}",
+			"// Purpose: ${4:Describe module purpose}",
+			"// Author: ${5:author}",
+			"// Date: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}",
+			"$0"
+		],
+		"description": "File header comment block"
+	},
+	"SV file timescale": {
+		"prefix": "sv.file.timescale",
+		"body": "`timescale ${1:1ns}/${2:1ps}$0",
+		"description": "timescale directive"
+	},
+	"SV file resetall": {
+		"prefix": "sv.file.resetall",
+		"body": "`resetall$0",
+		"description": "resetall directive"
+	},
+	"SV file banner": {
+		"prefix": "sv.file.banner",
+		"body": [
+			"// ============================================================",
+			"// ${1:Section Name}",
+			"// ============================================================",
+			"$0"
+		],
+		"description": "Section banner"
+	},
+	"SV file TODO": {
+		"prefix": "sv.file.todo",
+		"body": "// TODO(${1:owner}): ${2:task}$0",
+		"description": "TODO comment"
+	},
+	"SV file note": {
+		"prefix": "sv.file.note",
+		"body": "// NOTE: ${1:note}$0",
+		"description": "NOTE comment"
+	},
+	"SV include guard": {
+		"prefix": "sv.file.include_guard",
+		"body": [
+			"`ifndef ${1:PKG_FILE_SVH}",
+			"`define ${1:PKG_FILE_SVH}",
+			"",
+			"$0",
+			"",
+			"`endif // ${1:PKG_FILE_SVH}"
+		],
+		"description": "Include guard template for .svh files"
+	}
+}

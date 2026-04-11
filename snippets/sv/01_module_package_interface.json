@@ -1,0 +1,91 @@
+{
+	"SV Module (Parameterized)": {
+		"prefix": "sv.mod.param",
+		"body": [
+			"module ${1:module_name} #(",
+			"    parameter int ${2:WIDTH} = ${3:8}",
+			") (",
+			"    input  logic clk_i,",
+			"    input  logic rst_ni,",
+			"    $0",
+			");",
+			"",
+			"endmodule : ${1:module_name}"
+		],
+		"description": "Parameterized SystemVerilog module skeleton"
+	},
+	"SV Module": {
+		"prefix": "sv.mod",
+		"body": [
+			"module ${1:module_name} (",
+			"    input  logic clk_i,",
+			"    input  logic rst_ni,",
+			"    $0",
+			");",
+			"",
+			"endmodule : ${1:module_name}"
+		],
+		"description": "SystemVerilog module skeleton"
+	},
+	"SV Module (Raw)": {
+		"prefix": "sv.mod.raw",
+		"body": [
+			"module ${1:module_name} (",
+			"    $0",
+			");",
+			"",
+			"endmodule : ${1:module_name}"
+		],
+		"description": "SystemVerilog raw module skeleton without clk/rst defaults"
+	},
+	"SV Package": {
+		"prefix": "sv.pkg",
+		"body": [
+			"package ${1:package_name};",
+			"    $0",
+			"endpackage : ${1:package_name}"
+		],
+		"description": "SystemVerilog package skeleton"
+	},
+	"SV Import": {
+		"prefix": "sv.import",
+		"body": "import ${1:pkg_name}::${2:*};$0",
+		"description": "Import package scope"
+	},
+	"SV Import Item": {
+		"prefix": "sv.import.item",
+		"body": "import ${1:pkg_name}::${2:item_name};$0",
+		"description": "Import specific package item"
+	},
+	"SV Interface": {
+		"prefix": "sv.intf",
+		"body": [
+			"interface ${1:interface_name} (",
+			"    input logic clk_i,",
+			"    input logic rst_ni",
+			");",
+			"    $0",
+			"endinterface : ${1:interface_name}"
+		],
+		"description": "SystemVerilog interface skeleton with default clk/rst"
+	},
+	"SV Interface (Raw)": {
+		"prefix": "sv.intf.raw",
+		"body": [
+			"interface ${1:interface_name};",
+			"    $0",
+			"endinterface : ${1:interface_name}"
+		],
+		"description": "SystemVerilog raw interface skeleton"
+	},
+	"SV Modport": {
+		"prefix": "sv.modport",
+		"body": [
+			"modport ${1:modport_name} (",
+			"    input  ${2:input_ports},",
+			"    output ${3:output_ports}",
+			");$0"
+		],
+		"description": "SystemVerilog modport declaration"
+	}
+}

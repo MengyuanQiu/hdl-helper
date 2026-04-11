@@ -1,0 +1,137 @@
+{
+	"RTL counter basic": {
+		"prefix": "rtl.counter",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:cnt_q} <= '0;",
+			"    end else if (${4:en_i}) begin",
+			"        ${3:cnt_q} <= ${3:cnt_q} + 1'b1;",
+			"    end",
+			"end$0"
+		],
+		"description": "Basic incrementing counter"
+	},
+	"RTL counter wrap": {
+		"prefix": "rtl.counter.wrap",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:cnt_q} <= '0;",
+			"    end else if (${4:en_i}) begin",
+			"        if (${3:cnt_q} == ${5:MAX_VAL}) begin",
+			"            ${3:cnt_q} <= '0;",
+			"        end else begin",
+			"            ${3:cnt_q} <= ${3:cnt_q} + 1'b1;",
+			"        end",
+			"    end",
+			"end$0"
+		],
+		"description": "Wrapping counter"
+	},
+	"RTL counter saturating": {
+		"prefix": "rtl.counter.sat",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:cnt_q} <= '0;",
+			"    end else if (${4:en_i} && ${3:cnt_q} != ${5:MAX_VAL}) begin",
+			"        ${3:cnt_q} <= ${3:cnt_q} + 1'b1;",
+			"    end",
+			"end$0"
+		],
+		"description": "Saturating counter"
+	},
+	"RTL timer down": {
+		"prefix": "rtl.timer",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:timer_q} <= '0;",
+			"    end else if (${4:load_i}) begin",
+			"        ${3:timer_q} <= ${5:load_val_i};",
+			"    end else if (${6:tick_i} && ${3:timer_q} != '0) begin",
+			"        ${3:timer_q} <= ${3:timer_q} - 1'b1;",
+			"    end",
+			"end",
+			"assign ${7:timeout_o} = (${3:timer_q} == '0);$0"
+		],
+		"description": "Countdown timer level-style timeout output"
+	},
+	"RTL timer with busy": {
+		"prefix": "rtl.timer.busy",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:timer_q} <= '0;",
+			"    end else if (${4:load_i}) begin",
+			"        ${3:timer_q} <= ${5:load_val_i};",
+			"    end else if (${6:tick_i} && ${3:timer_q} != '0) begin",
+			"        ${3:timer_q} <= ${3:timer_q} - 1'b1;",
+			"    end",
+			"end",
+			"assign ${7:timeout_o} = (${3:timer_q} == '0);",
+			"assign ${8:busy_o}    = (${3:timer_q} != '0);$0"
+		],
+		"description": "Countdown timer with timeout and busy outputs"
+	},
+	"RTL watchdog": {
+		"prefix": "rtl.watchdog",
+		"body": [
+			"logic [${1:W}-1:0] ${2:wd_cnt_q};",
+			"",
+			"always_ff @(posedge ${3:clk_i} or negedge ${4:rst_ni}) begin",
+			"    if (!${4:rst_ni}) begin",
+			"        ${2:wd_cnt_q} <= ${5:TIMEOUT_VAL};",
+			"    end else if (${6:kick_i}) begin",
+			"        ${2:wd_cnt_q} <= ${5:TIMEOUT_VAL};",
+			"    end else if (${2:wd_cnt_q} != '0) begin",
+			"        ${2:wd_cnt_q} <= ${2:wd_cnt_q} - 1'b1;",
+			"    end",
+			"end",
+			"assign ${7:wd_expire_o} = (${2:wd_cnt_q} == '0);$0"
+		],
+		"description": "Watchdog timeout logic"
+	},
+	"RTL shift register": {
+		"prefix": "rtl.shift.reg",
+		"body": [
+			"logic [${1:W}-1:0] ${2:shreg_q};",
+			"",
+			"always_ff @(posedge ${3:clk_i} or negedge ${4:rst_ni}) begin",
+			"    if (!${4:rst_ni}) begin",
+			"        ${2:shreg_q} <= '0;",
+			"    end else if (${5:en_i}) begin",
+			"        ${2:shreg_q} <= {${2:shreg_q}[${1:W}-2:0], ${6:serial_i}};",
+			"    end",
+			"end",
+			"assign ${7:serial_o} = ${2:shreg_q}[${1:W}-1];$0"
+		],
+		"description": "Serial-in serial-out shift register"
+	},
+	"RTL debounce": {
+		"prefix": "rtl.debounce",
+		"body": [
+			"logic [${1:19}:0] ${2:db_cnt_q};",
+			"logic             ${3:db_state_q};",
+			"",
+			"always_ff @(posedge ${4:clk_i} or negedge ${5:rst_ni}) begin",
+			"    if (!${5:rst_ni}) begin",
+			"        ${2:db_cnt_q}   <= '0;",
+			"        ${3:db_state_q} <= 1'b0;",
+			"    end else if (${6:btn_i} != ${3:db_state_q}) begin",
+			"        if (${2:db_cnt_q} == {${1:19}+1{1'b1}}) begin",
+			"            ${3:db_state_q} <= ${6:btn_i};",
+			"            ${2:db_cnt_q}   <= '0;",
+			"        end else begin",
+			"            ${2:db_cnt_q} <= ${2:db_cnt_q} + 1'b1;",
+			"        end",
+			"    end else begin",
+			"        ${2:db_cnt_q} <= '0;",
+			"    end",
+			"end",
+			"assign ${7:btn_stable_o} = ${3:db_state_q};$0"
+		],
+		"description": "Counter-based input debouncer"
+	}
+}

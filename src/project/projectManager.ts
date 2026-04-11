@@ -71,7 +71,7 @@ export class ProjectManager {
     }
 
     public async scanWorkspace() {
-        if (!vscode.workspace.workspaceFolders) return;
+        if (!vscode.workspace.workspaceFolders) {return;}
 
         this.scanning = true;
         this.lastScanSummary.lastError = '';
@@ -89,30 +89,39 @@ export class ProjectManager {
                 console.log(`[Step 1] 开始搜索项目索引... (${ws.name})`);
 
                 // 获取排除目录配置
-                const config = vscode.workspace.getConfiguration('hdl-helper');
+                const config = vscode.workspace.getConfiguration('hdl-helper', folder.uri);
                 const excludeDirs = config.get<string[]>('project.excludeDirs') || ['node_modules', '.srcs', '.sim', 'ip'];
+                const filelistPatterns = config.get<string[]>('project.filelistPatterns') || ['**/*.f', '**/*.flist'];
                 const excludePattern = new vscode.RelativePattern(folder, excludeDirs.length > 0 ? `**/{${excludeDirs.join(',')}}/**` : '**/node_modules/**');
 
                 // 1. 优先查找 .f 文件
-                const fFiles = await vscode.workspace.findFiles(new vscode.RelativePattern(folder, '**/*.f'), excludePattern);
+                const fFileSet = new Set<string>();
+                for (const pattern of filelistPatterns) {
+                    const uris = await vscode.workspace.findFiles(new vscode.RelativePattern(folder, pattern), excludePattern);
+                    uris.forEach(uri => fFileSet.add(uri.fsPath));
+                }
+
+                const fFiles = Array.from(fFileSet).map(fsPath => vscode.Uri.file(fsPath));
                 let filesToScan: vscode.Uri[] = [];
 
                 if (fFiles.length > 0) {
                     console.log(`[Step 1.1] 发现 ${fFiles.length} 个 .f 文件，进入 Filelist 模式。`);
                     const rawPaths = new Set<string>();
+                    const includeDirs = new Set<string>();
 
                     for (const fUri of fFiles) {
-                        const parsedPaths = await FilelistParser.parse(fUri.fsPath);
-                        parsedPaths.forEach(p => rawPaths.add(p));
+                        const parsed = await FilelistParser.parseDetailed(fUri.fsPath);
+                        parsed.sourceFiles.forEach(p => rawPaths.add(p));
+                        parsed.includeDirs.forEach(dir => includeDirs.add(dir));
+                        parsed.libraryDirs.forEach(dir => includeDirs.add(dir));
                     }
 
                     filesToScan = Array.from(rawPaths)
                         .filter(p => fs.existsSync(p))
                         .map(p => vscode.Uri.file(p));
-                    
-                    // 扫描 include 目录 (从结构提取)
-                    const headerDirs = await vscode.workspace.findFiles(new vscode.RelativePattern(folder, '**/*.{vh,svh}'), excludePattern);
-                    ws.includeDirs = Array.from(new Set(headerDirs.map(u => path.dirname(u.fsPath))));
+
+                    // filelist 模式下优先采用 filelist 自带 include / library 目录
+                    ws.includeDirs = Array.from(includeDirs);
                 } else {
                     console.log(`[Step 1.2] 未发现 .f，全量扫描 (.v, .sv)。`);
                     const sourceFiles = await vscode.workspace.findFiles(new vscode.RelativePattern(folder, '**/*.{v,sv}'), excludePattern);
@@ -154,7 +163,7 @@ export class ProjectManager {
     private async parseAndCache(uri: vscode.Uri, ws?: HdlWorkspace) {
         if (!ws) {
             ws = this.getWorkspaceForUri(uri);
-            if (!ws) return; 
+            if (!ws) {return;} 
         }
 
         const fsPath = uri.fsPath;
@@ -187,9 +196,9 @@ export class ProjectManager {
                     modNames.push(hdlModule.name);
                 }
                 
-                if (!ws.fileMap.has(fsPath)) ws.fileMap.set(fsPath, []);
+                if (!ws.fileMap.has(fsPath)) {ws.fileMap.set(fsPath, []);}
                 const list = ws.fileMap.get(fsPath)!;
-                modNames.forEach(n => { if (!list.includes(n)) list.push(n); });
+                modNames.forEach(n => { if (!list.includes(n)) {list.push(n);} });
             }
         } catch (error) {
             console.error(`[Error] 读取失败: ${uri.fsPath}`, error);
@@ -204,7 +213,7 @@ export class ProjectManager {
 
     private removeFile(uri: vscode.Uri) {
         const ws = this.getWorkspaceForUri(uri);
-        if (!ws) return;
+        if (!ws) {return;}
 
         const fsPath = uri.fsPath;
         const moduleNames = ws.fileMap.get(fsPath);
@@ -228,9 +237,20 @@ export class ProjectManager {
 
     public getModule(name: string): HdlModule | undefined {
         for (const ws of this.workspaces.values()) {
-            if (ws.moduleMap.has(name)) return ws.moduleMap.get(name);
+            if (ws.moduleMap.has(name)) {return ws.moduleMap.get(name);}
         }
         return undefined;
+    }
+
+    public getModuleInWorkspace(name: string, sourceUri?: vscode.Uri): HdlModule | undefined {
+        if (sourceUri) {
+            const ws = this.getWorkspaceForUri(sourceUri);
+            if (ws?.moduleMap.has(name)) {
+                return ws.moduleMap.get(name);
+            }
+        }
+
+        return this.getModule(name);
     }
 
     public getModulesInFile(filePath: string): HdlModule[] {
@@ -240,7 +260,7 @@ export class ProjectManager {
             if (modNames) {
                 modNames.forEach(name => {
                     const m = ws.moduleMap.get(name);
-                    if (m) result.push(m);
+                    if (m) {result.push(m);}
                 });
                 return result; 
             }
@@ -254,6 +274,17 @@ export class ProjectManager {
             all = all.concat(ws.includeDirs);
         }
         return Array.from(new Set(all));
+    }
+
+    public getIncludeDirsForWorkspace(sourceUri?: vscode.Uri): string[] {
+        if (sourceUri) {
+            const ws = this.getWorkspaceForUri(sourceUri);
+            if (ws) {
+                return Array.from(new Set(ws.includeDirs));
+            }
+        }
+
+        return this.getIncludeDirs();
     }
 
     public isScanning(): boolean {

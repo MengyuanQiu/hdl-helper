@@ -145,7 +145,7 @@ write_bitstream -force ${buildDir.replace(/\\/g, '/')}/top.bit
      * 极简版解析 Utilization Report (只提取 LUT, FF, BRAM, DSP)
      */
     public static parseUtilization(rptPath: string): Record<string, string> | null {
-        if (!fs.existsSync(rptPath)) return null;
+        if (!fs.existsSync(rptPath)) {return null;}
         
         const content = fs.readFileSync(rptPath, 'utf8');
         const results: Record<string, string> = {};
@@ -156,10 +156,10 @@ write_bitstream -force ${buildDir.replace(/\\/g, '/')}/top.bit
         const bramMatch = content.match(/\|\s*Block RAM Tile\s*\|\s*(\d+)/);
         const dspMatch = content.match(/\|\s*DSPs\s*\|\s*(\d+)/);
 
-        if (lutMatch) results['LUT'] = lutMatch[1];
-        if (regMatch) results['FF'] = regMatch[1];
-        if (bramMatch) results['BRAM'] = bramMatch[1];
-        if (dspMatch) results['DSP'] = dspMatch[1];
+        if (lutMatch) {results['LUT'] = lutMatch[1];}
+        if (regMatch) {results['FF'] = regMatch[1];}
+        if (bramMatch) {results['BRAM'] = bramMatch[1];}
+        if (dspMatch) {results['DSP'] = dspMatch[1];}
 
         return results;
     }
@@ -168,7 +168,7 @@ write_bitstream -force ${buildDir.replace(/\\/g, '/')}/top.bit
      * 极简版解析 Timing Summary (提取 WNS, TNS, WHS, THS)
      */
     public static parseTiming(rptPath: string): Record<string, string> | null {
-        if (!fs.existsSync(rptPath)) return null;
+        if (!fs.existsSync(rptPath)) {return null;}
         
         const content = fs.readFileSync(rptPath, 'utf8');
         const results: Record<string, string> = {};

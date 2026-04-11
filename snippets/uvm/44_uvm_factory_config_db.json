@@ -1,0 +1,55 @@
+{
+	"UVM factory override": {
+		"prefix": "uvm.factory.override",
+		"body": "${1:orig_type}::type_id::set_type_override(${2:ovrd_type}::get_type());$0",
+		"description": "Set factory type override"
+	},
+	"UVM factory instance override": {
+		"prefix": "uvm.factory.override.inst",
+		"body": "${1:orig_type}::type_id::set_inst_override(${2:ovrd_type}::get_type(), \"${3:inst_path}\");$0",
+		"description": "Set factory instance override for a specific instance path"
+	},
+	"UVM create component": {
+		"prefix": "uvm.create.comp",
+		"body": "${1:inst} = ${2:class_t}::type_id::create(\"${1:inst}\", this);$0",
+		"description": "Factory create component"
+	},
+	"UVM create object": {
+		"prefix": "uvm.create.obj",
+		"body": "${1:obj} = ${2:class_t}::type_id::create(\"${1:obj}\");$0",
+		"description": "Factory create object"
+	},
+	"UVM config db set": {
+		"prefix": "uvm.cfg.set",
+		"body": "uvm_config_db#(${1:type})::set(${2:context}, \"${3:path}\", \"${4:key}\", ${5:value});$0",
+		"description": "Set value in config DB"
+	},
+	"UVM config db get": {
+		"prefix": "uvm.cfg.get",
+		"body": [
+			"if (!uvm_config_db#(${1:type})::get(${2:context}, \"${3:path}\", \"${4:key}\", ${5:value})) begin",
+			"    `uvm_fatal(\"CFG\", \"Failed to get ${4:key}\")",
+			"end$0"
+		],
+		"description": "Get value from config DB"
+	},
+	"UVM config db exists": {
+		"prefix": "uvm.cfg.exists",
+		"body": [
+			"if (uvm_config_db#(${1:type})::exists(${2:context}, \"${3:path}\", \"${4:key}\")) begin",
+			"    $0",
+			"end"
+		],
+		"description": "Check key existence in config DB"
+	},
+	"UVM field utils block": {
+		"prefix": "uvm.utils.fields",
+		"body": [
+			"`uvm_object_utils_begin(${1:class_name})",
+			"    `uvm_field_int(${2:field}, UVM_DEFAULT)",
+			"    `uvm_field_object(${3:obj_field}, UVM_DEFAULT)",
+			"`uvm_object_utils_end$0"
+		],
+		"description": "Example field automation block; trim unused macros"
+	}
+}

@@ -14,7 +14,7 @@ let client: LanguageClient;
 
 export function activateLanguageServer(context: vscode.ExtensionContext) {
     const config = vscode.workspace.getConfiguration('hdl-helper');
-    if (!config.get<boolean>('languageServer.enabled')) return;
+    if (!config.get<boolean>('languageServer.enabled')) {return;}
 
     let serverPath = config.get<string>('languageServer.path') || 'verible-verilog-ls';
 

@@ -1,0 +1,50 @@
+{
+	"SVA sequence": {
+		"prefix": "sva.seq",
+		"body": [
+			"sequence ${1:s_seq_name};",
+			"    ${2:signal_a} ##${3:1} ${4:signal_b};",
+			"endsequence$0"
+		],
+		"description": "Named SVA sequence"
+	},
+	"SVA property": {
+		"prefix": "sva.prop",
+		"body": [
+			"property ${1:p_name};",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    ${4:expr};",
+			"endproperty$0"
+		],
+		"description": "Named SVA property"
+	},
+	"SVA assert property": {
+		"prefix": "sva.assert",
+		"body": "assert_${1:name}: assert property(${2:p_name});$0",
+		"description": "Assert a named property"
+	},
+	"SVA cover property": {
+		"prefix": "sva.cover",
+		"body": "cover_${1:name}: cover property(${2:p_name});$0",
+		"description": "Cover a named property"
+	},
+	"SVA assume property": {
+		"prefix": "sva.assume",
+		"body": [
+			"assume_${1:name}: assume property(${2:p_name});$0"
+		],
+		"description": "Assume a named property"
+	},
+	"SVA rose implication": {
+		"prefix": "sva.rose.impl",
+		"body": [
+			"property p_${1:check_name};",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    \\$rose(${4:trigger}) |-> ##${5:1} ${6:consequence};",
+			"endproperty",
+			"",
+			"assert_${1:check_name}: assert property(p_${1:check_name});$0"
+		],
+		"description": "Rose-trigger implication property"
+	}
+}

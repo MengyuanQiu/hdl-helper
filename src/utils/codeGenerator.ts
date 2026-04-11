@@ -63,35 +63,75 @@ export class CodeGenerator {
         const signals: HdlPort[] = [];
         const signalNames = new Set<string>();
 
-        // 正则策略：
-        // 1. 捕获括号里的信号名: \(\s*(\w+)\s*\)
-        // 2. 捕获注释里的位宽: \/\/.*?(input|output|inout)\s*(?:wire|reg|logic)?\s*(.*)
-        // 该正则专门匹配 CodeGenerator 生成的带注释的代码
-        const lineRegex = /\(\s*(\w+)\s*\).*?\/\/.*?(input|output|inout)\s*(?:wire|reg|logic)?\s*(.*)/;
+        // 同时支持:
+        // 1) .port(sig) // input logic [7:0]
+        // 2) .port(sig)
+        // 3) .port(sig[7:0]) -> 声明 sig
+        // 对复杂表达式 (拼接/函数调用/运算/层级引用) 直接跳过，避免误声明。
+        const connectionRegex = /\.\w+\s*\(\s*([^\)]+?)\s*\)/g;
 
-        lines.forEach(line => {
-            const match = line.match(lineRegex);
-            if (match) {
-                const name = match[1]; 
-                const dir = match[2]; // 提取方向，虽然自动声明通常用 logic/wire，但保留信息也好
-                const width = match[3].trim(); // 位宽 [7:0]
-
-                // 过滤掉常量连接 (如 .rst(1'b0)) 或空连接
-                if (!name || /^\d/.test(name) || /^'/.test(name)) return;
-
-                if (!signalNames.has(name)) {
-                    signalNames.add(name);
-                    // 构造 HdlPort 对象返回
-                    // 注意：这里的 dir 和 type 是为了兼容 HdlPort 接口
-                    signals.push({
-                        name: name,
-                        dir: 'wire', 
-                        type: width ? `logic ${width}` : 'logic' // 默认生成 logic 类型
-                    } as HdlPort);
+        for (const line of lines) {
+            let match: RegExpExecArray | null;
+            while ((match = connectionRegex.exec(line)) !== null) {
+                const expr = match[1];
+                const signalName = this.extractDeclarableSignal(expr);
+                if (!signalName || signalNames.has(signalName)) {
+                    continue;
                 }
+
+                signalNames.add(signalName);
+                signals.push({
+                    name: signalName,
+                    dir: 'wire',
+                    type: this.extractTypeFromInlineComment(line) ?? 'logic'
+                } as HdlPort);
             }
-        });
+        }
 
         return signals;
     }
+
+    private static extractDeclarableSignal(expr: string): string | null {
+        let s = expr.trim().replace(/,\s*$/, '');
+        if (!s) {
+            return null;
+        }
+
+        // 常量或复杂表达式不做自动声明
+        if (/^\d+$/.test(s) || /^\d+'[bBdDhHoO][0-9a-fA-F_xXzZ?]+$/.test(s) || /^'[01xXzZ]$/.test(s)) {
+            return null;
+        }
+        if (/^\{.*\}$/.test(s) || /^[A-Za-z_]\w*\s*\(.*\)$/.test(s)) {
+            return null;
+        }
+        if (/[?:+\-*/%&|^~<>=!]/.test(s) || s.includes('.')) {
+            return null;
+        }
+
+        // 允许位选/部分位选: sig[3], sig[7:0]
+        const idMatch = s.match(/^([A-Za-z_]\w*)(?:\s*\[[^[\]]+\]\s*)*$/);
+        return idMatch ? idMatch[1] : null;
+    }
+
+    private static extractTypeFromInlineComment(line: string): string | undefined {
+        const commentStart = line.indexOf('//');
+        if (commentStart < 0) {
+            return undefined;
+        }
+
+        const comment = line.slice(commentStart);
+        const match = comment.match(/\b(input|output|inout)\b\s*(?:wire|reg|logic)?\s*(.*)$/);
+        if (!match) {
+            return undefined;
+        }
+
+        const tail = match[2].trim();
+        if (!tail) {
+            return 'logic';
+        }
+
+        const width = tail.match(/\[[^[\]]+\]/)?.[0];
+        return width ? `logic ${width}` : 'logic';
+    }
+
 }

@@ -81,7 +81,7 @@ export class FastParser {
             while ((match = instRegex.exec(moduleText)) !== null) {
                 const type = match[1];
                 const name = match[2];
-                if (this.reservedKeywords.has(type)) continue;
+                if (this.reservedKeywords.has(type)) {continue;}
 
                 // 计算实例化在原文件中的真实位置
                 const range = this.findRange(text, name, startIndex + match.index);
@@ -297,7 +297,7 @@ export class FastParser {
      */
     private static findRange(fullText: string, target: string, startSearchIndex: number): vscode.Range {
         const index = fullText.indexOf(target, startSearchIndex);
-        if (index === -1) return new vscode.Range(0, 0, 0, 0);
+        if (index === -1) {return new vscode.Range(0, 0, 0, 0);}
         const lines = fullText.substring(0, index).split('\n');
         const line = lines.length - 1;
         const char = lines[lines.length - 1].length;

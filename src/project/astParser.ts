@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import { HdlModule, HdlInstance, HdlPort, HdlParam, HdlSymbol, HdlSymbolKind } from './hdlSymbol';
 
 // 动态 require web-tree-sitter (在 VS Code Extension Host 中运行)
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+ 
 const Parser = require('web-tree-sitter');
 
 /**
@@ -31,7 +31,7 @@ export class AstParser {
         channel?: vscode.OutputChannel
     ): Promise<void> {
         // 防止并发重入
-        if (AstParser.isReady || AstParser.isInitializing) return;
+        if (AstParser.isReady || AstParser.isInitializing) {return;}
         AstParser.isInitializing = true;
         AstParser.outputChannel = channel;
 
@@ -95,7 +95,7 @@ export class AstParser {
      * 获取完整 AST 树对象，用于高级分析 (如 FSM)
      */
     public static getTree(text: string): any {
-        if (!AstParser.ready) return null;
+        if (!AstParser.ready) {return null;}
         try {
             return AstParser.parser.parse(text);
         } catch (err) {
@@ -155,7 +155,7 @@ export class AstParser {
             }
         }
 
-        if (!moduleName || !nameNode) return null;
+        if (!moduleName || !nameNode) {return null;}
 
         // 构造模块名字的 Range
         const nameRange = new vscode.Range(
@@ -198,7 +198,7 @@ export class AstParser {
             // 提取端口: ansi_port_declaration, port_declaration
             if (node.type === 'ansi_port_declaration' || node.type === 'port_declaration') {
                 const port = AstParser.parsePortNode(node);
-                if (port) hdlModule.addPort(port);
+                if (port) {hdlModule.addPort(port);}
             }
             // 提取参数: parameter_declaration
             if (node.type === 'parameter_declaration') {
@@ -218,7 +218,7 @@ export class AstParser {
                     c.type === 'module_identifier' || c.type === 'simple_identifier'
                 );
                 const type = typeNode?.text;
-                if (!type) return;
+                if (!type) {return;}
 
                 // 找所有 hierarchical_instance (可能一次实例化多个 u_a, u_b)
                 for (const child of node.children) {
@@ -240,7 +240,7 @@ export class AstParser {
                             AstParser.walkNode(portList, (pNode: any) => {
                                 if (pNode.type === 'named_port_connection') {
                                     const portId = pNode.children.find((c: any) => c.type === 'port_identifier');
-                                    if (portId) connectedPorts.push(portId.text);
+                                    if (portId) {connectedPorts.push(portId.text);}
                                 }
                             });
                         }
@@ -374,7 +374,7 @@ export class AstParser {
         // 2. 遍历 AST 提取 net/reg/data/integer/genvar 声明
         AstParser.walkNode(moduleNode, (node: any) => {
             const kind = AstParser.DECL_NODE_TYPES[node.type];
-            if (!kind) return;
+            if (!kind) {return;}
 
             // 提取该声明节点中的所有标识符
             AstParser.walkNode(node, (child: any) => {
@@ -392,7 +392,7 @@ export class AstParser {
                     ) {
                         const name = child.text;
                         // 跳过已作为端口记录的符号
-                        if (hdlModule.symbols.some(s => s.name === name)) return;
+                        if (hdlModule.symbols.some(s => s.name === name)) {return;}
 
                         const symRange = new vscode.Range(
                             child.startPosition.row,

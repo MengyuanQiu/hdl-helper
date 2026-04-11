@@ -1,0 +1,127 @@
+{
+	"UVM agent skeleton": {
+		"prefix": "uvm.agent",
+		"body": [
+			"class ${1:my_agent} extends uvm_agent;",
+			"    `uvm_component_utils(${1:my_agent})",
+			"",
+			"    ${2:my_sequencer} sqr;",
+			"    ${3:my_driver}    drv;",
+			"    ${4:my_monitor}   mon;",
+			"",
+			"    function new(string name = \"${1:my_agent}\", uvm_component parent = null);",
+			"        super.new(name, parent);",
+			"    endfunction : new",
+			"",
+			"    // TODO: add build/connect phases or pair with uvm.agent.active_passive.phases",
+			"",
+			"endclass : ${1:my_agent}$0"
+		],
+		"description": "UVM agent composition shell; pair with uvm.agent.active_passive.phases"
+	},
+	"UVM agent active-passive": {
+		"prefix": "uvm.agent.active_passive.phases",
+		"body": [
+			"virtual function void build_phase(uvm_phase phase);",
+			"    super.build_phase(phase);",
+			"    ${1:mon} = ${2:my_monitor}::type_id::create(\"${1:mon}\", this);",
+			"    if (is_active == UVM_ACTIVE) begin",
+			"        ${3:sqr} = ${4:my_sequencer}::type_id::create(\"${3:sqr}\", this);",
+			"        ${5:drv} = ${6:my_driver}::type_id::create(\"${5:drv}\", this);",
+			"    end",
+			"endfunction : build_phase",
+			"",
+			"virtual function void connect_phase(uvm_phase phase);",
+			"    super.connect_phase(phase);",
+			"    if (is_active == UVM_ACTIVE) begin",
+			"        ${5:drv}.seq_item_port.connect(${3:sqr}.seq_item_export);",
+			"    end",
+			"endfunction : connect_phase$0"
+		],
+		"description": "Active/passive agent build/connect pattern"
+	},
+	"UVM env skeleton": {
+		"prefix": "uvm.env",
+		"body": [
+			"class ${1:my_env} extends uvm_env;",
+			"    `uvm_component_utils(${1:my_env})",
+			"",
+			"    ${2:my_agent}      agt;",
+			"    ${3:my_scoreboard} scb;",
+			"",
+			"    function new(string name = \"${1:my_env}\", uvm_component parent = null);",
+			"        super.new(name, parent);",
+			"    endfunction : new",
+			"",
+			"    virtual function void build_phase(uvm_phase phase);",
+			"        super.build_phase(phase);",
+			"        // TODO: create agt/scb components",
+			"        $0",
+			"    endfunction : build_phase",
+			"",
+			"endclass : ${1:my_env}"
+		],
+		"description": "UVM environment skeleton"
+	},
+	"UVM test skeleton": {
+		"prefix": "uvm.test",
+		"body": [
+			"class ${1:my_test} extends uvm_test;",
+			"    `uvm_component_utils(${1:my_test})",
+			"    ${2:my_env} env;",
+			"",
+			"    function new(string name = \"${1:my_test}\", uvm_component parent = null);",
+			"        super.new(name, parent);",
+			"    endfunction : new",
+			"",
+			"    virtual function void build_phase(uvm_phase phase);",
+			"        super.build_phase(phase);",
+			"        env = ${2:my_env}::type_id::create(\"env\", this);",
+			"    endfunction : build_phase",
+			"",
+			"    virtual task run_phase(uvm_phase phase);",
+			"        phase.raise_objection(this);",
+			"        $0",
+			"        phase.drop_objection(this);",
+			"    endtask : run_phase",
+			"endclass : ${1:my_test}"
+		],
+		"description": "UVM test skeleton"
+	},
+	"UVM scoreboard skeleton": {
+		"prefix": "uvm.scoreboard",
+		"body": [
+			"class ${1:my_scoreboard} extends uvm_scoreboard;",
+			"    `uvm_component_utils(${1:my_scoreboard})",
+			"    uvm_analysis_imp #(${2:my_seq_item}, ${1:my_scoreboard}) imp;",
+			"",
+			"    function new(string name = \"${1:my_scoreboard}\", uvm_component parent = null);",
+			"        super.new(name, parent);",
+			"        imp = new(\"imp\", this);",
+			"    endfunction : new",
+			"",
+			"    function void write(${2:my_seq_item} ${3:tr});",
+			"        $0",
+			"    endfunction : write",
+			"endclass : ${1:my_scoreboard}"
+		],
+		"description": "UVM scoreboard with single analysis imp"
+	},
+	"UVM subscriber skeleton": {
+		"prefix": "uvm.subscriber",
+		"body": [
+			"class ${1:my_subscriber} extends uvm_subscriber #(${2:my_seq_item});",
+			"    `uvm_component_utils(${1:my_subscriber})",
+			"",
+			"    function new(string name = \"${1:my_subscriber}\", uvm_component parent = null);",
+			"        super.new(name, parent);",
+			"    endfunction : new",
+			"",
+			"    function void write(${2:my_seq_item} ${3:tr});",
+			"        $0",
+			"    endfunction : write",
+			"endclass : ${1:my_subscriber}"
+		],
+		"description": "UVM subscriber skeleton"
+	}
+}

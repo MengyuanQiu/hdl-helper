@@ -1,0 +1,117 @@
+{
+	"RTL reg basic": {
+		"prefix": "rtl.reg.basic",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:data_q} <= ${4:'0};",
+			"    end else begin",
+			"        ${3:data_q} <= ${5:data_d};",
+			"    end",
+			"end$0"
+		],
+		"description": "Basic register with async active-low reset"
+	},
+	"RTL reg no reset": {
+		"prefix": "rtl.reg.no_rst",
+		"body": [
+			"always_ff @(posedge ${1:clk_i}) begin",
+			"    ${2:data_q} <= ${3:data_d};",
+			"end$0"
+		],
+		"description": "Register without reset"
+	},
+	"RTL reg no reset with clock enable": {
+		"prefix": "rtl.reg.no_rst.ce",
+		"body": [
+			"always_ff @(posedge ${1:clk_i}) begin",
+			"    if (${2:ce_i}) begin",
+			"        ${3:data_q} <= ${4:data_d};",
+			"    end",
+			"end$0"
+		],
+		"description": "Register without reset and with clock enable"
+	},
+	"RTL reg with clock enable": {
+		"prefix": "rtl.reg.ce",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:data_q} <= ${4:'0};",
+			"    end else if (${5:ce_i}) begin",
+			"        ${3:data_q} <= ${6:data_d};",
+			"    end",
+			"end$0"
+		],
+		"description": "Register with clock enable"
+	},
+	"RTL reg with clear": {
+		"prefix": "rtl.reg.clr",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:data_q} <= ${4:'0};",
+			"    end else if (${5:clr_i}) begin",
+			"        ${3:data_q} <= ${4:'0};",
+			"    end else begin",
+			"        ${3:data_q} <= ${6:data_d};",
+			"    end",
+			"end$0"
+		],
+		"description": "Register with synchronous clear"
+	},
+	"RTL reg with ce and clear": {
+		"prefix": "rtl.reg.ce_clr",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:data_q} <= ${4:'0};",
+			"    end else if (${5:clr_i}) begin",
+			"        ${3:data_q} <= ${4:'0};",
+			"    end else if (${6:ce_i}) begin",
+			"        ${3:data_q} <= ${7:data_d};",
+			"    end",
+			"end$0"
+		],
+		"description": "Register with clear and clock enable"
+	},
+	"RTL valid register": {
+		"prefix": "rtl.reg.valid",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:valid_q} <= 1'b0;",
+			"    end else if (${4:flush_i}) begin",
+			"        ${3:valid_q} <= 1'b0;",
+			"    end else if (${5:ready_i}) begin",
+			"        ${3:valid_q} <= ${6:valid_d};",
+			"    end",
+			"end$0"
+		],
+		"description": "Valid-bit register with downstream ready and flush gating"
+	},
+	"RTL async active-low reset block": {
+		"prefix": "rtl.reset.async_low",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        $0",
+			"    end else begin",
+			"    end",
+			"end"
+		],
+		"description": "Template for async active-low reset logic"
+	},
+	"RTL sync reset block": {
+		"prefix": "rtl.reset.sync",
+		"body": [
+			"always_ff @(posedge ${1:clk_i}) begin",
+			"    if (!${2:srst_ni}) begin",
+			"        $0",
+			"    end else begin",
+			"    end",
+			"end"
+		],
+		"description": "Template for synchronous active-low reset logic"
+	}
+}

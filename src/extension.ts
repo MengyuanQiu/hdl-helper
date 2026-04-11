@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 import { LintManager } from './linter/LintManager';
 import VerilogFormatter from './formatter';
 import * as cp from 'child_process';
@@ -22,19 +23,89 @@ import { VerilogOutlineProvider } from './providers/outlineProvider';
 import { VerilogReferenceProvider } from './providers/referenceProvider';
 import { VerilogRenameProvider } from './providers/renameProvider';
 import { VerilogCompletionProvider } from './providers/completionProvider';
-import { SimCodeLensProvider } from './providers/simCodeLensProvider';
-import { SimManager } from './simulation/simManager';
+import { HdlSimTask, SimManager } from './simulation/simManager';
 import { WaveformViewer } from './simulation/waveformViewer';
 import { VivadoBridge } from './eda/vivadoBridge';
 import { XdcCompletionProvider } from './providers/xdcCompletionProvider';
-import { CodeGenerator } from './utils/codeGenerator'
-import { DocGenerator } from './utils/docGenerator'
+import { CodeGenerator } from './utils/codeGenerator';
+import { DocGenerator } from './utils/docGenerator';
 import { IpCatalogProvider } from './providers/ipCatalogProvider';
 import { HdlCodeActionProvider } from './providers/codeActionProvider';
 
 
 // 全局变量，方便 deactivate 使用
 let projectManager: ProjectManager;
+
+function resolveWorkspaceForContext(sourceUri?: vscode.Uri): vscode.WorkspaceFolder | undefined {
+    if (sourceUri) {
+        const fromSource = vscode.workspace.getWorkspaceFolder(sourceUri);
+        if (fromSource) {
+            return fromSource;
+        }
+    }
+
+    const activeUri = vscode.window.activeTextEditor?.document.uri;
+    if (activeUri) {
+        const fromActive = vscode.workspace.getWorkspaceFolder(activeUri);
+        if (fromActive) {
+            return fromActive;
+        }
+    }
+
+    return vscode.workspace.workspaceFolders?.[0];
+}
+
+function findLatestWaveformInBuild(buildDir: string): string | undefined {
+    if (!fs.existsSync(buildDir)) {
+        return undefined;
+    }
+
+    const candidates = fs.readdirSync(buildDir, { withFileTypes: true })
+        .filter(entry => entry.isFile())
+        .map(entry => path.join(buildDir, entry.name))
+        .filter(filePath => {
+            const ext = path.extname(filePath).toLowerCase();
+            return ext === '.fst' || ext === '.vcd';
+        })
+        .map(filePath => ({ filePath, mtime: fs.statSync(filePath).mtimeMs }))
+        .sort((a, b) => b.mtime - a.mtime);
+
+    return candidates[0]?.filePath;
+}
+
+function isLikelyTestbench(mod: HdlModule): boolean {
+    return mod.ports.length === 0 || mod.name.toLowerCase().startsWith('tb');
+}
+
+async function pickModuleFromHierarchy(projectManager: ProjectManager, actionLabel: string): Promise<HdlModule | undefined> {
+    const modules = projectManager.getAllModules();
+    if (modules.length === 0) {
+        vscode.window.showWarningMessage('No modules available in Module Hierarchy. Please rescan project first.');
+        return undefined;
+    }
+
+    const sorted = [...modules].sort((a, b) => {
+        const aTb = isLikelyTestbench(a) ? 0 : 1;
+        const bTb = isLikelyTestbench(b) ? 0 : 1;
+        if (aTb !== bTb) {
+            return aTb - bTb;
+        }
+        return a.name.localeCompare(b.name);
+    });
+
+    const picked = await vscode.window.showQuickPick(
+        sorted.map(mod => ({
+            label: mod.name,
+            description: path.basename(mod.fileUri.fsPath),
+            detail: isLikelyTestbench(mod) ? 'Likely testbench module' : 'Design module',
+            module: mod
+        })),
+        { placeHolder: `Select module to ${actionLabel}` }
+    );
+
+    return picked?.module;
+}
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('HDL Helper is active!');
 
@@ -122,6 +193,11 @@ export function activate(context: vscode.ExtensionContext) {
                 description: 'Open extension settings (linter/formatter/project)',
                 detail: 'Configuration'
             },
+            {
+                label: 'Open Simulation Settings',
+                description: 'Configure simulator path, build dir, and task file',
+                detail: 'Configuration'
+            },
         ], {
             placeHolder: 'HDL Helper Quick Actions'
         });
@@ -148,6 +224,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
         if (action.label === 'Open HDL Helper Settings') {
             await vscode.commands.executeCommand('workbench.action.openSettings', 'hdl-helper');
+            return;
+        }
+        if (action.label === 'Open Simulation Settings') {
+            await vscode.commands.executeCommand('hdl-helper.openSimulationSettings');
         }
     }));
 
@@ -212,7 +292,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     // D. 复制实例化模板 (树节点右键)
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.copyInstantiation', async (item: HdlModule) => {
-        if (!item || !(item instanceof HdlModule)) return;
+        if (!item || !(item instanceof HdlModule)) {
+            return;
+        }
 
         // 调用统一生成器 (这里可以选择不带注释，保持清爽，或者设为 true 也带注释)
         const finalCode = CodeGenerator.generateInstantiation(item, false);
@@ -311,34 +393,127 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     // =========================================================================
-    // 7. 注册仿真与 CodeLens (Phase 6)
+    // 7. 注册仿真命令 (Phase 6)
     // =========================================================================
-    const simCodeLensProvider = new SimCodeLensProvider(projectManager);
-    context.subscriptions.push(
-        vscode.languages.registerCodeLensProvider(
-            ['verilog', 'systemverilog'],
-            simCodeLensProvider
-        )
-    );
 
-    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runSimulation', async (moduleName: string) => {
-        if (!moduleName) {
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runSimulationFromHierarchy', async (item?: HdlModule) => {
+        const targetModule = item instanceof HdlModule
+            ? item
+            : await pickModuleFromHierarchy(projectManager, 'run simulation');
+
+        if (!targetModule) {
+            return;
+        }
+
+        await vscode.commands.executeCommand('hdl-helper.runSimulation', targetModule.name, targetModule.fileUri);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.viewWaveformFromHierarchy', async (item?: HdlModule) => {
+        const targetModule = item instanceof HdlModule
+            ? item
+            : await pickModuleFromHierarchy(projectManager, 'view waveform');
+
+        if (!targetModule) {
+            return;
+        }
+
+        await vscode.commands.executeCommand('hdl-helper.viewWaveform', targetModule.name, targetModule.fileUri);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openSimulationSettings', async () => {
+        await vscode.commands.executeCommand('workbench.action.openSettings', 'hdl-helper.simulation');
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runSimulation', async (moduleName: string, sourceUri?: vscode.Uri) => {
+        if (!moduleName || typeof moduleName !== 'string') {
             vscode.window.showErrorMessage('No module selected for simulation.');
             return;
         }
-        
-        // 尝试获取任务配置
-        const task = await SimManager.getDefaultTaskForModule(moduleName, projectManager);
-        
-        // 执行任务
-        await SimManager.runTask(task, projectManager);
-    }));
 
-    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.viewWaveform', (waveformPath: string) => {
-        if (!waveformPath) {
-            vscode.window.showErrorMessage('No waveform file provided.');
+        const workspaceFolder = resolveWorkspaceForContext(sourceUri);
+        if (!workspaceFolder) {
+            vscode.window.showErrorMessage('No workspace folder open for simulation.');
             return;
         }
+
+        const matchedTasks = await SimManager.getTasksForTop(moduleName, projectManager, workspaceFolder.uri);
+        let task: HdlSimTask;
+        if (matchedTasks.length > 1) {
+            const picked = await vscode.window.showQuickPick(
+                matchedTasks.map(t => ({
+                    label: t.name,
+                    description: `tool=${t.tool}, top=${t.top}`,
+                    detail: t.filelist
+                        ? `filelist: ${Array.isArray(t.filelist) ? t.filelist.join(', ') : t.filelist}`
+                        : `sources: ${(t.sources || []).join(', ') || '(auto)'}`,
+                    task: t
+                })),
+                {
+                    placeHolder: `Select simulation task for ${moduleName}`
+                }
+            );
+
+            if (!picked) {
+                return;
+            }
+            task = picked.task;
+        } else if (matchedTasks.length === 1) {
+            task = matchedTasks[0];
+        } else {
+            task = await SimManager.getDefaultTaskForModule(moduleName, projectManager, workspaceFolder.uri);
+        }
+        
+        // 执行任务
+        await SimManager.runTask(task, projectManager, workspaceFolder.uri);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.viewWaveform', async (waveformRef: string, sourceUri?: vscode.Uri) => {
+        let waveformPath = '';
+
+        // 1) 入参是已存在的文件路径
+        if (waveformRef && fs.existsSync(waveformRef)) {
+            waveformPath = waveformRef;
+        }
+
+        // 2) 入参是模块名: 自动在 build 下查找 .fst/.vcd
+        if (!waveformPath && waveformRef) {
+            const workspaceFolder = resolveWorkspaceForContext(sourceUri);
+            const wsPath = workspaceFolder?.uri.fsPath;
+            if (!wsPath) {
+                vscode.window.showErrorMessage('No workspace folder open for waveform lookup.');
+                return;
+            }
+            const buildDir = path.join(wsPath, 'build');
+            const fstPath = path.join(buildDir, `${waveformRef}.fst`);
+            const vcdPath = path.join(buildDir, `${waveformRef}.vcd`);
+
+            if (fs.existsSync(fstPath)) {
+                waveformPath = fstPath;
+            } else if (fs.existsSync(vcdPath)) {
+                waveformPath = vcdPath;
+            } else {
+                waveformPath = findLatestWaveformInBuild(buildDir) || '';
+            }
+        }
+
+        // 3) 仍未找到则让用户手选
+        if (!waveformPath) {
+            const picked = await vscode.window.showOpenDialog({
+                canSelectMany: false,
+                openLabel: 'Open Waveform',
+                filters: {
+                    'Waveform Files': ['fst', 'vcd']
+                }
+            });
+
+            if (!picked || picked.length === 0) {
+                vscode.window.showErrorMessage('No waveform file provided.');
+                return;
+            }
+
+            waveformPath = picked[0].fsPath;
+        }
+
         WaveformViewer.show(context.extensionUri, waveformPath);
     }));
 
@@ -346,11 +521,12 @@ export function activate(context: vscode.ExtensionContext) {
     // 8. 注册 EDA 工具 (Vivado 集成, Phase 7)
     // =========================================================================
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runVivadoSynth', async () => {
-        if (!vscode.workspace.workspaceFolders) {
+        const workspaceFolder = resolveWorkspaceForContext();
+        if (!workspaceFolder) {
             vscode.window.showErrorMessage('Please open a workspace first.');
             return;
         }
-        const wsPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+        const wsPath = workspaceFolder.uri.fsPath;
         // 这里需要获取实际的 top module，我们暂时通过用户输入来获取
         const topModule = await vscode.window.showInputBox({ 
             prompt: 'Enter top module name for Synthesis',
@@ -362,11 +538,12 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runVivadoImpl', async () => {
-        if (!vscode.workspace.workspaceFolders) {
+        const workspaceFolder = resolveWorkspaceForContext();
+        if (!workspaceFolder) {
             vscode.window.showErrorMessage('Please open a workspace first.');
             return;
         }
-        const wsPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+        const wsPath = workspaceFolder.uri.fsPath;
         await VivadoBridge.runImpl(wsPath);
     }));
 
@@ -388,7 +565,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     // G. 生成接口文档 (Markdown) - 右键菜单触发
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.generateDoc', async (item: HdlModule) => {
-        if (!item || !(item instanceof HdlModule)) return;
+        if (!item || !(item instanceof HdlModule)) {
+            return;
+        }
 
         try {
             // 1. 生成 Markdown 内容

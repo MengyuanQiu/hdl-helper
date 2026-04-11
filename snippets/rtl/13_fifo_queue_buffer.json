@@ -1,0 +1,96 @@
+{
+	"RTL sync FIFO shell": {
+		"prefix": "rtl.fifo.sync.shell",
+		"body": [
+			"module ${1:sync_fifo} #(",
+			"    parameter int DATA_W = ${2:32},",
+			"    parameter int DEPTH  = ${3:16}",
+			") (",
+			"    input  logic              clk_i,",
+			"    input  logic              rst_ni,",
+			"    input  logic              wr_en_i,",
+			"    input  logic [DATA_W-1:0] wr_data_i,",
+			"    output logic              full_o,",
+			"    input  logic              rd_en_i,",
+			"    output logic [DATA_W-1:0] rd_data_o,",
+			"    output logic              empty_o",
+			");",
+			"",
+			"    localparam int ADDR_W = \\$clog2(DEPTH);",
+			"    logic [DATA_W-1:0] mem [0:DEPTH-1];",
+			"    logic [ADDR_W:0]   wr_ptr_q, rd_ptr_q;",
+			"",
+			"    // TODO: full/empty/write/read/data path",
+			"    $0",
+			"",
+			"endmodule : ${1:sync_fifo}"
+		],
+		"description": "Synchronous FIFO module skeleton"
+	},
+	"RTL async FIFO shell": {
+		"prefix": "rtl.fifo.async.shell",
+		"body": [
+			"module ${1:async_fifo} #(",
+			"    parameter int DATA_W = ${2:32},",
+			"    parameter int DEPTH  = ${3:16}",
+			") (",
+			"    input  logic              wr_clk_i,",
+			"    input  logic              wr_rst_ni,",
+			"    input  logic              rd_clk_i,",
+			"    input  logic              rd_rst_ni,",
+			"    input  logic              wr_en_i,",
+			"    input  logic [DATA_W-1:0] wr_data_i,",
+			"    output logic              full_o,",
+			"    input  logic              rd_en_i,",
+			"    output logic [DATA_W-1:0] rd_data_o,",
+			"    output logic              empty_o",
+			");",
+			"",
+			"    // TODO: gray pointers + pointer CDC + dual-port memory",
+			"    $0",
+			"",
+			"endmodule : ${1:async_fifo}"
+		],
+		"description": "Asynchronous FIFO skeleton"
+	},
+	"RTL elastic buffer 1-stage": {
+		"prefix": "rtl.buf.elastic1",
+		"body": [
+			"logic                  ${1:v_q};",
+			"logic [${2:W}-1:0]     ${3:d_q};",
+			"",
+			"assign ${4:in_ready_o}  = !${1:v_q} || ${5:out_ready_i};",
+			"assign ${6:out_valid_o} = ${1:v_q};",
+			"assign ${7:out_data_o}  = ${3:d_q};",
+			"",
+			"always_ff @(posedge ${8:clk_i} or negedge ${9:rst_ni}) begin",
+			"    if (!${9:rst_ni}) begin",
+			"        ${1:v_q} <= 1'b0;",
+			"    end else if (${4:in_ready_o}) begin",
+			"        ${1:v_q} <= ${10:in_valid_i};",
+			"        ${3:d_q} <= ${11:in_data_i};",
+			"    end",
+			"end$0"
+		],
+		"description": "One-stage elastic buffer for ready/valid channel storage"
+	},
+	"RTL ring queue shell": {
+		"prefix": "rtl.queue.ring",
+		"body": [
+			"localparam int ${1:DEPTH} = ${2:16};",
+			"localparam int ${3:PTR_W} = \\$clog2(${1:DEPTH});",
+			"logic [${4:W}-1:0] ${5:q_mem} [0:${1:DEPTH}-1];",
+			"logic [${3:PTR_W}-1:0] ${6:head_q}, ${7:tail_q};",
+			"logic [${3:PTR_W}:0]   ${8:count_q};",
+			"logic                  ${9:full_w}, ${10:empty_w};",
+			"// TODO: declare push/pop control signals",
+			"",
+			"assign ${9:full_w}  = (${8:count_q} == ${1:DEPTH});",
+			"assign ${10:empty_w} = (${8:count_q} == 0);",
+			"",
+			"// TODO: push/pop pointer movement and memory read/write sequencing",
+			"$0"
+		],
+		"description": "Ring queue structural skeleton"
+	}
+}

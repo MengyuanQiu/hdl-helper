@@ -89,7 +89,7 @@ export class HdlCodeActionProvider implements vscode.CodeActionProvider {
             // Fallback, maybe the range only covers `always`
             newText = 'always_comb';
             // We should ideally replace up to the `@(*)` but safely guessing simple replacement
-            const lineFragment = document.getText(new vscode.Range(diagnostic.range.start.line, diagnostic.range.start.character, diagnostic.range.start.line, diagnostic.range.start.character + 20));
+            const lineFragment = document.getText(new vscode.Range(diagnostic.range.start.line, diagnostic.range.start.character, diagnostic.range.start.line, diagnostic.range.start.character + 50));
             const match = lineFragment.match(/always\s*@\s*\(\s*\*\s*\)|always\s*@\s*\*/);
             if (match) {
                 const preciseRange = new vscode.Range(

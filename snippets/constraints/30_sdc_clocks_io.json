@@ -1,0 +1,35 @@
+{
+	"SDC create clock": {
+		"prefix": "sdc.clock.create",
+		"body": [
+			"create_clock -name ${1:clk} -period ${2:10.0} [get_ports ${3:clk_i}]$0"
+		],
+		"description": "Create primary SDC clock"
+	},
+	"SDC create generated clock": {
+		"prefix": "sdc.clock.generated",
+		"body": [
+			"create_generated_clock -name ${1:clk_div2} \\",
+			"    -source [get_pins ${2:u_pll/clk_in}] \\",
+			"    -divide_by ${3:2} \\",
+			"    [get_pins ${4:u_pll/clk_out}]$0"
+		],
+		"description": "Create generated clock from explicit source pin"
+	},
+	"SDC input delay": {
+		"prefix": "sdc.io.input_delay",
+		"body": [
+			"set_input_delay -clock [get_clocks ${1:clk}] -max ${2:2.0} [get_ports ${3:data_i}]",
+			"set_input_delay -clock [get_clocks ${1:clk}] -min ${4:0.5} [get_ports ${3:data_i}]$0"
+		],
+		"description": "Set external input delay relative to reference clock"
+	},
+	"SDC output delay": {
+		"prefix": "sdc.io.output_delay",
+		"body": [
+			"set_output_delay -clock [get_clocks ${1:clk}] -max ${2:2.0} [get_ports ${3:data_o}]",
+			"set_output_delay -clock [get_clocks ${1:clk}] -min ${4:0.5} [get_ports ${3:data_o}]$0"
+		],
+		"description": "Set external output delay relative to reference clock"
+	}
+}

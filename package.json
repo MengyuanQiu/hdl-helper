@@ -2,10 +2,10 @@
   "name": "hdl-helper",
   "displayName": "HDL Helper",
   "description": "FPGA/IC 全能助手：双引擎语法检查 (Vivado/Verible)、一键格式化、自动 Testbench、智能例化、LSP 跳转与大纲。",
-  "version": "3.0.0",
+  "version": "3.2.0",
   "publisher": "Cyrus",
   "engines": {
-    "vscode": "^1.80.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Programming Languages",
@@ -14,7 +14,7 @@
     "Snippets"
   ],
   "icon": "images/icon_min.png",
-  "main": "./out/extension.js",
+  "main": "./out/main.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/Aligo-BTBKS/hdl-helper"
@@ -39,6 +39,11 @@
       {
         "command": "hdl-helper.debugProject",
         "title": "HDL: Debug Project",
+        "category": "HDL Helper"
+      },
+      {
+        "command": "hdl-helper.quickStart",
+        "title": "HDL: Quick Actions",
         "category": "HDL Helper"
       },
       {
@@ -78,6 +83,18 @@
         "category": "HDL Helper"
       },
       {
+        "command": "hdl-helper.runSimulationFromHierarchy",
+        "title": "HDL: Run Simulation (Hierarchy)",
+        "category": "HDL Helper",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "hdl-helper.viewWaveformFromHierarchy",
+        "title": "HDL: View Waveform (Hierarchy)",
+        "category": "HDL Helper",
+        "icon": "$(graph-line)"
+      },
+      {
         "command": "hdl-helper.runVivadoSynth",
         "title": "HDL: Run Vivado Synthesis",
         "category": "HDL Helper"
@@ -112,6 +129,12 @@
         "command": "hdl-helper.generateRegisters",
         "title": "HDL: Generate Register Map from File",
         "category": "HDL Helper"
+      },
+      {
+        "command": "hdl-helper.openSimulationSettings",
+        "title": "HDL: Open Simulation Settings",
+        "category": "HDL Helper",
+        "icon": "$(gear)"
       }
     ],
     "configuration": {
@@ -140,24 +163,31 @@
           ],
           "description": "解析工程结构时排除的目录名 (Directories to exclude when scanning the project)"
         },
+        "hdl-helper.project.filelistPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/*.f",
+            "**/*.flist"
+          ],
+          "description": "工程扫描时识别 filelist 的 glob 模式。若命中 filelist，将优先按 filelist 解析源文件与 include 路径。"
+        },
         "hdl-helper.linter.activeEngines": {
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["verible", "vivado", "verilator"]
+            "enum": [
+              "verible",
+              "vivado",
+              "verilator"
+            ]
           },
-          "default": ["verible"],
-          "description": "激活的 Lint 引擎列表（可多选，并发执行）。可选: 'verible', 'vivado', 'verilator'"
-        },
-        "hdl-helper.linter.tool": {
-          "type": "string",
-          "enum": [
-            "xvlog",
-            "verible-lint"
+          "default": [
+            "verible"
           ],
-          "default": "xvlog",
-          "markdownDeprecationMessage": "**已废弃**: 请使用 `hdl-helper.linter.activeEngines` 代替。",
-          "description": "[已废弃] 选择语法检查工具"
+          "description": "激活的 Lint 引擎列表（可多选，并发执行）。可选：'verible', 'vivado', 'verilator'"
         },
         "hdl-helper.linter.veriblePath": {
           "type": "string",
@@ -171,7 +201,9 @@
         },
         "hdl-helper.linter.verilatorFlags": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "default": [],
           "description": "传递给 Verilator 的额外参数 (Extra flags for Verilator)，例如: [\"-Wno-WIDTH\", \"--bbox-sys\"]。"
         },
@@ -187,6 +219,15 @@
           "description": "Verible 格式化工具的路径 (Path to verible-verilog-format executable).",
           "scope": "resource"
         },
+        "hdl-helper.formatter.flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "传递给 Verible Formatter 的额外参数 (Extra flags for verible-verilog-format)，例如: [\"--column_limit=120\", \"--lines=1-200\"]。",
+          "scope": "resource"
+        },
         "hdl-helper.languageServer.enabled": {
           "type": "boolean",
           "default": true,
@@ -196,6 +237,41 @@
           "type": "string",
           "default": "verible-verilog-ls",
           "description": "Path to verible-verilog-ls executable."
+        },
+        "hdl-helper.simulation.tasksFile": {
+          "type": "string",
+          "default": ".vscode/hdl_tasks.json",
+          "description": "仿真任务文件路径 (相对工作区或绝对路径)。"
+        },
+        "hdl-helper.simulation.iverilogPath": {
+          "type": "string",
+          "default": "iverilog",
+          "description": "Icarus Verilog 编译器路径 (iverilog)。如果未加入 PATH，请配置绝对路径。"
+        },
+        "hdl-helper.simulation.vvpPath": {
+          "type": "string",
+          "default": "vvp",
+          "description": "Icarus Verilog 运行器路径 (vvp)。如果未加入 PATH，请配置绝对路径。"
+        },
+        "hdl-helper.simulation.buildDir": {
+          "type": "string",
+          "default": "build",
+          "description": "仿真构建输出目录 (相对工作区或绝对路径)。"
+        },
+        "hdl-helper.simulation.defaultFlags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "-g2012"
+          ],
+          "description": "未在任务中显式指定 flags 时使用的默认仿真编译参数。"
+        },
+        "hdl-helper.simulation.autoOpenWaveform": {
+          "type": "boolean",
+          "default": true,
+          "description": "仿真完成后是否弹出波形打开提示。"
         },
         "hdl-helper.linter.rules": {
           "type": "object",
@@ -261,6 +337,30 @@
         "key": "ctrl+alt+t",
         "mac": "cmd+alt+t",
         "when": "editorTextFocus && (resourceLangId == verilog || resourceLangId == systemverilog)"
+      },
+      {
+        "command": "hdl-helper.generateFsm",
+        "key": "ctrl+alt+f",
+        "mac": "cmd+alt+f",
+        "when": "editorTextFocus && (resourceLangId == verilog || resourceLangId == systemverilog)"
+      },
+      {
+        "command": "hdl-helper.generateAxi",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a",
+        "when": "editorTextFocus && (resourceLangId == verilog || resourceLangId == systemverilog)"
+      },
+      {
+        "command": "hdl-helper.generateMemory",
+        "key": "ctrl+alt+m",
+        "mac": "cmd+alt+m",
+        "when": "editorTextFocus && (resourceLangId == verilog || resourceLangId == systemverilog)"
+      },
+      {
+        "command": "hdl-helper.generateRegisters",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r",
+        "when": "editorTextFocus && (resourceLangId == verilog || resourceLangId == systemverilog)"
       }
     ],
     "menus": {
@@ -287,22 +387,45 @@
         },
         {
           "command": "hdl-helper.generateAxi",
-          "group": "hdl-group@5"
+          "group": "hdl-group@5",
+          "when": "editorTextFocus && (resourceLangId == verilog || resourceLangId == systemverilog)"
         },
         {
           "command": "hdl-helper.generateMemory",
-          "group": "hdl-group@5"
+          "group": "hdl-group@5",
+          "when": "editorTextFocus && (resourceLangId == verilog || resourceLangId == systemverilog)"
         },
         {
           "command": "hdl-helper.generateRegisters",
-          "group": "hdl-group@5"
+          "group": "hdl-group@5",
+          "when": "editorTextFocus && (resourceLangId == verilog || resourceLangId == systemverilog)"
         }
       ],
       "view/title": [
         {
+          "command": "hdl-helper.quickStart",
+          "when": "view == hdl-hierarchy-view",
+          "group": "navigation"
+        },
+        {
           "command": "hdl-helper.clearTopModule",
           "when": "view == hdl-hierarchy-view",
           "group": "navigation"
+        },
+        {
+          "command": "hdl-helper.runSimulationFromHierarchy",
+          "when": "view == hdl-hierarchy-view",
+          "group": "navigation@1"
+        },
+        {
+          "command": "hdl-helper.viewWaveformFromHierarchy",
+          "when": "view == hdl-hierarchy-view",
+          "group": "navigation@2"
+        },
+        {
+          "command": "hdl-helper.openSimulationSettings",
+          "when": "view == hdl-hierarchy-view",
+          "group": "navigation@3"
         },
         {
           "command": "hdl-helper.refreshIpExplorer",
@@ -335,26 +458,256 @@
           "command": "hdl-helper.generateDoc",
           "when": "view == hdl-hierarchy-view && viewItem == module",
           "group": "3_documentation"
+        },
+        {
+          "command": "hdl-helper.runSimulationFromHierarchy",
+          "when": "view == hdl-hierarchy-view && viewItem == module",
+          "group": "inline@1"
+        },
+        {
+          "command": "hdl-helper.viewWaveformFromHierarchy",
+          "when": "view == hdl-hierarchy-view && viewItem == module",
+          "group": "inline@2"
         }
       ]
     },
     "snippets": [
-      { "language": "verilog", "path": "./snippets/rtl/basic.json" },
-      { "language": "verilog", "path": "./snippets/rtl/loops.json" },
-      { "language": "verilog", "path": "./snippets/rtl/axi.json" },
-      { "language": "verilog", "path": "./snippets/rtl/fifo.json" },
-      { "language": "verilog", "path": "./snippets/rtl/fsm/fsm_core.json" },
-      { "language": "verilog", "path": "./snippets/rtl/fsm/fsm_onehot.json" },
-      { "language": "systemverilog", "path": "./snippets/rtl/basic.json" },
-      { "language": "systemverilog", "path": "./snippets/rtl/loops.json" },
-      { "language": "systemverilog", "path": "./snippets/rtl/axi.json" },
-      { "language": "systemverilog", "path": "./snippets/rtl/fifo.json" },
-      { "language": "systemverilog", "path": "./snippets/rtl/fsm/fsm_core.json" },
-      { "language": "systemverilog", "path": "./snippets/rtl/fsm/fsm_onehot.json" },
-      { "language": "systemverilog", "path": "./snippets/uvm/base_classes.json" },
-      { "language": "systemverilog", "path": "./snippets/sva/assertions.json" },
-      { "language": "sdc", "path": "./snippets/constraints/sdc.json" },
-      { "language": "xdc", "path": "./snippets/constraints/xdc.json" }
+      {
+        "language": "verilog",
+        "path": "./snippets/sv/00_file_skeleton.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/sv/01_module_package_interface.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/sv/02_proc_blocks.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/sv/03_types_decl.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/sv/04_control_flow.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/sv/05_generate.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/sv/06_tasks_functions.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/sv/07_debug_misc.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/rtl/10_reg_reset.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/rtl/11_handshake_ready_valid.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/rtl/12_cdc_reset_crossing.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/rtl/13_fifo_queue_buffer.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/rtl/14_fsm.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/rtl/15_counter_timer_shift.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/rtl/16_mux_encode_decode.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/rtl/17_pipeline.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/rtl/18_arbiter_interconnect.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/rtl/19_parameter_checks.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/templates/rtl/00_rv_templates.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/templates/rtl/01_fsm_templates.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./snippets/templates/rtl/02_cdc_templates.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/sv/00_file_skeleton.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/sv/01_module_package_interface.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/sv/02_proc_blocks.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/sv/03_types_decl.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/sv/04_control_flow.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/sv/05_generate.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/sv/06_tasks_functions.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/sv/07_debug_misc.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/rtl/10_reg_reset.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/rtl/11_handshake_ready_valid.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/rtl/12_cdc_reset_crossing.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/rtl/13_fifo_queue_buffer.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/rtl/14_fsm.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/rtl/15_counter_timer_shift.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/rtl/16_mux_encode_decode.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/rtl/17_pipeline.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/rtl/18_arbiter_interconnect.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/rtl/19_parameter_checks.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/templates/rtl/00_rv_templates.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/templates/rtl/01_fsm_templates.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/templates/rtl/02_cdc_templates.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/sva/20_sequences_properties.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/sva/21_handshake_fifo_protocol.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/sva/22_fsm_arbiter_safety.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/sva/23_formal_assume_cover_bind.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/uvm/40_uvm_base.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/uvm/41_uvm_sequence_item_sequence.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/uvm/42_uvm_driver_monitor_sequencer.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/uvm/43_uvm_agent_env_test.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/uvm/44_uvm_factory_config_db.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/uvm/45_uvm_tlm_analysis.json"
+      },
+      {
+        "language": "systemverilog",
+        "path": "./snippets/uvm/46_uvm_messages_phases.json"
+      },
+      {
+        "language": "sdc",
+        "path": "./snippets/constraints/30_sdc_clocks_io.json"
+      },
+      {
+        "language": "sdc",
+        "path": "./snippets/constraints/31_sdc_exceptions.json"
+      },
+      {
+        "language": "sdc",
+        "path": "./snippets/constraints/34_sta_reports_queries.json"
+      },
+      {
+        "language": "xdc",
+        "path": "./snippets/constraints/32_xdc_clocks_io.json"
+      },
+      {
+        "language": "xdc",
+        "path": "./snippets/constraints/33_xdc_queries_debug.json"
+      },
+      {
+        "language": "xdc",
+        "path": "./snippets/constraints/34_sta_reports_queries.json"
+      }
     ],
     "languages": [
       {
@@ -384,9 +737,26 @@
         "configuration": "./language-configuration.json"
       },
       {
+        "id": "sdc",
+        "aliases": [
+          "SDC",
+          "sdc"
+        ],
+        "extensions": [
+          ".sdc"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
         "id": "xdc",
-        "aliases": ["Xilinx Design Constraints", "xdc", "sdc"],
-        "extensions": [".xdc", ".sdc"]
+        "aliases": [
+          "Xilinx Design Constraints",
+          "xdc"
+        ],
+        "extensions": [
+          ".xdc"
+        ],
+        "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
@@ -401,6 +771,11 @@
         "path": "./syntaxes/systemverilog.tmLanguage.json"
       },
       {
+        "language": "sdc",
+        "scopeName": "source.sdc",
+        "path": "./syntaxes/sdc.tmLanguage.json"
+      },
+      {
         "language": "xdc",
         "scopeName": "source.xdc",
         "path": "./syntaxes/xdc.tmLanguage.json"
@@ -408,28 +783,34 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run batch-pack",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src",
-    "test": "vscode-test"
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
+    "esbuild": "npm run esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+    "test-compile": "tsc -p ./",
+    "batch-pack": "npm run esbuild-base -- --minify" 
   },
   "dependencies": {
     "iconv-lite": "^0.7.2",
     "jschardet": "^3.1.4",
-    "vscode-jsonrpc": "^8.2.0",
+    "vscode-jsonrpc": "^8.2.1",
     "vscode-languageclient": "^9.0.1",
-    "web-tree-sitter": "^0.26.6"
+    "web-tree-sitter": "^0.26.7"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "^18.0.0",
-    "@types/vscode": "^1.80.0",
+    "@types/node": "^25.5.0",
+    "@types/vscode": "^1.90.0",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
-    "eslint": "^9.39.2",
+    "esbuild": "^0.27.4",
+    "eslint": "^10.0.3",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.52.0"
+    "typescript-eslint": "^8.57.1"
   }
 }

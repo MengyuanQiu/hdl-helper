@@ -1,0 +1,101 @@
+{
+  "UVM Factory Override": {
+    "prefix": "uvm_factory_override",
+    "body": [
+      "// UVM Factory Override",
+      "initial begin",
+      "    // Type override",
+      "    ${1:original_type}::type_id::set_type_override(${2:override_type}::get_type());",
+      "    ",
+      "    // Instance override",
+      "    // ${3:env}.${4:agent}::type_id::set_inst_override(${5:override_agent}::get_type());",
+      "end"
+    ],
+    "description": "Set UVM factory type or instance override"
+  },
+  "UVM Object Factory Create": {
+    "prefix": "uvm_object_create",
+    "body": [
+      "// Create object using factory",
+      "${1:obj_name} = ${2:class_name}::type_id::create(\"${3:inst_name}\");",
+      "",
+      "// Alternative with parent",
+      "// ${1:obj_name} = ${2:class_name}::type_id::create(\"${3:inst_name}\", ${4:parent});"
+    ],
+    "description": "Create UVM object using factory mechanism"
+  },
+  "UVM Component Factory Create": {
+    "prefix": "uvm_component_create",
+    "body": [
+      "// Create component using factory",
+      "${1:comp_name} = ${2:class_name}::type_id::create(\"${3:inst_name}\", ${4:this});",
+      "",
+      "// With configuration",
+      "// if (!$value$plusargs(\"${5:param_name}=%d\", ${6:param_var})) begin",
+      "//     ${6:param_var} = ${7:default_value};",
+      "// end"
+    ],
+    "description": "Create UVM component using factory with parent reference"
+  },
+  "UVM Macro Utils": {
+    "prefix": "uvm_utils",
+    "body": [
+      "// UVM Utility Macros",
+      "`uvm_object_utils_begin(${1:class_name})",
+      "    `uvm_field_int(${2:field_name}, UVM_DEFAULT)",
+      "    `uvm_field_array_int(${3:array_field}, UVM_DEFAULT)",
+      "    `uvm_field_object(${4:object_field}, UVM_DEFAULT)",
+      "    `uvm_field_enum(${5:enum_type}, ${6:enum_field}, UVM_DEFAULT)",
+      "`uvm_object_utils_end",
+      "",
+      "// For components:",
+      "// `uvm_component_utils(${1:class_name})",
+      "// `uvm_component_param_utils(${1:class_name} #(${2:param_type}))"
+    ],
+    "description": "UVM utility macros for field automation"
+  },
+  "UVM Configuration DB": {
+    "prefix": "uvm_config_db",
+    "body": [
+      "// UVM Configuration Database",
+      "",
+      "// Set configuration",
+      "`uvm_info(get_type_name(), \"Setting config\", UVM_HIGH)",
+      "uvm_config_db#(${1:type})::set(${2:context}, \"${3:instance_path}\", \"${4:field_name}\", ${5:value});",
+      "",
+      "// Get configuration",
+      "if (!uvm_config_db#(${1:type})::get(${2:context}, \"${3:instance_path}\", \"${4:field_name}\", ${6:var_name})) begin",
+      "    `uvm_fatal(\"NOCONFIG\", \"Failed to get config\")",
+      "end",
+      "",
+      "// Check existence",
+      "// if (uvm_config_db#(${1:type})::exists(${2:context}, \"${3:instance_path}\", \"${4:field_name}\")) begin",
+      "//     // Configuration exists",
+      "// end"
+    ],
+    "description": "UVM configuration database set/get operations"
+  },
+  "UVM Phase Imp": {
+    "prefix": "uvm_phase_imp",
+    "body": [
+      "// UVM Phase Implementation",
+      "virtual task ${1:phase_name}(uvm_phase phase);",
+      "    super.${1:phase_name}(phase);",
+      "    ",
+      "    `uvm_info(get_type_name(), \"Starting ${1:phase_name} phase\", UVM_MEDIUM)",
+      "    ",
+      "    // TODO: Add ${1:phase_name} implementation",
+      "    ",
+      "endtask : ${1:phase_name}",
+      "",
+      "// Common phases:",
+      "// - build_phase(phase)",
+      "// - connect_phase(phase)",
+      "// - run_phase(phase)",
+      "// - extract_phase(phase)",
+      "// - check_phase(phase)",
+      "// - report_phase(phase)"
+    ],
+    "description": "UVM phase task template"
+  }
+}

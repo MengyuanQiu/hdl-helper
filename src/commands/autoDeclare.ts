@@ -3,7 +3,7 @@ import { CodeGenerator } from '../utils/codeGenerator'; // 👈 复用统一的�
 
 export async function autoDeclareSignals() {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) return;
+    if (!editor) {return;}
 
     const selection = editor.selection;
     const text = editor.document.getText(selection);
@@ -19,7 +19,7 @@ export async function autoDeclareSignals() {
     const parsedPorts = CodeGenerator.parseSelectedInstantiation(text);
 
     if (parsedPorts.length === 0) {
-        vscode.window.showWarningMessage('未识别到有效信号。请确保选中了包含 "// input..." 等注释的例化代码 (推荐用 Ctrl+Alt+I 生成)');
+        vscode.window.showWarningMessage('未识别到有效信号。请确保选中了包含端口连接的例化代码，例如 .port_name(signal_name)');
         return;
     }
 
@@ -39,10 +39,10 @@ export async function autoDeclareSignals() {
 
     parsedPorts.forEach(port => {
         // 过滤全局信号
-        if (ignoreList.has(port.name)) return;
+        if (ignoreList.has(port.name)) {return;}
         
         // 去重
-        if (uniqueSignals.has(port.name)) return;
+        if (uniqueSignals.has(port.name)) {return;}
         uniqueSignals.add(port.name);
 
         // 提取位宽

@@ -1,0 +1,82 @@
+{
+	"SV always_ff": {
+		"prefix": "sv.aff",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin : ${3:blk_ff}",
+			"    if (!${2:rst_ni}) begin",
+			"        $0",
+			"    end else begin",
+			"    end",
+			"end"
+		],
+		"description": "Generic always_ff skeleton for custom reset/update logic"
+	},
+	"SV always_ff with CE": {
+		"prefix": "sv.aff.ce",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin : ${3:blk_ff_ce}",
+			"    if (!${2:rst_ni}) begin",
+			"        ${4:q} <= ${5:'0};",
+			"    end else if (${6:ce_i}) begin",
+			"        ${4:q} <= ${7:d};",
+			"    end",
+			"end$0"
+		],
+		"description": "always_ff register pattern with clock enable"
+	},
+	"SV always_ff reset and CE": {
+		"prefix": "sv.aff.rst.ce",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin : ${3:blk_ff_rst_ce}",
+			"    if (!${2:rst_ni}) begin",
+			"        ${4:q} <= ${5:'0};",
+			"    end else if (${6:ce_i}) begin",
+			"        ${4:q} <= ${7:d};",
+			"    end",
+			"end$0"
+		],
+		"description": "always_ff pattern with reset and explicit hold"
+	},
+	"SV always_comb": {
+		"prefix": "sv.acomb",
+		"body": [
+			"always_comb begin : ${1:blk_comb}",
+			"    $0",
+			"end"
+		],
+		"description": "Combinational always_comb block"
+	},
+	"SV always_comb with default": {
+		"prefix": "sv.acomb.default",
+		"body": [
+			"always_comb begin : ${1:blk_comb_default}",
+			"    ${2:out_o} = ${3:'0};",
+			"    $0",
+			"end"
+		],
+		"description": "always_comb block with explicit default assignment"
+	},
+	"SV always_latch": {
+		"prefix": "sv.alatch",
+		"body": [
+			"always_latch begin : ${1:blk_latch}",
+			"    $0",
+			"end"
+		],
+		"description": "Latch block (use only when latch is intended)"
+	},
+	"SV initial": {
+		"prefix": "sv.init",
+		"body": [
+			"initial begin",
+			"    $0",
+			"end"
+		],
+		"description": "Initial block"
+	},
+	"SV assign": {
+		"prefix": "sv.assign",
+		"body": "assign ${1:lhs} = ${2:rhs};$0",
+		"description": "Continuous assignment"
+	}
+}

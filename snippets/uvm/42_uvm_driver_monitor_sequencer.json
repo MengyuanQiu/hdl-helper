@@ -1,0 +1,102 @@
+{
+	"UVM driver skeleton": {
+		"prefix": "uvm.driver",
+		"body": [
+			"class ${1:my_driver} extends uvm_driver #(${2:my_seq_item});",
+			"    `uvm_component_utils(${1:my_driver})",
+			"",
+			"    function new(string name = \"${1:my_driver}\", uvm_component parent = null);",
+			"        super.new(name, parent);",
+			"    endfunction : new",
+			"",
+			"    task run_phase(uvm_phase phase);",
+			"        ${2:my_seq_item} req;",
+			"        forever begin",
+			"            seq_item_port.get_next_item(req);",
+			"            // TODO: drive interface from req",
+			"            // TODO: complete drive before item_done()",
+			"            seq_item_port.item_done();",
+			"        end",
+			"    endtask : run_phase",
+			"endclass : ${1:my_driver}$0"
+		],
+		"description": "UVM driver skeleton with seq_item_port handshake"
+	},
+	"UVM monitor skeleton": {
+		"prefix": "uvm.monitor",
+		"body": [
+			"class ${1:my_monitor} extends uvm_monitor;",
+			"    `uvm_component_utils(${1:my_monitor})",
+			"    uvm_analysis_port #(${2:my_seq_item}) ${3:ap};",
+			"",
+			"    function new(string name = \"${1:my_monitor}\", uvm_component parent = null);",
+			"        super.new(name, parent);",
+			"        ${3:ap} = new(\"${3:ap}\", this);",
+			"    endfunction : new",
+			"",
+			"    task run_phase(uvm_phase phase);",
+			"        ${2:my_seq_item} tr;",
+			"        forever begin",
+			"            tr = ${2:my_seq_item}::type_id::create(\"tr\");",
+			"            // TODO: sample interface and fill transaction",
+			"            ${3:ap}.write(tr);",
+			"        end",
+			"    endtask : run_phase",
+			"endclass : ${1:my_monitor}$0"
+		],
+		"description": "Monitor template; creates a fresh transaction each iteration"
+	},
+	"UVM sequencer skeleton": {
+		"prefix": "uvm.sequencer",
+		"body": [
+			"class ${1:my_sequencer} extends uvm_sequencer #(${2:my_seq_item});",
+			"    `uvm_component_utils(${1:my_sequencer})",
+			"",
+			"    function new(string name = \"${1:my_sequencer}\", uvm_component parent = null);",
+			"        super.new(name, parent);",
+			"    endfunction : new",
+			"endclass : ${1:my_sequencer}$0"
+		],
+		"description": "UVM sequencer template"
+	},
+	"UVM get next item": {
+		"prefix": "uvm.seq_item_port.get_next",
+		"body": [
+			"${1:my_seq_item} req;",
+			"seq_item_port.get_next_item(req);",
+			"$0",
+			"seq_item_port.item_done();"
+		],
+		"description": "Driver pull item from sequencer with local req declaration"
+	},
+	"UVM get next item inline": {
+		"prefix": "uvm.seq_item_port.get_next.inline",
+		"body": [
+			"seq_item_port.get_next_item(${1:req});",
+			"$0",
+			"seq_item_port.item_done();"
+		],
+		"description": "Driver pull item from sequencer using existing req handle"
+	},
+	"UVM try next item": {
+		"prefix": "uvm.seq_item_port.try_next",
+		"body": [
+			"${1:my_seq_item} req;",
+			"seq_item_port.try_next_item(req);",
+			"if (req != null) begin",
+			"    $0",
+			"    seq_item_port.item_done();",
+			"end"
+		],
+		"description": "Non-blocking pull item from sequencer when available"
+	},
+	"UVM analysis write": {
+		"prefix": "uvm.analysis.write",
+		"body": [
+			"function void write(${1:my_seq_item} ${2:tr});",
+			"    $0",
+			"endfunction : write"
+		],
+		"description": "Analysis write callback skeleton"
+	}
+}

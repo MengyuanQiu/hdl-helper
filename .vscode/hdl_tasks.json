@@ -1,0 +1,44 @@
+{
+  "tasks": [
+    {
+      "name": "Run dsp_cnn_top (sources mode)",
+      "type": "hdl-sim",
+      "tool": "iverilog",
+      "top": "dsp_cnn_top",
+      "sources": [
+        "rtl",
+        "tb",
+        "sim"
+      ],
+      "workingDirectory": ".",
+      "buildDir": "build",
+      "flags": [
+        "-g2012"
+      ],
+      "iverilogPath": "iverilog",
+      "vvpPath": "vvp",
+      "waveform": true,
+      "waveformFormat": "fst",
+      "autoOpenWaveform": true
+    },
+    {
+      "name": "Run dsp_cnn_top (filelist mode)",
+      "type": "hdl-sim",
+      "tool": "iverilog",
+      "top": "dsp_cnn_top",
+      "filelist": [
+        "sim/filelist.f"
+      ],
+      "workingDirectory": ".",
+      "buildDir": "build",
+      "flags": [
+        "-g2012"
+      ],
+      "iverilogPath": "iverilog",
+      "vvpPath": "vvp",
+      "waveform": true,
+      "waveformFormat": "fst",
+      "autoOpenWaveform": true
+    }
+  ]
+}

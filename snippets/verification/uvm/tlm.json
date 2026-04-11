@@ -1,0 +1,94 @@
+{
+  "TLM Port": {
+    "prefix": "tlm_port",
+    "body": [
+      "// TLM Port Declaration",
+      "class ${1:class_name} extends uvm_component;",
+      "    // TLM Ports",
+      "    uvm_blocking_put_port#(${2:type}) put_port;",
+      "    uvm_blocking_get_port#(${2:type}) get_port;",
+      "    uvm_analysis_port#(${2:type}) analysis_port;",
+      "",
+      "    function new(string name = \"${1:class_name}\", uvm_component parent = null);",
+      "        super.new(name, parent);",
+      "        put_port = new(\"put_port\", this);",
+      "        get_port = new(\"get_port\", this);",
+      "        analysis_port = new(\"analysis_port\", this);",
+      "    endfunction",
+      "",
+      "endclass"
+    ],
+    "description": "TLM port declarations for component communication"
+  },
+  "TLM Export": {
+    "prefix": "tlm_export",
+    "body": [
+      "// TLM Export Implementation",
+      "class ${1:export_imp}#(type T=${2:type}) extends uvm_component implements uvm_blocking_put_imp #(T);",
+      "",
+      "    `uvm_component_utils(${1:export_imp})",
+      "",
+      "    // Put implementation",
+      "    virtual task put(T t);",
+      "        `uvm_info(get_type_name(), $sformatf(\"Received: %p\", t), UVM_MEDIUM)",
+      "        // TODO: Process received data",
+      "    endtask",
+      "",
+      "endclass"
+    ],
+    "description": "TLM export with put method implementation"
+  },
+  "TLM Analysis Port": {
+    "prefix": "tlm_analysis",
+    "body": [
+      "// TLM Analysis Port Connection",
+      "class ${1:class_name} extends uvm_component;",
+      "    // Analysis ports",
+      "    uvm_analysis_port#(${2:type}) analysis_port;",
+      "    uvm_analysis_imp#(${2:type}, ${3:component}) analysis_imp;",
+      "",
+      "    function new(string name = \"${1:class_name}\", uvm_component parent = null);",
+      "        super.new(name, parent);",
+      "        analysis_port = new(\"analysis_port\", this);",
+      "        analysis_imp = new(\"analysis_imp\", this);",
+      "    endfunction",
+      "",
+      "    // Connect method",
+      "    virtual function void connect_phase(uvm_phase phase);",
+      "        super.connect_phase(phase);",
+      "        // Connect to monitor",
+      "        // monitor.analysis_port.connect(analysis_imp);",
+      "    endfunction",
+      "",
+      "endclass"
+    ],
+    "description": "TLM analysis port for broadcast communication"
+  },
+  "TLM FIFO": {
+    "prefix": "tlm_fifo",
+    "body": [
+      "// TLM FIFO",
+      "${1:type} fifo = new();",
+      "",
+      "// Producer side",
+      "task produce();",
+      "    forever begin",
+      "        ${2:data_type} data;",
+      "        // Generate data",
+      "        data = ${3:value};",
+      "        fifo.put(data);",
+      "    end",
+      "endtask",
+      "",
+      "// Consumer side",
+      "task consume();",
+      "    forever begin",
+      "        ${2:data_type} data;",
+      "        fifo.get(data);",
+      "        // Process data",
+      "    end",
+      "endtask"
+    ],
+    "description": "TLM FIFO for producer-consumer communication"
+  }
+}

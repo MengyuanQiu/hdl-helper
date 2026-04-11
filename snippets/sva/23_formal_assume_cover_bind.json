@@ -1,0 +1,56 @@
+{
+	"SVA bind module": {
+		"prefix": "sva.bind",
+		"body": "bind ${1:target_module} ${2:assert_module} ${3:u_assert} (.*);$0",
+		"description": "Bind assertion module to DUT using wildcard port connection"
+	},
+	"SVA default clocking": {
+		"prefix": "sva.default.clocking",
+		"body": [
+			"default clocking cb @(posedge ${1:clk_i});",
+			"endclocking$0"
+		],
+		"description": "Define default clocking block"
+	},
+	"SVA disable iff": {
+		"prefix": "sva.disable.iff",
+		"body": "disable iff (!${1:rst_ni})$0",
+		"description": "Disable condition for properties"
+	},
+	"SVA formal assume input stable": {
+		"prefix": "sva.formal.assume.input_stable",
+		"body": [
+			"property p_${1:input_stable};",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    ${4:valid} && !${5:ready} |-> \\$stable(${6:input_bus});",
+			"endproperty",
+			"",
+			"assume_${1:input_stable}: assume property(p_${1:input_stable});$0"
+		],
+		"description": "Formal environment assumption for stable inputs"
+	},
+	"SVA formal cover reach": {
+		"prefix": "sva.formal.cover.reach",
+		"body": [
+			"property p_${1:reach};",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    ${4:goal_condition};",
+			"endproperty",
+			"",
+			"cover_${1:reach}: cover property(p_${1:reach});$0"
+		],
+		"description": "Formal cover objective"
+	},
+	"SVA known check": {
+		"prefix": "sva.known.check",
+		"body": [
+			"property p_${1:known};",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    !\\$isunknown(${4:signal_bus});",
+			"endproperty",
+			"",
+			"assert_${1:known}: assert property(p_${1:known});$0"
+		],
+		"description": "Check signal is never X/Z"
+	}
+}

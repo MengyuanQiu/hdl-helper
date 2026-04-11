@@ -1,0 +1,56 @@
+{
+	"SV display": {
+		"prefix": "sv.display",
+		"body": "\\$display(\"${1:msg}: %0h\", ${2:value});$0",
+		"description": "Display debug message"
+	},
+	"SV displayh": {
+		"prefix": "sv.displayh",
+		"body": "\\$display(\"${1:%0h}\", ${2:value});$0",
+		"description": "Display value in hex format"
+	},
+	"SV warning": {
+		"prefix": "sv.warning",
+		"body": "\\$warning(\"${1:warning message}\");$0",
+		"description": "Emit warning message"
+	},
+	"SV error": {
+		"prefix": "sv.error",
+		"body": "\\$error(\"${1:error message}\");$0",
+		"description": "Emit error message"
+	},
+	"SV fatal": {
+		"prefix": "sv.fatal",
+		"body": "\\$fatal(${1:1}, \"${2:fatal message}\");$0",
+		"description": "Emit fatal message and stop"
+	},
+	"SV immediate assert": {
+		"prefix": "sv.assert.imm",
+		"body": "assert (${1:condition}) else \\$error(\"${2:assertion failed}\");$0",
+		"description": "Immediate assertion"
+	},
+	"SV immediate assert block": {
+		"prefix": "sv.assert.imm.blk",
+		"body": [
+			"assert (${1:condition})",
+			"begin",
+			"    ${2:// pass action}",
+			"end",
+			"else",
+			"begin",
+			"    \\$error(\"${3:assertion failed}\");",
+			"end$0"
+		],
+		"description": "Immediate assertion with begin/end actions"
+	},
+	"SV posedge": {
+		"prefix": "sv.posedge",
+		"body": "posedge ${1:clk_i}",
+		"description": "posedge expression"
+	},
+	"SV negedge": {
+		"prefix": "sv.negedge",
+		"body": "negedge ${1:rst_ni}",
+		"description": "negedge expression"
+	}
+}

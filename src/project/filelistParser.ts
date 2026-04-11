@@ -1,68 +1,140 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+export interface FilelistParseResult {
+    sourceFiles: string[];
+    includeDirs: string[];
+    libraryDirs: string[];
+}
+
 export class FilelistParser {
+    private static expandEnvVars(input: string): string {
+        return input.replace(/\$\{([^}]+)\}|\$([A-Za-z_][A-Za-z0-9_]*)|%([^%]+)%/g, (match, p1, p2, p3) => {
+            const varName = p1 || p2 || p3;
+            const value = process.env[varName];
+            return value !== undefined ? value : match;
+        });
+    }
+
     /**
      * 解析 .f 文件，返回绝对路径列表
      * @param fFilePath .f 文件的绝对路径
      */
     public static parse(fFilePath: string): string[] {
-        const fileList: string[] = [];
-        
-        // 检查文件是否存在
-        if (!fs.existsSync(fFilePath)) return [];
+        return this.parseDetailed(fFilePath).sourceFiles;
+    }
 
-        const content = fs.readFileSync(fFilePath, 'utf-8');
+    /**
+     * 解析 filelist，返回源文件、include 目录与库目录。
+     */
+    public static parseDetailed(fFilePath: string, visited = new Set<string>()): FilelistParseResult {
+        const result: FilelistParseResult = {
+            sourceFiles: [],
+            includeDirs: [],
+            libraryDirs: []
+        };
+
+        if (!fFilePath) {
+            return result;
+        }
+
+        const absFilelist = path.resolve(fFilePath);
+        if (!fs.existsSync(absFilelist) || visited.has(absFilelist)) {
+            return result;
+        }
+        visited.add(absFilelist);
+
+        const sourceSet = new Set<string>();
+        const includeSet = new Set<string>();
+        const librarySet = new Set<string>();
+
+        const content = fs.readFileSync(absFilelist, 'utf-8');
         const lines = content.split(/\r?\n/);
-        const rootDir = path.dirname(fFilePath); // 用于解析相对路径
+        const rootDir = path.dirname(absFilelist);
+
+        const toAbs = (rawPath: string): string => {
+            return path.isAbsolute(rawPath) ? rawPath : path.resolve(rootDir, rawPath);
+        };
 
         for (let line of lines) {
             line = line.trim();
-
-            // 1. 过滤空行
-            if (!line) continue;
-
-            // 2. 过滤注释 (// 或 # 或 *)
-            // 注意：有些 .f 用 // 注释，有些工具支持 #
-            if (line.startsWith('//') || line.startsWith('#') || line.startsWith('*')) continue;
-
-            // 3. 过滤参数 (以 + 或 - 开头)
-            // 例如: +incdir+..., -v lib.v, -y dir
-            // 我们目前只关注源文件，暂时忽略 include 目录和库定义
-            if (line.startsWith('+') || line.startsWith('-')) {
-                // TODO: 未来可以解析 +incdir+ 传递给 Verible
+            if (!line) {
                 continue;
             }
 
-            // 4. 处理行内注释 (例如: "file.v // comment")
-            const commentIndex = line.indexOf('//');
-            if (commentIndex !== -1) {
-                line = line.substring(0, commentIndex).trim();
-            }
-
-            // 5. 路径处理
-            // 此时 line 应该是一个文件路径
-            // 简单处理环境变量：如果包含 $ 符号，暂时跳过（V2.1 不支持复杂环境变量解析）
-            if (line.includes('$')) {
-                console.warn(`[Filelist] Skipped path with env var: ${line}`);
+            if (line.startsWith('//') || line.startsWith('#') || line.startsWith('*')) {
                 continue;
             }
 
-            let absPath = line;
-            if (!path.isAbsolute(line)) {
-                // 拼接相对路径: .f 所在目录 + 文件路径
-                absPath = path.join(rootDir, line);
+            const slashComment = line.indexOf('//');
+            if (slashComment !== -1) {
+                line = line.substring(0, slashComment).trim();
             }
 
-            // 6. 验证并添加
-            // 只收录存在的 .v/.sv/.vh 文件
-            if (fs.existsSync(absPath)) {
-                if (/\.(v|sv|vh|svh)$/i.test(absPath)) {
-                    fileList.push(absPath);
+            if (!line) {
+                continue;
+            }
+
+            line = this.expandEnvVars(line);
+
+            if (line.startsWith('+incdir+')) {
+                const parts = line.split('+').slice(2).map(p => p.trim()).filter(Boolean);
+                for (const dir of parts) {
+                    const absDir = toAbs(this.expandEnvVars(dir));
+                    if (fs.existsSync(absDir)) {
+                        includeSet.add(absDir);
+                    }
                 }
+                continue;
+            }
+
+            if (line.startsWith('-f ') || line.startsWith('-F ')) {
+                const nestedRaw = line.substring(2).trim();
+                if (nestedRaw) {
+                    const nestedAbs = toAbs(nestedRaw);
+                    const nested = this.parseDetailed(nestedAbs, visited);
+                    nested.sourceFiles.forEach(f => sourceSet.add(f));
+                    nested.includeDirs.forEach(d => includeSet.add(d));
+                    nested.libraryDirs.forEach(d => librarySet.add(d));
+                }
+                continue;
+            }
+
+            if (line.startsWith('-y ')) {
+                const libRaw = line.substring(2).trim();
+                if (libRaw) {
+                    const libAbs = toAbs(libRaw);
+                    if (fs.existsSync(libAbs)) {
+                        librarySet.add(libAbs);
+                    }
+                }
+                continue;
+            }
+
+            if (line.startsWith('-v ')) {
+                const fileRaw = line.substring(2).trim();
+                if (fileRaw) {
+                    const fileAbs = toAbs(fileRaw);
+                    if (fs.existsSync(fileAbs) && /\.(v|sv|vh|svh)$/i.test(fileAbs)) {
+                        sourceSet.add(fileAbs);
+                    }
+                }
+                continue;
+            }
+
+            if (line.startsWith('+') || line.startsWith('-')) {
+                continue;
+            }
+
+            const absPath = toAbs(line);
+            if (fs.existsSync(absPath) && /\.(v|sv|vh|svh)$/i.test(absPath)) {
+                sourceSet.add(absPath);
             }
         }
 
-        return fileList;
+        result.sourceFiles = Array.from(sourceSet).sort((a, b) => a.localeCompare(b));
+        result.includeDirs = Array.from(includeSet).sort((a, b) => a.localeCompare(b));
+        result.libraryDirs = Array.from(librarySet).sort((a, b) => a.localeCompare(b));
+        return result;
     }
 }

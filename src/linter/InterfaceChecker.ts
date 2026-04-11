@@ -18,7 +18,7 @@ export class InterfaceChecker {
             for (const instance of mod.instances) {
                 // Find the definition of the instantiated module
                 const targetMod = this.projectManager.getModule(instance.type);
-                if (!targetMod) continue; // If module definition isn't found in workspace, skip checking
+                if (!targetMod) {continue;} // If module definition isn't found in workspace, skip checking
 
                 const targetPorts = targetMod.ports.map(p => p.name);
                 const connectedPorts = instance.portConnections;

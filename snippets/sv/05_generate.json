@@ -1,0 +1,51 @@
+{
+	"SV generate for": {
+		"prefix": "sv.gen.for",
+		"body": [
+			"generate",
+			"    for (genvar ${1:i} = 0; ${1:i} < ${2:NUM}; ${1:i}++) begin : gen_${3:block}",
+			"        $0",
+			"    end",
+			"endgenerate"
+		],
+		"description": "generate-for block"
+	},
+	"SV generate if-else": {
+		"prefix": "sv.gen.ifelse",
+		"body": [
+			"generate",
+			"    if (${1:COND}) begin : gen_${2:true_blk}",
+			"        $0",
+			"    end else begin : gen_${3:false_blk}",
+			"    end",
+			"endgenerate"
+		],
+		"description": "generate-if-else block"
+	},
+	"SV generate if": {
+		"prefix": "sv.gen.if",
+		"body": [
+			"generate",
+			"    if (${1:COND}) begin : gen_${2:true_blk}",
+			"        $0",
+			"    end",
+			"endgenerate"
+		],
+		"description": "generate-if block"
+	},
+	"SV generate case": {
+		"prefix": "sv.gen.case",
+		"body": [
+			"generate",
+			"    case (${1:SEL})",
+			"        ${2:0}: begin : gen_${3:case0}",
+			"            $0",
+			"        end",
+			"        default: begin : gen_${4:default}",
+			"        end",
+			"    endcase",
+			"endgenerate"
+		],
+		"description": "generate-case block"
+	}
+}

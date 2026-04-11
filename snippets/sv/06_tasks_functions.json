@@ -1,0 +1,89 @@
+{
+	"SV function": {
+		"prefix": "sv.func",
+		"body": [
+			"function ${1:logic} ${2:func_name}(${3:arguments});",
+			"    $0",
+			"endfunction : ${2:func_name}"
+		],
+		"description": "Function declaration"
+	},
+	"SV void function": {
+		"prefix": "sv.func.void",
+		"body": [
+			"function void ${1:func_name}(${2:arguments});",
+			"    $0",
+			"endfunction : ${1:func_name}"
+		],
+		"description": "Void function declaration"
+	},
+	"SV automatic function": {
+		"prefix": "sv.func.auto",
+		"body": [
+			"function automatic ${1:logic} ${2:func_name}(${3:arguments});",
+			"    $0",
+			"endfunction : ${2:func_name}"
+		],
+		"description": "Automatic function declaration"
+	},
+	"SV task": {
+		"prefix": "sv.task",
+		"body": [
+			"task ${1:task_name}(${2:arguments});",
+			"    $0",
+			"endtask : ${1:task_name}"
+		],
+		"description": "Task declaration"
+	},
+	"SV automatic task": {
+		"prefix": "sv.task.auto",
+		"body": [
+			"task automatic ${1:task_name}(${2:arguments});",
+			"    $0",
+			"endtask : ${1:task_name}"
+		],
+		"description": "Automatic task declaration"
+	},
+	"SV class": {
+		"prefix": "sv.class",
+		"body": [
+			"class ${1:class_name};",
+			"    function new();",
+			"        $0",
+			"    endfunction : new",
+			"endclass : ${1:class_name}"
+		],
+		"description": "Class declaration"
+	},
+	"SV class extends": {
+		"prefix": "sv.class.ext",
+		"body": [
+			"class ${1:class_name} extends ${2:base_class};",
+			"    function new();",
+			"        super.new();",
+			"        $0",
+			"    endfunction : new",
+			"endclass : ${1:class_name}"
+		],
+		"description": "Derived class declaration"
+	},
+	"SV class shell": {
+		"prefix": "sv.class.shell",
+		"body": [
+			"class ${1:class_name};",
+			"    $0",
+			"endclass : ${1:class_name}"
+		],
+		"description": "Class shell without predefined constructor"
+	},
+	"SV class constructor with args": {
+		"prefix": "sv.class.new.args",
+		"body": [
+			"function new(${1:args});",
+			"    ${2:super.new(${3:super_args});}",
+			"    $0",
+			"endfunction : new"
+		],
+		"description": "Constructor template with argument placeholders"
+	}
+}

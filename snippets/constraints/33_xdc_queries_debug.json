@@ -1,0 +1,32 @@
+{
+	"XDC query cells": {
+		"prefix": "xdc.query.cells",
+		"body": "get_cells -hier -filter {NAME =~ *${1:pattern}*}$0",
+		"description": "Query hierarchical cells"
+	},
+	"XDC query pins safe": {
+		"prefix": "xdc.query.pins.safe",
+		"body": "get_pins -of_objects [get_cells -hier -filter {NAME =~ *${1:cell_name}*}] -filter {REF_PIN_NAME == ${2:CLK}}$0",
+		"description": "Safe pin query via selected cells"
+	},
+	"XDC mark debug": {
+		"prefix": "xdc.debug.mark_debug",
+		"body": "set_property MARK_DEBUG true [get_nets -hier -filter {NAME =~ *${1:signal}*}]$0",
+		"description": "Mark net for debug visibility"
+	},
+	"XDC dont touch": {
+		"prefix": "xdc.debug.dont_touch",
+		"body": "set_property DONT_TOUCH true [get_cells -hier -filter {NAME =~ *${1:inst}*}]$0",
+		"description": "Prevent optimization on cells"
+	},
+	"XDC query nets": {
+		"prefix": "xdc.query.nets",
+		"body": "get_nets -hier -filter {NAME =~ *${1:net_pattern}*}$0",
+		"description": "Query nets by hierarchical pattern"
+	},
+	"XDC query ports": {
+		"prefix": "xdc.query.ports",
+		"body": "get_ports {${1:port_pattern}}$0",
+		"description": "Query top-level ports"
+	}
+}

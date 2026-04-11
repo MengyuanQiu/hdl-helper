@@ -1,3 +1,9 @@
 package cmd : vsce package
 compile cmd : npm run compile
 code --install-extension /path/to/your-extension.vsix
+
+Remove-Item -Recurse -Force out
+
+npm run batch-pack
+
+package cmd : vsce package

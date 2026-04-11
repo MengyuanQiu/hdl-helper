@@ -12,10 +12,10 @@ export class TestbenchGenerator {
 
         // 简单的启发式搜索
         const foundClk = ports.find(p => /clk|clock/i.test(p.name));
-        if (foundClk) clockPort = foundClk.name;
+        if (foundClk) {clockPort = foundClk.name;}
 
         const foundRst = ports.find(p => /rst|reset/i.test(p.name));
-        if (foundRst) resetPort = foundRst.name;
+        if (foundRst) {resetPort = foundRst.name;}
 
         // 2. 构建 TB 内部信号声明
         // 规则: Input -> reg/logic (TB驱动), Output -> wire/logic (TB观测)
@@ -38,8 +38,8 @@ export class TestbenchGenerator {
         const instanceConnections = ports.map((p, index) => {
             let connectTo = p.name;
             // 映射时钟复位
-            if (p.name === clockPort) connectTo = 'clk';
-            if (p.name === resetPort) connectTo = 'rst_n';
+            if (p.name === clockPort) {connectTo = 'clk';}
+            if (p.name === resetPort) {connectTo = 'rst_n';}
             
             const padding = ' '.repeat(Math.max(0, maxNameLen - p.name.length));
             const comma = index === ports.length - 1 ? '' : ',';

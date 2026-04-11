@@ -1,0 +1,185 @@
+{
+	"RTL FSM state enum": {
+		"prefix": "rtl.fsm.state_enum",
+		"body": [
+			"typedef enum logic [${1:1}:0] {",
+			"    ${2:ST_IDLE},",
+			"    ${3:ST_BUSY},",
+			"    ${4:ST_DONE}",
+			"} ${5:state_t};$0"
+		],
+		"description": "FSM state enum declaration"
+	},
+	"RTL FSM state enum onehot": {
+		"prefix": "rtl.fsm.state_enum.onehot",
+		"body": [
+			"typedef enum logic [2:0] {",
+			"    ${1:ST_IDLE} = 3'b001,",
+			"    ${2:ST_BUSY} = 3'b010,",
+			"    ${3:ST_DONE} = 3'b100",
+			"} ${4:state_t};$0"
+		],
+		"description": "One-hot FSM state enum declaration (default shown for 3 states)"
+	},
+	"RTL FSM 2-segment": {
+		"prefix": "rtl.fsm.2seg",
+		"body": [
+			"${1:state_t} ${2:state_q};",
+			"",
+			"always_ff @(posedge ${3:clk_i} or negedge ${4:rst_ni}) begin",
+			"    if (!${4:rst_ni}) begin",
+			"        ${2:state_q} <= ${5:ST_IDLE};",
+			"    end else begin",
+			"        case (${2:state_q})",
+			"            ${5:ST_IDLE}: if (${6:start_i}) ${2:state_q} <= ${7:ST_BUSY};",
+			"            ${7:ST_BUSY}: if (${8:done_i})  ${2:state_q} <= ${9:ST_DONE};",
+			"            ${9:ST_DONE}:                   ${2:state_q} <= ${5:ST_IDLE};",
+			"            default:                         ${2:state_q} <= ${5:ST_IDLE};",
+			"        endcase",
+			"    end",
+			"end$0"
+		],
+		"description": "Two-segment FSM style"
+	},
+	"RTL FSM 2-segment unique": {
+		"prefix": "rtl.fsm.2seg.unique",
+		"body": [
+			"${1:state_t} ${2:state_q};",
+			"",
+			"always_ff @(posedge ${3:clk_i} or negedge ${4:rst_ni}) begin",
+			"    if (!${4:rst_ni}) begin",
+			"        ${2:state_q} <= ${5:ST_IDLE};",
+			"    end else begin",
+			"        unique case (${2:state_q})",
+			"            ${5:ST_IDLE}: if (${6:start_i}) ${2:state_q} <= ${7:ST_BUSY};",
+			"            ${7:ST_BUSY}: if (${8:done_i})  ${2:state_q} <= ${9:ST_DONE};",
+			"            ${9:ST_DONE}:                   ${2:state_q} <= ${5:ST_IDLE};",
+			"            default:                         ${2:state_q} <= ${5:ST_IDLE};",
+			"        endcase",
+			"    end",
+			"end$0"
+		],
+		"description": "Two-segment FSM style with unique case"
+	},
+	"RTL FSM 3-segment": {
+		"prefix": "rtl.fsm.3seg",
+		"body": [
+			"${1:state_t} ${2:state_q}, ${3:state_d};",
+			"",
+			"always_ff @(posedge ${4:clk_i} or negedge ${5:rst_ni}) begin",
+			"    if (!${5:rst_ni}) begin",
+			"        ${2:state_q} <= ${6:ST_IDLE};",
+			"    end else begin",
+			"        ${2:state_q} <= ${3:state_d};",
+			"    end",
+			"end",
+			"",
+			"always_comb begin",
+			"    ${3:state_d} = ${2:state_q};",
+			"    case (${2:state_q})",
+			"        ${6:ST_IDLE}: if (${7:start_i}) ${3:state_d} = ${8:ST_BUSY};",
+			"        ${8:ST_BUSY}: if (${9:done_i})  ${3:state_d} = ${10:ST_DONE};",
+			"        ${10:ST_DONE}:                  ${3:state_d} = ${6:ST_IDLE};",
+			"        default:                        ${3:state_d} = ${6:ST_IDLE};",
+			"    endcase",
+			"end",
+			"",
+			"always_comb begin",
+			"    ${11:out_o} = 1'b0;",
+			"    case (${2:state_q})",
+			"        ${8:ST_BUSY}: ${11:out_o} = 1'b1;",
+			"        default: ;",
+			"    endcase",
+			"end$0"
+		],
+		"description": "Three-segment FSM with dedicated output block"
+	},
+	"RTL FSM mealy 3-segment": {
+		"prefix": "rtl.fsm.mealy.3seg",
+		"body": [
+			"${1:state_t} ${2:state_q}, ${3:state_d};",
+			"",
+			"always_ff @(posedge ${4:clk_i} or negedge ${5:rst_ni}) begin",
+			"    if (!${5:rst_ni}) ${2:state_q} <= ${6:ST_IDLE};",
+			"    else              ${2:state_q} <= ${3:state_d};",
+			"end",
+			"",
+			"always_comb begin",
+			"    ${3:state_d} = ${2:state_q};",
+			"    ${7:out_o}   = 1'b0;",
+			"    case (${2:state_q})",
+			"        ${6:ST_IDLE}: begin",
+			"            if (${8:start_i}) begin",
+			"                ${3:state_d} = ${9:ST_BUSY};",
+			"                ${7:out_o}   = 1'b1;",
+			"            end",
+			"        end",
+			"        ${9:ST_BUSY}: if (${10:done_i}) ${3:state_d} = ${11:ST_DONE};",
+			"        ${11:ST_DONE}:                  ${3:state_d} = ${6:ST_IDLE};",
+			"        default:                        ${3:state_d} = ${6:ST_IDLE};",
+			"    endcase",
+			"end$0"
+		],
+		"description": "Mealy-style three-segment FSM"
+	},
+	"RTL FSM onehot": {
+		"prefix": "rtl.fsm.onehot",
+		"body": [
+			"localparam int ${1:STATE_W} = ${2:3};",
+			"typedef enum logic [${1:STATE_W}-1:0] {",
+			"    ${3:ST_IDLE} = ${2:3}'b001,",
+			"    ${4:ST_BUSY} = ${2:3}'b010,",
+			"    ${5:ST_DONE} = ${2:3}'b100",
+			"} ${6:state_t};",
+			"",
+			"(* fsm_encoding = \"one_hot\" *) ${6:state_t} ${7:state_q}, ${8:state_d};",
+			"",
+			"always_ff @(posedge ${11:clk_i} or negedge ${12:rst_ni}) begin",
+			"    if (!${12:rst_ni}) begin",
+			"        ${7:state_q} <= ${3:ST_IDLE};",
+			"    end else begin",
+			"        ${7:state_q} <= ${8:state_d};",
+			"    end",
+			"end",
+			"",
+			"always_comb begin",
+			"    ${8:state_d} = '0;",
+			"    unique case (1'b1)",
+			"        ${7:state_q}[0]: ${8:state_d} = ${9:start_i} ? ${4:ST_BUSY} : ${3:ST_IDLE};",
+			"        ${7:state_q}[1]: ${8:state_d} = ${10:done_i}  ? ${5:ST_DONE} : ${4:ST_BUSY};",
+			"        ${7:state_q}[2]: ${8:state_d} = ${3:ST_IDLE};",
+			"        default:         ${8:state_d} = ${3:ST_IDLE};",
+			"    endcase",
+			"end",
+			"",
+			"// TODO: add state-dependent output logic.$0"
+		],
+		"description": "One-hot FSM skeleton with state register and transition logic"
+	},
+	"RTL FSM illegal recover": {
+		"prefix": "rtl.fsm.illegal_recover",
+		"body": [
+			"always_comb begin",
+			"    ${1:state_d} = ${2:state_q};",
+			"    if (!(${2:state_q} inside {${3:ST_IDLE}, ${4:ST_BUSY}, ${5:ST_DONE}})) begin",
+			"        ${1:state_d} = ${3:ST_IDLE};",
+			"    end",
+			"end$0"
+		],
+		"description": "Illegal-state recovery to safe state"
+	},
+	"RTL FSM illegal recover with flag": {
+		"prefix": "rtl.fsm.illegal_recover.flag",
+		"body": [
+			"always_comb begin",
+			"    ${1:state_d}         = ${2:state_q};",
+			"    ${3:illegal_state_o} = 1'b0;",
+			"    if (!(${2:state_q} inside {${4:ST_IDLE}, ${5:ST_BUSY}, ${6:ST_DONE}})) begin",
+			"        ${1:state_d}         = ${4:ST_IDLE};",
+			"        ${3:illegal_state_o} = 1'b1;",
+			"    end",
+			"end$0"
+		],
+		"description": "Illegal-state recovery with error flag"
+	}
+}

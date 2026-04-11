@@ -10,19 +10,19 @@ export class VerilogRenameProvider implements vscode.RenameProvider {
         token: vscode.CancellationToken
     ): vscode.ProviderResult<vscode.Range | { range: vscode.Range; placeholder: string }> {
         const range = document.getWordRangeAtPosition(position);
-        if (!range) throw new Error('Cannot rename this element.');
+        if (!range) {throw new Error('Cannot rename this element.');}
         return range;
     }
 
-    public provideRenameEdits(
+    public async provideRenameEdits(
         document: vscode.TextDocument,
         position: vscode.Position,
         newName: string,
         token: vscode.CancellationToken
-    ): vscode.ProviderResult<vscode.WorkspaceEdit> {
+    ): Promise<vscode.WorkspaceEdit | null> {
         
         const range = document.getWordRangeAtPosition(position);
-        if (!range) return null;
+        if (!range) {return null;}
         
         const word = document.getText(range);
         const edit = new vscode.WorkspaceEdit();
@@ -58,12 +58,110 @@ export class VerilogRenameProvider implements vscode.RenameProvider {
             for (const otherMod of this.projectManager.getAllModules()) {
                 const instances = otherMod.instances.filter(i => i.type === word);
                 for (const inst of instances) {
-                    edit.replace(inst.fileUri, inst.range, newName);
+                    // P8 Fix: 找到模块类型名在实例化所在文件中的精确位置
+                    // inst.range 指向实例名 (u_xxx)，类型名在其前方
+                    const typeRange = await this.findTypeNameRange(inst.fileUri, inst.range, word);
+                    if (typeRange) {
+                        edit.replace(inst.fileUri, typeRange, newName);
+                    }
                 }
             }
             return edit;
         }
 
         return null;
+    }
+
+    /**
+     * 在实例化行附近查找模块类型名的精确位置
+     * 实例化格式: module_type [#(...)] instance_name (...)
+     * inst.range 指向 instance_name，类型名在其前方
+     */
+    private async findTypeNameRange(
+        fileUri: vscode.Uri,
+        instRange: vscode.Range,
+        typeName: string
+    ): Promise<vscode.Range | null> {
+        try {
+            const doc = await vscode.workspace.openTextDocument(fileUri);
+            const fullText = doc.getText();
+            if (!doc.getText(instRange).trim()) {
+                return null;
+            }
+
+            const instOffset = doc.offsetAt(instRange.start);
+            const windowStart = Math.max(0, instOffset - 5000);
+            const searchText = fullText.slice(windowStart, instOffset);
+
+            const regex = new RegExp(`\\b${this.escapeRegExp(typeName)}\\b`, 'g');
+            let match: RegExpExecArray | null;
+            let bestOffset = -1;
+
+            while ((match = regex.exec(searchText)) !== null) {
+                const candidateOffset = windowStart + match.index;
+                const middle = fullText.slice(candidateOffset + typeName.length, instOffset);
+                if (!this.isValidTypeToInstanceGap(middle)) {
+                    continue;
+                }
+                bestOffset = candidateOffset;
+            }
+
+            if (bestOffset >= 0) {
+                const start = doc.positionAt(bestOffset);
+                const end = doc.positionAt(bestOffset + typeName.length);
+                return new vscode.Range(start, end);
+            }
+        } catch {
+            // 如果无法打开文件，跳过
+        }
+        return null;
+    }
+
+    private isValidTypeToInstanceGap(gapText: string): boolean {
+        // 先去掉注释，再判断 type 与 instance 之间是否只包含空白或 #(...)
+        const withoutComments = gapText
+            .replace(/\/\*[\s\S]*?\*\//g, '')
+            .replace(/\/\/.*$/gm, '')
+            .trim();
+
+        if (!withoutComments) {
+            return true;
+        }
+
+        if (!withoutComments.startsWith('#')) {
+            return false;
+        }
+
+        const openIdx = withoutComments.indexOf('(');
+        if (openIdx < 0) {
+            return false;
+        }
+
+        const closeIdx = this.findMatchingParen(withoutComments, openIdx);
+        if (closeIdx < 0) {
+            return false;
+        }
+
+        return withoutComments.slice(closeIdx + 1).trim().length === 0;
+    }
+
+    private findMatchingParen(text: string, openIdx: number): number {
+        let depth = 0;
+        for (let i = openIdx; i < text.length; i++) {
+            const ch = text[i];
+            if (ch === '(') {
+                depth++;
+            } else if (ch === ')') {
+                depth--;
+                if (depth === 0) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private escapeRegExp(input: string): string {
+        return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 }

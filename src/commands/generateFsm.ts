@@ -58,10 +58,8 @@ export async function visualizeFsm() {
             }
 
             // Look for nonblocking assignments to NEXT_STATE or state variables
-            // This is a heuristic. Let's just catch *all* RHS of nonblocking assigned identifiers in this case_item.
             const assignments = findAssignments(node);
             for (const v of assignments) {
-                // If the right-hand side is just a word (likely a state name), record it
                 if (/^[a-zA-Z0-9_]+$/.test(v.rhs)) {
                     fsmStates.get(stateName)!.push({
                         to: v.rhs,
@@ -80,8 +78,6 @@ export async function visualizeFsm() {
         const results: Array<{ rhs: string, node: any }> = [];
         function walkEq(n: any) {
             if (n.type === 'nonblocking_assignment' || n.type === 'blocking_assignment') {
-                const rhsNode = n.children.find((c: any) => c.type === 'identifier' || c.type === 'simple_identifier' || c.type === 'number');
-                // The right hand side is usually the last child or follows '<='
                 const eqIdx = n.children.findIndex((c: any) => c.text === '<=' || c.text === '=');
                 if (eqIdx !== -1 && eqIdx + 1 < n.children.length) {
                     results.push({
@@ -90,7 +86,7 @@ export async function visualizeFsm() {
                     });
                 }
             } else {
-                for (const c of n.children) walkEq(c);
+                for (const c of n.children) {walkEq(c);}
             }
         }
         walkEq(root);
@@ -98,14 +94,13 @@ export async function visualizeFsm() {
     }
 
     function extractCondition(assignmentNode: any): string | null {
-        // Trace back up to find if statement
         let p = assignmentNode.parent;
         while (p && p.type !== 'if_statement' && p.type !== 'case_item') {
             p = p.parent;
         }
         if (p && p.type === 'if_statement') {
             const cond = p.children.find((c: any) => c.type === 'parenthesized_expression');
-            if (cond) return cond.text;
+            if (cond) {return cond.text;}
         }
         return null;
     }
@@ -133,7 +128,6 @@ export async function visualizeFsm() {
         for (const [to, cond] of uniqueTrans.entries()) {
             mermaidText += `    ${state} --> ${to}`;
             if (cond) {
-                // Strip parentheses from condition if desired
                 let cleanCond = cond.startsWith('(') && cond.endsWith(')') ? cond.slice(1, -1) : cond;
                 mermaidText += ` : ${cleanCond}`;
             }
@@ -156,12 +150,16 @@ function showFsmWebView(mermaidText: string) {
         }
     );
 
+    // P3 Fix: 设置正确的 CSP，显式白名单 CDN 来源
+    const cspSource = panel.webview.cspSource;
+
     panel.webview.html = `
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline' ${cspSource}; img-src ${cspSource} data:;">
             <title>FSM Viewer</title>
             <script type="module">
                 import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';

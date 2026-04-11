@@ -1,0 +1,74 @@
+{
+	"SVA ready-valid stable": {
+		"prefix": "sva.rv.stable",
+		"body": [
+			"property p_${1:bus}_stability;",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    (${4:valid} && !${5:ready}) |-> \\$stable(${6:payload});",
+			"endproperty",
+			"",
+			"assert_${1:bus}_stability: assert property(p_${1:bus}_stability)$0"
+		],
+		"description": "Payload remains stable while VALID is high and READY is low"
+	},
+	"SVA req to ack": {
+		"prefix": "sva.req2ack",
+		"body": [
+			"property p_${1:req2ack};",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    ${4:req} |-> ##[${5:1}:${6:8}] ${7:ack};",
+			"endproperty",
+			"",
+			"assert_${1:req2ack}: assert property(p_${1:req2ack});$0"
+		],
+		"description": "Request eventually acknowledged within bounded latency"
+	},
+	"SVA no drop before handshake": {
+		"prefix": "sva.no_drop_before_hs",
+		"body": [
+			"property p_${1:no_drop};",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    ${4:valid} && !${5:ready} |=> ${4:valid} until_with (${4:valid} && ${5:ready});",
+			"endproperty",
+			"",
+			"assert_${1:no_drop}: assert property(p_${1:no_drop});$0"
+		],
+		"description": "VALID stays asserted at least until handshake completes"
+	},
+	"SVA fifo no overflow": {
+		"prefix": "sva.fifo.no_overflow",
+		"body": [
+			"property p_${1:fifo}_no_overflow;",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    !(${4:push} && ${5:full});",
+			"endproperty",
+			"",
+			"assert_${1:fifo}_no_overflow: assert property(p_${1:fifo}_no_overflow);$0"
+		],
+		"description": "Push not allowed when FIFO full"
+	},
+	"SVA fifo no underflow": {
+		"prefix": "sva.fifo.no_underflow",
+		"body": [
+			"property p_${1:fifo}_no_underflow;",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    !(${4:pop} && ${5:empty});",
+			"endproperty",
+			"",
+			"assert_${1:fifo}_no_underflow: assert property(p_${1:fifo}_no_underflow);$0"
+		],
+		"description": "Pop not allowed when FIFO empty"
+	},
+	"SVA bounded latency": {
+		"prefix": "sva.latency.bound",
+		"body": [
+			"property p_${1:latency_bound};",
+			"    @(posedge ${2:clk_i}) disable iff (!${3:rst_ni})",
+			"    ${4:req} |-> ##[${5:1}:${6:MAX_LAT}] ${7:resp};",
+			"endproperty",
+			"",
+			"assert_${1:latency_bound}: assert property(p_${1:latency_bound});$0"
+		],
+		"description": "Generic bounded request-response latency property"
+	}
+}

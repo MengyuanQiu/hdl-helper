@@ -17,7 +17,7 @@ export function emitMarkdown(map: RegisterMap): string {
     lines.push(`\n## Detailed Fields\n`);
     map.registers.forEach(reg => {
         lines.push(`### 0x${reg.offset.toString(16)}: ${reg.name}`);
-        if(reg.description) lines.push(`> ${reg.description}\n`);
+        if(reg.description) {lines.push(`> ${reg.description}\n`);}
         
         lines.push(`| Bits | Name | Access | Reset | Description |`);
         lines.push(`| ---- | ---- | ------ | ----- | ----------- |`);

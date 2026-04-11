@@ -1,0 +1,149 @@
+{
+	"RTL ready-valid interface source": {
+		"prefix": "rtl.rv.ifc.src",
+		"body": [
+			"logic                  ${1:valid_o};",
+			"logic                  ${2:ready_i};",
+			"logic [${3:W}-1:0]     ${4:data_o};$0"
+		],
+		"description": "Ready/valid source-side signal declaration"
+	},
+	"RTL ready-valid interface destination": {
+		"prefix": "rtl.rv.ifc.dst",
+		"body": [
+			"logic                  ${1:valid_i};",
+			"logic                  ${2:ready_o};",
+			"logic [${3:W}-1:0]     ${4:data_i};$0"
+		],
+		"description": "Ready/valid destination-side signal declaration"
+	},
+	"RTL ready-valid register slice": {
+		"prefix": "rtl.rv.slice",
+		"body": [
+			"logic                  ${1:v_q};",
+			"logic [${2:W}-1:0]     ${3:d_q};",
+			"",
+			"assign ${4:in_ready_o}  = !${1:v_q} || ${5:out_ready_i};",
+			"assign ${6:out_valid_o} = ${1:v_q};",
+			"assign ${7:out_data_o}  = ${3:d_q};",
+			"",
+			"always_ff @(posedge ${8:clk_i} or negedge ${9:rst_ni}) begin",
+			"    if (!${9:rst_ni}) begin",
+			"        ${1:v_q} <= 1'b0;",
+			"    end else if (${4:in_ready_o}) begin",
+			"        ${1:v_q} <= ${10:in_valid_i};",
+			"        ${3:d_q} <= ${11:in_data_i};",
+			"    end",
+			"end$0"
+		],
+		"description": "Single-stage ready/valid register slice"
+	},
+	"RTL skid buffer": {
+		"prefix": "rtl.rv.skid",
+		"body": [
+			"logic                  ${1:skid_v_q};",
+			"logic [${2:W}-1:0]     ${3:skid_d_q};",
+			"",
+			"assign ${4:in_ready_o}  = !${1:skid_v_q} || ${5:out_ready_i};",
+			"assign ${6:out_valid_o} = ${7:in_valid_i} || ${1:skid_v_q};",
+			"assign ${8:out_data_o}  = ${1:skid_v_q} ? ${3:skid_d_q} : ${9:in_data_i};",
+			"",
+			"always_ff @(posedge ${10:clk_i} or negedge ${11:rst_ni}) begin",
+			"    if (!${11:rst_ni}) begin",
+			"        ${1:skid_v_q} <= 1'b0;",
+			"    end else begin",
+			"        if (${7:in_valid_i} && !${5:out_ready_i} && !${1:skid_v_q}) begin",
+			"            ${1:skid_v_q} <= 1'b1;",
+			"            ${3:skid_d_q} <= ${9:in_data_i};",
+			"        end else if (${5:out_ready_i}) begin",
+			"            ${1:skid_v_q} <= 1'b0;",
+			"        end",
+			"    end",
+			"end$0"
+		],
+		"description": "Simplified skid buffer for one-beat backpressure handling"
+	},
+	"RTL valid-only channel": {
+		"prefix": "rtl.rv.valid_only",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:valid_q} <= 1'b0;",
+			"    end else begin",
+			"        ${3:valid_q} <= ${4:valid_d};",
+			"    end",
+			"end$0"
+		],
+		"description": "Valid-only registered channel"
+	},
+	"RTL ready-valid fork": {
+		"prefix": "rtl.rv.fork",
+		"body": [
+			"assign ${1:in_ready_o}   = ${2:out0_ready_i} && ${3:out1_ready_i};",
+			"assign ${4:out0_valid_o} = ${5:in_valid_i};",
+			"assign ${6:out1_valid_o} = ${5:in_valid_i};",
+			"assign ${7:out0_data_o}  = ${8:in_data_i};",
+			"assign ${9:out1_data_o}  = ${8:in_data_i};$0"
+		],
+		"description": "Fork one channel to two sinks"
+	},
+	"RTL ready-valid join": {
+		"prefix": "rtl.rv.join",
+		"body": [
+			"assign ${1:out_valid_o} = ${2:in0_valid_i} && ${3:in1_valid_i};",
+			"assign ${4:in0_ready_o} = ${5:out_ready_i} && ${3:in1_valid_i};",
+			"assign ${6:in1_ready_o} = ${5:out_ready_i} && ${2:in0_valid_i};",
+			"assign ${7:out_data_o}  = {${8:in1_data_i}, ${9:in0_data_i}};$0"
+		],
+		"description": "Rendezvous join of two ready/valid inputs"
+	},
+	"RTL ready-valid mux": {
+		"prefix": "rtl.rv.mux",
+		"body": [
+			"always_comb begin",
+			"    ${1:out_valid_o} = 1'b0;",
+			"    ${2:out_data_o}  = '0;",
+			"    ${3:in0_ready_o} = 1'b0;",
+			"    ${4:in1_ready_o} = 1'b0;",
+			"    case (${5:sel_i})",
+			"        1'b0: begin",
+			"            ${1:out_valid_o} = ${6:in0_valid_i};",
+			"            ${2:out_data_o}  = ${7:in0_data_i};",
+			"            ${3:in0_ready_o} = ${8:out_ready_i};",
+			"        end",
+			"        default: begin",
+			"            ${1:out_valid_o} = ${9:in1_valid_i};",
+			"            ${2:out_data_o}  = ${10:in1_data_i};",
+			"            ${4:in1_ready_o} = ${8:out_ready_i};",
+			"        end",
+			"    endcase",
+			"end$0"
+		],
+		"description": "Two-to-one ready/valid mux"
+	},
+	"RTL ready-valid demux": {
+		"prefix": "rtl.rv.demux",
+		"body": [
+			"always_comb begin",
+			"    ${1:out0_valid_o} = 1'b0;",
+			"    ${2:out1_valid_o} = 1'b0;",
+			"    ${3:out0_data_o}  = '0;",
+			"    ${4:out1_data_o}  = '0;",
+			"    ${5:in_ready_o}   = 1'b0;",
+			"    case (${6:sel_i})",
+			"        1'b0: begin",
+			"            ${1:out0_valid_o} = ${7:in_valid_i};",
+			"            ${3:out0_data_o}  = ${8:in_data_i};",
+			"            ${5:in_ready_o}   = ${9:out0_ready_i};",
+			"        end",
+			"        default: begin",
+			"            ${2:out1_valid_o} = ${7:in_valid_i};",
+			"            ${4:out1_data_o}  = ${8:in_data_i};",
+			"            ${5:in_ready_o}   = ${10:out1_ready_i};",
+			"        end",
+			"    endcase",
+			"end$0"
+		],
+		"description": "One-to-two ready/valid demux with backpressure"
+	}
+}

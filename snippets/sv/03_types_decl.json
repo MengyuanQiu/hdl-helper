@@ -1,0 +1,125 @@
+{
+	"SV parameter": {
+		"prefix": "sv.param",
+		"body": "parameter ${1:NAME} = ${2:VALUE};$0",
+		"description": "Parameter declaration"
+	},
+	"SV parameter int": {
+		"prefix": "sv.param.int",
+		"body": "parameter int ${1:NAME} = ${2:0};$0",
+		"description": "Typed int parameter declaration"
+	},
+	"SV localparam": {
+		"prefix": "sv.localparam",
+		"body": "localparam ${1:NAME} = ${2:VALUE};$0",
+		"description": "Localparam declaration"
+	},
+	"SV localparam int": {
+		"prefix": "sv.localparam.int",
+		"body": "localparam int ${1:NAME} = ${2:0};$0",
+		"description": "Typed int localparam declaration"
+	},
+	"SV logic": {
+		"prefix": "sv.logic",
+		"body": "logic ${1:[31:0]} ${2:sig};$0",
+		"description": "Logic declaration"
+	},
+	"SV logic q": {
+		"prefix": "sv.logic.q",
+		"body": "logic ${1:[31:0]} ${2:data_q};$0",
+		"description": "Logic declaration for registered signal"
+	},
+	"SV logic d": {
+		"prefix": "sv.logic.d",
+		"body": "logic ${1:[31:0]} ${2:data_d};$0",
+		"description": "Logic declaration for next-state signal"
+	},
+	"SV bit": {
+		"prefix": "sv.bit",
+		"body": "bit ${1:flag};$0",
+		"description": "bit declaration"
+	},
+	"SV int": {
+		"prefix": "sv.int",
+		"body": "int ${1:value};$0",
+		"description": "int declaration"
+	},
+	"SV shortint": {
+		"prefix": "sv.shortint",
+		"body": "shortint ${1:value};$0",
+		"description": "shortint declaration"
+	},
+	"SV longint": {
+		"prefix": "sv.longint",
+		"body": "longint ${1:value};$0",
+		"description": "longint declaration"
+	},
+	"SV byte": {
+		"prefix": "sv.byte",
+		"body": "byte ${1:value};$0",
+		"description": "byte declaration"
+	},
+	"SV typedef struct packed": {
+		"prefix": "sv.struct.packed",
+		"body": [
+			"typedef struct packed {",
+			"    $0",
+			"} ${1:struct_name_t};"
+		],
+		"description": "Packed struct typedef"
+	},
+	"SV typedef struct": {
+		"prefix": "sv.struct",
+		"body": [
+			"typedef struct {",
+			"    $0",
+			"} ${1:struct_name_t};"
+		],
+		"description": "Unpacked struct typedef"
+	},
+	"SV typedef enum": {
+		"prefix": "sv.typedef.enum",
+		"body": [
+			"typedef enum logic ${1:[1:0]} {",
+			"    ${2:IDLE},",
+			"    ${3:BUSY}",
+			"} ${4:state_t};$0"
+		],
+		"description": "Enum typedef"
+	},
+	"SV enum": {
+		"prefix": "sv.enum",
+		"body": "enum logic ${1:[1:0]} { ${2:IDLE}, ${3:BUSY} } ${4:state};$0",
+		"description": "Compact single-line enum declaration"
+	},
+	"SV enum multi-line": {
+		"prefix": "sv.enum.multi",
+		"body": [
+			"enum logic ${1:[1:0]} {",
+			"    ${2:IDLE},",
+			"    ${3:BUSY}",
+			"} ${4:state};$0"
+		],
+		"description": "Multi-line enum declaration"
+	},
+	"SV queue": {
+		"prefix": "sv.queue",
+		"body": "${1:data_type} ${2:q}[\\$];$0",
+		"description": "Queue declaration"
+	},
+	"SV associative array": {
+		"prefix": "sv.aa",
+		"body": "${1:data_type} ${2:aa}[${3:index_type}];$0",
+		"description": "Associative array declaration"
+	},
+	"SV mailbox": {
+		"prefix": "sv.mailbox",
+		"body": "mailbox ${1:#(my_type)} ${2:mbx};$0",
+		"description": "Mailbox declaration only"
+	},
+	"SV mailbox new": {
+		"prefix": "sv.mailbox.new",
+		"body": "${1:mbx} = new(${2:capacity});$0",
+		"description": "Mailbox initialization"
+	}
+}

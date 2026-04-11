@@ -1,0 +1,80 @@
+{
+	"RTL param check basic": {
+		"prefix": "rtl.param.check",
+		"body": [
+			"initial begin",
+			"    if (!(${1:PARAM} ${2:> 0})) begin",
+			"        $fatal(1, \"[PARAM] ${1:PARAM} invalid: %0d\", ${1:PARAM});",
+			"    end",
+			"end$0"
+		],
+		"description": "Basic parameter legality check"
+	},
+	"RTL param check greater than zero": {
+		"prefix": "rtl.param.check.gt0",
+		"body": [
+			"initial begin",
+			"    if (${1:PARAM} <= 0) begin",
+			"        $fatal(1, \"[PARAM] ${1:PARAM} must be > 0, got %0d\", ${1:PARAM});",
+			"    end",
+			"end$0"
+		],
+		"description": "Parameter must be greater than zero"
+	},
+	"RTL param check nonzero": {
+		"prefix": "rtl.param.check.nonzero",
+		"body": [
+			"initial begin",
+			"    if (${1:PARAM} == 0) begin",
+			"        $fatal(1, \"[PARAM] ${1:PARAM} must be nonzero\");",
+			"    end",
+			"end$0"
+		],
+		"description": "Parameter must be nonzero"
+	},
+	"RTL param check power of two": {
+		"prefix": "rtl.param.check.pow2",
+		"body": [
+			"initial begin",
+			"    if ((${1:DEPTH} <= 0) || ((${1:DEPTH} & (${1:DEPTH} - 1)) != 0)) begin",
+			"        $fatal(1, \"[PARAM] ${1:DEPTH} must be power of two, got %0d\", ${1:DEPTH});",
+			"    end",
+			"end$0"
+		],
+		"description": "Power-of-two parameter check"
+	},
+	"RTL param width relation check": {
+		"prefix": "rtl.param.check.width_rel",
+		"body": [
+			"initial begin",
+			"    if (${1:OUT_W} < ${2:IN_W}) begin",
+			"        $fatal(1, \"[PARAM] OUT_W(%0d) must be >= IN_W(%0d)\", ${1:OUT_W}, ${2:IN_W});",
+			"    end",
+			"end$0"
+		],
+		"description": "Check width relation between parameters"
+	},
+	"RTL param min depth check": {
+		"prefix": "rtl.param.check.depth_min",
+		"body": [
+			"initial begin",
+			"    if (${1:DEPTH} < ${2:2}) begin",
+			"        $fatal(1, \"[PARAM] DEPTH must be >= ${2:2}, got %0d\", ${1:DEPTH});",
+			"    end",
+			"end$0"
+		],
+		"description": "Check minimum depth"
+	},
+	"RTL static assert localparam": {
+		"prefix": "rtl.param.check.static",
+		"body": [
+			"localparam bit ${1:PARAM_OK} = (${2:WIDTH} > 0) && (${3:DEPTH} > 1);",
+			"initial begin",
+			"    if (!${1:PARAM_OK}) begin",
+			"        $fatal(1, \"[PARAM] static check failed\");",
+			"    end",
+			"end$0"
+		],
+		"description": "Parameter guard using localparam condition and runtime fatal"
+	}
+}

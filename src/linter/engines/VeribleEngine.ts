@@ -41,16 +41,27 @@ export class VeribleEngine implements ILinterEngine {
                 }
             }
 
-            // 3. 构建 rules 字符串
+            // 3. 构建 rules 参数
             const ruleList: string[] = [];
             for (const [ruleName, value] of Object.entries(rulesConfig)) {
-                if (value === false || value === 'false') {
+                // 处理值：支持布尔值、字符串 'true'/'false'、配置字符串
+                if (value === false || value === 'false' || value === 'False') {
+                    // 禁用规则
                     ruleList.push(`-${ruleName}`);
-                } else if (value === true || value === 'true') {
+                } else if (value === true || value === 'true' || value === 'True') {
+                    // 启用规则（无参数）
                     ruleList.push(ruleName);
-                } else if (typeof value === 'string') {
+                } else if (typeof value === 'string' && value.length > 0) {
+                    // 配置字符串（如 'length:120'）
                     ruleList.push(`${ruleName}=${value}`);
                 }
+            }
+
+            // 4. 如果没有配置任何规则，使用默认规则
+            if (ruleList.length === 0) {
+                ruleList.push('line-length=length:150');
+                ruleList.push('no-tabs');
+                ruleList.push('no-trailing-spaces');
             }
 
             const args = [
@@ -85,7 +96,7 @@ export class VeribleEngine implements ILinterEngine {
             const col = parseInt(match[3]) - 1;
             const msg = match[4];
 
-            if (path.basename(filePath) !== path.basename(doc.fileName)) continue;
+            if (path.basename(filePath) !== path.basename(doc.fileName)) {continue;}
 
             let severity = vscode.DiagnosticSeverity.Warning;
             if (msg.toLowerCase().includes('error') || msg.toLowerCase().includes('fatal')) {

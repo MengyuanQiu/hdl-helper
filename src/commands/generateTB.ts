@@ -46,7 +46,7 @@ export async function generateTestbench() {
             `文件 ${tbFileName} 已存在，是否覆盖？`,
             '覆盖', '取消'
         );
-        if (overwrite !== '覆盖') return;
+        if (overwrite !== '覆盖') {return;}
     }
 
     // 写入并打开

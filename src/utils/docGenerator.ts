@@ -32,8 +32,8 @@ export class DocGenerator {
             // 排序逻辑：时钟复位置顶 -> 输入 -> 输出 -> 双向
             const sortedPorts = [...module.ports].sort((a, b) => {
                 const isClkRst = (name: string) => /clk|rst|clock|reset/i.test(name);
-                if (isClkRst(a.name) && !isClkRst(b.name)) return -1;
-                if (!isClkRst(a.name) && isClkRst(b.name)) return 1;
+                if (isClkRst(a.name) && !isClkRst(b.name)) {return -1;}
+                if (!isClkRst(a.name) && isClkRst(b.name)) {return 1;}
 
                 const dirOrder: {[key:string]: number} = { 'input': 1, 'output': 2, 'inout': 3 };
                 const scoreA = dirOrder[a.dir] || 4;

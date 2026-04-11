@@ -1,0 +1,79 @@
+{
+	"UVM sequence item": {
+		"prefix": "uvm.seq_item",
+		"body": [
+			"class ${1:my_seq_item} extends uvm_sequence_item;",
+			"    rand bit [${2:31}:0] ${3:data};",
+			"",
+			"    `uvm_object_utils_begin(${1:my_seq_item})",
+			"        `uvm_field_int(${3:data}, UVM_DEFAULT)",
+			"    `uvm_object_utils_end",
+			"",
+			"    function new(string name = \"${1:my_seq_item}\");",
+			"        super.new(name);",
+			"    endfunction : new",
+			"endclass : ${1:my_seq_item}$0"
+		],
+		"description": "Example UVM sequence item skeleton"
+	},
+	"UVM sequence": {
+		"prefix": "uvm.seq",
+		"body": [
+			"class ${1:my_sequence} extends uvm_sequence #(${2:my_seq_item});",
+			"    `uvm_object_utils(${1:my_sequence})",
+			"",
+			"    function new(string name = \"${1:my_sequence}\");",
+			"        super.new(name);",
+			"    endfunction : new",
+			"",
+			"    virtual task body();",
+			"        $0",
+			"    endtask : body",
+			"endclass : ${1:my_sequence}"
+		],
+		"description": "UVM sequence skeleton"
+	},
+	"UVM start item": {
+		"prefix": "uvm.start_item",
+		"body": [
+			"start_item(${1:req});",
+			"if (!${1:req}.randomize()) begin",
+			"    `uvm_fatal(\"RAND\", \"Randomize failed\")",
+			"end",
+			"finish_item(${1:req});$0"
+		],
+		"description": "Start and finish a randomized sequence item"
+	},
+	"UVM finish item": {
+		"prefix": "uvm.finish_item",
+		"body": "finish_item(${1:req});$0",
+		"description": "Finish current sequence item"
+	},
+	"UVM randomize with": {
+		"prefix": "uvm.randomize.with",
+		"body": [
+			"if (!${1:req}.randomize() with {",
+			"    ${2:field} == ${3:value};",
+			"}) begin",
+			"    `uvm_fatal(\"RAND\", \"Randomize with constraint failed\")",
+			"end$0"
+		],
+		"description": "Randomize object with inline constraints"
+	},
+	"UVM sequence body": {
+		"prefix": "uvm.seq.body",
+		"body": [
+			"virtual task body();",
+			"    ${1:my_seq_item} req;",
+			"    req = ${1:my_seq_item}::type_id::create(\"req\");",
+			"    start_item(req);",
+			"    if (!req.randomize()) begin",
+			"        `uvm_fatal(\"RAND\", \"req randomize failed\")",
+			"    end",
+			"    finish_item(req);",
+			"    $0",
+			"endtask : body"
+		],
+		"description": "Canonical single-item sequence body template"
+	}
+}

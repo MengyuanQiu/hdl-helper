@@ -7,7 +7,7 @@ export class CsvRegisterParser {
         const content = fs.readFileSync(filePath, 'utf-8');
         const lines = content.split(/\r?\n/).filter(l => l.trim().length > 0);
         
-        if (lines.length === 0) throw new Error("CSV file is empty");
+        if (lines.length === 0) {throw new Error("CSV file is empty");}
 
         const map: RegisterMap = {
             moduleName: path.basename(filePath, path.extname(filePath)),
@@ -27,7 +27,7 @@ export class CsvRegisterParser {
             // Handle quotes in CSV naive split
             const cols = rawLine.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
             
-            if (cols.length < 6) continue;
+            if (cols.length < 6) {continue;}
 
             const regName = cols[0];
             const offsetStr = cols[1];

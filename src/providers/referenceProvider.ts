@@ -12,7 +12,7 @@ export class VerilogReferenceProvider implements vscode.ReferenceProvider {
     ): vscode.ProviderResult<vscode.Location[]> {
         
         const range = document.getWordRangeAtPosition(position);
-        if (!range) return null;
+        if (!range) {return null;}
         
         const word = document.getText(range);
 

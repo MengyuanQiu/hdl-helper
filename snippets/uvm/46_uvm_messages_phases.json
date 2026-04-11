@@ -1,0 +1,88 @@
+{
+	"UVM build phase": {
+		"prefix": "uvm.phase.build",
+		"body": [
+			"virtual function void build_phase(uvm_phase phase);",
+			"    super.build_phase(phase);",
+			"    $0",
+			"endfunction : build_phase"
+		],
+		"description": "build_phase template"
+	},
+	"UVM connect phase": {
+		"prefix": "uvm.phase.connect",
+		"body": [
+			"virtual function void connect_phase(uvm_phase phase);",
+			"    super.connect_phase(phase);",
+			"    $0",
+			"endfunction : connect_phase"
+		],
+		"description": "connect_phase template"
+	},
+	"UVM run phase": {
+		"prefix": "uvm.phase.run",
+		"body": [
+			"virtual task run_phase(uvm_phase phase);",
+			"    super.run_phase(phase);",
+			"    phase.raise_objection(this);",
+			"    $0",
+			"    phase.drop_objection(this);",
+			"endtask : run_phase"
+		],
+		"description": "run_phase template with objection handling"
+	},
+	"UVM run phase raw": {
+		"prefix": "uvm.phase.run.raw",
+		"body": [
+			"virtual task run_phase(uvm_phase phase);",
+			"    super.run_phase(phase);",
+			"    $0",
+			"endtask : run_phase"
+		],
+		"description": "run_phase template without objection handling, retains super call"
+	},
+	"UVM check phase": {
+		"prefix": "uvm.phase.check",
+		"body": [
+			"virtual function void check_phase(uvm_phase phase);",
+			"    super.check_phase(phase);",
+			"    $0",
+			"endfunction : check_phase"
+		],
+		"description": "check_phase template"
+	},
+	"UVM report phase": {
+		"prefix": "uvm.phase.report",
+		"body": [
+			"virtual function void report_phase(uvm_phase phase);",
+			"    super.report_phase(phase);",
+			"    $0",
+			"endfunction : report_phase"
+		],
+		"description": "report_phase template"
+	},
+	"UVM objection block": {
+		"prefix": "uvm.objection",
+		"body": [
+			"phase.raise_objection(this);",
+			"$0",
+			"phase.drop_objection(this);"
+		],
+		"description": "Raise/drop objection wrapper"
+	},
+	"UVM info message": {
+		"prefix": "uvm.info",
+		"body": "`uvm_info(\"${1:ID}\", $sformatf(\"${2:message}\"), UVM_${3:MEDIUM})$0",
+		"description": "UVM info macro with formatted message"
+	},
+	"UVM error message": {
+		"prefix": "uvm.error",
+		"body": "`uvm_error(\"${1:ID}\", $sformatf(\"${2:error message}\"))$0",
+		"description": "UVM error macro"
+	},
+	"UVM fatal message": {
+		"prefix": "uvm.fatal",
+		"body": "`uvm_fatal(\"${1:ID}\", $sformatf(\"${2:fatal message}\"))$0",
+		"description": "UVM fatal macro"
+	}
+}

@@ -1,0 +1,19 @@
+{
+  "tasks": [
+    {
+      "name": "Regression Sim - Alias Dump",
+      "type": "hdl-sim",
+      "tool": "iverilog",
+      "top": "tb_counter_alias_dump",
+      "sources": [
+        "rtl",
+        "tb/*.sv"
+      ],
+      "flags": [
+        "-g2012"
+      ],
+      "waveform": true,
+      "waveformFormat": "fst"
+    }
+  ]
+}

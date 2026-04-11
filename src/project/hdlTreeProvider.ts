@@ -73,7 +73,7 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlItem> {
             const label = `${element.name} : ${element.type}`;
             
             // 🔥 核心逻辑：先去数据库查一下，这个实例化的类型，有没有对应的定义？
-            const moduleDef = this.projectManager.getModule(element.type);
+            const moduleDef = this.projectManager.getModuleInWorkspace(element.type, element.fileUri);
             const hasChildren = moduleDef !== undefined;
             
             // 如果有定义，就是 Collapsed (有箭头)；如果是黑盒/IP，就是 None (无箭头)
@@ -159,7 +159,7 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlItem> {
         // 3. 🔥 如果当前节点是“实例化” (Instance) -> 查找它的定义，并返回定义的子节点！
         // 这就是实现 "无限套娃" 的关键
         if (element instanceof HdlInstance) {
-            const moduleDef = this.projectManager.getModule(element.type);
+            const moduleDef = this.projectManager.getModuleInWorkspace(element.type, element.fileUri);
             if (moduleDef) {
                 // 这里我们要返回的是 moduleDef 的 instances
                 // 但是！TreeItem 需要知道父子关系吗？在这个简单版里不需要，

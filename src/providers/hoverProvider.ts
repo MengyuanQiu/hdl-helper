@@ -14,7 +14,7 @@ export class VerilogHoverProvider implements vscode.HoverProvider {
         
         // 1. 获取当前鼠标悬停的单词
         const range = document.getWordRangeAtPosition(position);
-        if (!range) return null;
+        if (!range) {return null;}
         
         const word = document.getText(range);
 
@@ -102,9 +102,9 @@ export class VerilogHoverProvider implements vscode.HoverProvider {
                 ports.map(p => `${p.dir.padEnd(6)} ${p.type} ${p.name}`).join('\n');
 
             let portText = '';
-            if (inputs.length) portText += `// Inputs\n${formatPorts(inputs)}\n`;
-            if (outputs.length) portText += `// Outputs\n${formatPorts(outputs)}\n`;
-            if (inouts.length) portText += `// Inouts\n${formatPorts(inouts)}\n`;
+            if (inputs.length) {portText += `// Inputs\n${formatPorts(inputs)}\n`;}
+            if (outputs.length) {portText += `// Outputs\n${formatPorts(outputs)}\n`;}
+            if (inouts.length) {portText += `// Inouts\n${formatPorts(inouts)}\n`;}
 
             md.appendCodeblock(portText, 'verilog');
         } else {

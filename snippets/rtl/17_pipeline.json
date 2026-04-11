@@ -1,0 +1,108 @@
+{
+	"RTL pipeline register": {
+		"prefix": "rtl.pipe.reg",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:stage_q} <= ${4:'0};",
+			"    end else if (${5:en_i}) begin",
+			"        ${3:stage_q} <= ${6:stage_d};",
+			"    end",
+			"end$0"
+		],
+		"description": "Pipeline data register"
+	},
+	"RTL pipeline valid": {
+		"prefix": "rtl.pipe.valid",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:valid_q} <= 1'b0;",
+			"    end else if (${4:advance_i}) begin",
+			"        ${3:valid_q} <= ${5:valid_d};",
+			"    end",
+			"end$0"
+		],
+		"description": "Pipeline valid register"
+	},
+	"RTL pipeline bubble insertion": {
+		"prefix": "rtl.pipe.bubble",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:valid_q} <= 1'b0;",
+			"    end else if (${4:stall_i}) begin",
+			"        ${3:valid_q} <= 1'b0;",
+			"    end else begin",
+			"        ${3:valid_q} <= ${5:valid_d};",
+			"    end",
+			"end$0"
+		],
+		"description": "Insert invalid bubble when stall condition requests squash"
+	},
+	"RTL pipeline hold on stall": {
+		"prefix": "rtl.pipe.hold",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:data_q}  <= ${4:'0};",
+			"        ${5:valid_q} <= 1'b0;",
+			"    end else if (!${6:stall_i}) begin",
+			"        ${3:data_q}  <= ${7:data_d};",
+			"        ${5:valid_q} <= ${8:valid_d};",
+			"    end",
+			"end$0"
+		],
+		"description": "Hold stage state while stall is asserted"
+	},
+	"RTL pipeline flush": {
+		"prefix": "rtl.pipe.flush",
+		"body": [
+			"always_ff @(posedge ${1:clk_i} or negedge ${2:rst_ni}) begin",
+			"    if (!${2:rst_ni}) begin",
+			"        ${3:valid_q} <= 1'b0;",
+			"    end else if (${4:flush_i}) begin",
+			"        ${3:valid_q} <= 1'b0;",
+			"    end else if (${5:advance_i}) begin",
+			"        ${3:valid_q} <= ${6:valid_d};",
+			"    end",
+			"end$0"
+		],
+		"description": "Flush stage valid; data is don't-care when invalid"
+	},
+	"RTL pipeline forwarding mux": {
+		"prefix": "rtl.pipe.fwd",
+		"body": [
+			"always_comb begin",
+			"    ${1:data_o} = ${2:data_main_i};",
+			"    if (${3:fwd_sel_ex_i}) begin",
+			"        ${1:data_o} = ${4:data_ex_i};",
+			"    end else if (${5:fwd_sel_wb_i}) begin",
+			"        ${1:data_o} = ${6:data_wb_i};",
+			"    end",
+			"end$0"
+		],
+		"description": "Forwarding mux for hazards"
+	},
+	"RTL pipeline stage shell": {
+		"prefix": "rtl.pipe.stage",
+		"body": [
+			"module ${1:pipe_stage} #(",
+			"    parameter int W = ${2:32}",
+			") (",
+			"    input  logic         clk_i,",
+			"    input  logic         rst_ni,",
+			"    input  logic         in_valid_i,",
+			"    output logic         in_ready_o,",
+			"    input  logic [W-1:0] in_data_i,",
+			"    output logic         out_valid_o,",
+			"    input  logic         out_ready_i,",
+			"    output logic [W-1:0] out_data_o",
+			");",
+			"    // TODO: ready/valid stage body",
+			"    $0",
+			"endmodule : ${1:pipe_stage}"
+		],
+		"description": "Pipeline stage module shell"
+	}
+}
