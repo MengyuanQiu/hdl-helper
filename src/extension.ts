@@ -15,6 +15,7 @@ import { generateRegistersCommand } from './commands/generateRegisters';
 import { debugProjectClassification } from './commands/debugProjectClassification';
 import { debugActiveTargetContext } from './commands/debugActiveTargetContext';
 import { debugRecentRunsByTarget } from './commands/debugRecentRuns';
+import { openLastWaveformByTarget } from './commands/openLastWaveformByTarget';
 import { debugDualHierarchyState } from './commands/debugDualHierarchyState';
 import { openDualHierarchyRegressionChecklist } from './commands/openDualHierarchyRegressionChecklist';
 import { openProjectConfigFromWorkspace } from './commands/openProjectConfig';
@@ -294,6 +295,11 @@ export function activate(context: vscode.ExtensionContext) {
                 description: 'Open .hdl-helper/project.json or create when missing',
                 detail: 'Configuration'
             },
+            {
+                label: 'Open Last Waveform (Active Target)',
+                description: 'Open latest waveform from target-keyed run record',
+                detail: 'Diagnostics'
+            },
         ], {
             placeHolder: 'HDL Helper Quick Actions'
         });
@@ -356,6 +362,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
         if (action.label === 'Open Project Config') {
             await vscode.commands.executeCommand('hdl-helper.openProjectConfig');
+            return;
+        }
+        if (action.label === 'Open Last Waveform (Active Target)') {
+            await vscode.commands.executeCommand('hdl-helper.openLastWaveformByTarget');
         }
     }));
 
@@ -410,6 +420,11 @@ export function activate(context: vscode.ExtensionContext) {
                 label: '[Action] Open Project Config',
                 description: 'Open existing config or create template',
                 command: 'hdl-helper.openProjectConfig'
+            },
+            {
+                label: '[Action] Open Last Waveform (Active Target)',
+                description: 'Open latest waveform from target-keyed run record',
+                command: 'hdl-helper.openLastWaveformByTarget'
             }
         ], {
             placeHolder: 'Hierarchy Tools (Settings / Diagnostics / Action)'
@@ -713,6 +728,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openProjectConfig', async () => {
         await openProjectConfigFromWorkspace(async () => createProjectConfig(projectManager));
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openLastWaveformByTarget', async () => {
+        await openLastWaveformByTarget(stateService);
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runSimulation', async (moduleName: string, sourceUri?: vscode.Uri) => {

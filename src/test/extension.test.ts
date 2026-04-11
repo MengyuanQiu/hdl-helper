@@ -23,6 +23,7 @@ import {
 import { buildTargetContextDebugSnapshot } from '../commands/debugActiveTargetContext';
 import { getProjectConfigPath, openProjectConfig } from '../commands/openProjectConfig';
 import { formatRunRecords } from '../commands/debugRecentRuns';
+import { pickRunRecordForTarget } from '../commands/openLastWaveformByTarget';
 import { buildConfigIssues } from '../project/configDiagnostics';
 // import * as myExtension from '../../extension';
 
@@ -466,5 +467,23 @@ suite('Extension Test Suite', () => {
 		assert.ok(lines.some(line => line.includes('Target: sim_default')));
 		assert.ok(lines.some(line => line.includes('Success: true')));
 		assert.ok(lines.some(line => line.includes('Waveform: C:/repo/build/tb_top.fst')));
+	});
+
+	test('Pick run record helper returns undefined when target id is missing', () => {
+		const record = pickRunRecordForTarget({}, undefined);
+		assert.strictEqual(record, undefined);
+	});
+
+	test('Pick run record helper returns matching target record', () => {
+		const record = pickRunRecordForTarget({
+			sim_default: {
+				targetId: 'sim_default',
+				timestamp: 123,
+				success: true
+			}
+		}, 'sim_default');
+
+		assert.strictEqual(record?.targetId, 'sim_default');
+		assert.strictEqual(record?.success, true);
 	});
 });

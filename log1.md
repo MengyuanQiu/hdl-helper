@@ -374,3 +374,29 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（23 passing）。
+
+## 2026-04-11 - Iteration 4 Day 2: Reopen Waveform by Active Target
+
+- 目标: 继续推进 Iteration 4，补齐“按 active target 重开最近波形”链路。
+- 变更文件:
+  - src/commands/openLastWaveformByTarget.ts
+  - src/extension.ts
+  - src/test/extension.test.ts
+  - package.json
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - 新增命令 `HDL: Open Last Waveform (Active Target)`：
+    - projectConfig 模式下按 active `TargetContext.targetId` 查找最近运行记录；
+    - heuristic 模式下回退 `heuristic:<simulationTop/designTop>` 键；
+    - 命中后自动调用 `viewWaveform` 打开记录中的波形路径。
+  - Quick Actions / Hierarchy Tools / Command Palette 全部接入该命令。
+  - 新增 helper 与最小回归测试：
+    - `pickRunRecordForTarget`
+    - `Pick run record helper returns undefined when target id is missing`
+    - `Pick run record helper returns matching target record`
+  - 设置指南补充基于 active target 回开波形的使用说明。
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（25 passing）。

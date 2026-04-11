@@ -216,6 +216,12 @@
         "title": "HDL: Open Project Config",
         "category": "HDL Helper",
         "icon": "$(go-to-file)"
+      },
+      {
+        "command": "hdl-helper.openLastWaveformByTarget",
+        "title": "HDL: Open Last Waveform (Active Target)",
+        "category": "HDL Helper",
+        "icon": "$(graph-line)"
       }
     ],
     "configuration": {
