@@ -1,170 +1,127 @@
-# HDL Helper <img src="images/icon.png" height="40" align="top"/>
-```json
-{
-  "hdl-helper.linter.activeEngines": ["verible", "verilator"],
-  "hdl-helper.linter.verilatorFlags": ["-Wno-WIDTH"]
-}
+# HDL Helper
+
+**中文** | [English](#hdl-helper-1)
+
+**HDL Helper** 是一款面向 FPGA/IC 工程师的 VS Code 全能型硬件描述语言（HDL）开发扩展。它将通用的代码编辑器升级为一个功能完备的专业硬件开发环境，覆盖了从代码编写、静态检查、工程导航、代码生成到仿真与波形查看的完整开发闭环。
+
+## 核心能力
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        HDL Helper                               │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ 代码生成      │  │ 多引擎检查    │  │ 仿真与波形            │  │
+│  │ • AXI接口    │  │ • Verilator  │  │ • Icarus Verilog     │  │
+│  │ • Memory IP  │  │ • Verible    │  │ • Surfer波形查看     │  │
+│  │ • 寄存器映射  │  │ • Vivado     │  │ • FST/VCD支持        │  │
+│  └──────────────┘  └──────────────┘  └──────────────────────┘  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ 工程管理      │  │ 语言服务      │  │ EDA工具集成           │  │
+│  │ • AST解析    │  │ • 跳转定义    │  │ • Vivado综合         │  │
+│  │ • 层级视图    │  │ • 悬停提示    │  │ • Vivado实现         │  │
+│  │ • IP浏览     │  │ • 符号重命名  │  │ • 报告解析           │  │
+│  └──────────────┘  └──────────────┘  └──────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### 3. Simulation Setup
-Create a `.vscode/hdl_tasks.json` in your workspace to define simulation profiles:
-```json
-{
-  "tasks": [
-    {
-      "name": "Run Base TB",
-      "type": "hdl-sim",
-      "tool": "iverilog",
-      "top": "tb_top",
-      "sources": ["rtl", "tb"],
-      "filelist": ["sim/filelist.f"],
-      "flags": ["-g2012"],
-      "workingDirectory": ".",
-      "buildDir": "build",
-      "waveform": true,
-      "waveformFormat": "fst",
-      "autoOpenWaveform": true
-    }
-  ]
-}
-```
-Simulation runtime settings (Workspace Settings):
+### 主要特性
 
-```json
-{
-  "hdl-helper.simulation.tasksFile": ".vscode/hdl_tasks.json",
-  "hdl-helper.simulation.iverilogPath": "iverilog",
-  "hdl-helper.simulation.vvpPath": "vvp",
-  "hdl-helper.simulation.buildDir": "build",
-  "hdl-helper.simulation.defaultFlags": ["-g2012"],
-  "hdl-helper.simulation.autoOpenWaveform": true
-}
-```
+*   **多引擎语法检查**: 并发集成 Verilator (硬件语义)、Verible (代码风格) 和 Vivado xvlog (原生语法) 三大 Linter，全面保障代码质量。
+*   **智能代码生成**: 提供向导式 AXI 接口、FIFO/RAM、寄存器映射 (CSV/JSON 驱动) 以及 Testbench 生成器，极大提升开发效率。
+*   **一体化仿真与波形**: 通过 `hdl_tasks.json` 配置任务，直接在 VS Code 中启动 Icarus Verilog 仿真，并集成 FST/VCD 波形查看器。
+*   **强大的工程管理**: 基于 Tree-sitter 的高性能 AST 解析器，提供模块层级视图、IP 浏览器和跨文件符号导航。
+*   **专业的语言服务**: 支持 Go to Definition, Find All References, Rename Symbol, Hover 等核心 IDE 功能，提供流畅的编码体验。
+*   **FSM 可视化**: 一键从 RTL 代码提取状态机逻辑，并以 Mermaid 图表形式可视化。
+*   **Vivado 深度集成**: 直接在编辑器内调用 Vivado 进行综合与实现，并解析其报告。
 
-### 4. Project Exclusion
-Exclude directories from project scanning:
-```json
-{
-  "hdl-helper.project.excludeDirs": ["node_modules", ".srcs", ".sim", "ip"]
-}
-```
+## 快速开始
+
+1.  **安装扩展**
+    *   在 VS Code 扩展市场中搜索 "HDL Helper" 并点击安装。
+
+2.  **(推荐) 安装外部工具**
+    *   **Verilator** (Windows: `choco install verilator`, Linux: `apt install verilator`)
+    *   **Verible** (从 [GitHub Releases](https://github.com/chipsalliance/verible/releases) 下载)
+    *   **Icarus Verilog** (Windows: `choco install iverilog`, Linux: `apt install iverilog`)
+
+3.  **打开项目**
+    *   在 VS Code 中打开包含 `.v` / `.sv` 文件的项目文件夹，扩展将自动扫描并构建索引。
+
+4.  **开始使用**
+    *   使用代码片段 (`snippets`) 快速插入常用模板。
+    *   通过命令面板 (`Ctrl+Shift+P`) 访问所有 HDL Helper 功能。
+
+## 代码片段 (Snippets)
+
+HDL Helper 提供了大量结构化的代码片段，涵盖 RTL、UVM、SVA 和约束等多个领域。当前活跃的命名空间包括：
+`sv.*`, `rtl.*`, `sva.*`, `sdc.*`, `xdc.*`, `sta.*`, `uvm.*` 以及 `tpl.rtl.*`。
+
+## 项目状态
+
+截至 2026-04-11，HDL Helper V3.x 版本已进入“结构稳定 + 可发布”阶段，核心功能链路完备，适合生产环境使用。
 
 ---
 
-## ⌨️ Shortcuts & Commands
+# HDL Helper
 
-| Shortcut | Command | Description |
-| --- | --- | --- |
-| **`F12`** | Go to Definition | Jump to signal or module definition. |
-| **`F2`** | Rename | Smart rename symbol across the project. |
-| **`Ctrl+Alt+I`** | Instantiate Module | Copy Instantiation template. |
-| **`Ctrl+Alt+W`** | Create Signals | Auto-declare signals for selected instance. |
-| **`Ctrl+Alt+T`** | Generate Testbench | Quick testbench generation. |
-| **`Shift+Alt+F`** | Format Document | Format using Verible rules. |
+**[中文](#hdl-helper)** | English
 
-### All Commands
-| Command | Description |
-| --- | --- |
-| `HDL: Instantiate Module` | Generate module instantiation template |
-| `HDL: Create Signal Declarations` | Auto-declare signals for instance |
-| `HDL: Generate Testbench` | Generate testbench template |
-| `HDL: Visualize FSM (Mermaid)` | Generate FSM state diagram |
-| `HDL: Generate AXI Interface` | AXI4-Lite/Full/Stream wizard |
-| `HDL: Generate Memory IP` | FIFO/RAM generator wizard |
-| `HDL: Generate Register Map` | CSV/JSON to RTL/C Header/MD |
-| `HDL: Run Simulation` | Execute simulation task |
-| `HDL: View Waveform` | Open FST/VCD waveform viewer |
-| `HDL: Run Simulation (Hierarchy)` | Run simulation from Module Hierarchy view |
-| `HDL: View Waveform (Hierarchy)` | Open waveform from Module Hierarchy view |
-| `HDL: Run Vivado Synthesis` | Launch Vivado synthesis |
-| `HDL: Run Vivado Implementation` | Launch Vivado implementation |
-| `HDL: Set as Top Module` | Set top module for hierarchy |
-| `HDL: Generate Interface Doc` | Generate Markdown documentation |
-| `HDL: List All Linter Rules` | Show Verible lint rules |
+**HDL Helper** is a comprehensive Hardware Description Language (HDL) development extension for VS Code, designed specifically for FPGA/IC engineers. It transforms a general-purpose code editor into a full-featured professional hardware development environment, covering the entire development lifecycle from coding and static analysis to project navigation, code generation, simulation, and waveform viewing.
 
----
+## Core Capabilities
 
-## 📁 Project Structure
-
-```raw
-HDL-Helper/
-├── src/
-│   ├── commands/          # Command implementations
-│   ├── generators/        # Code generators (AXI, Memory, Registers)
-│   ├── linter/           # Multi-engine linter system
-│   ├── project/          # Project management & AST parsing
-│   ├── providers/        # VS Code providers (completion, hover, etc.)
-│   ├── simulation/       # Simulation manager & waveform viewer
-│   └── utils/            # Utilities (code gen, file I/O)
-├── snippets/             # Code snippets (RTL, UVM, SVA, Constraints)
-├── syntaxes/             # TextMate grammars
-└── resources/            # WASM binaries (tree-sitter)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        HDL Helper                               │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ Code Gen     │  │ Multi-Linter │  │ Sim & Waveform       │  │
+│  │ • AXI IF     │  │ • Verilator  │  │ • Icarus Verilog     │  │
+│  │ • Memory IP  │  │ • Verible    │  │ • Surfer Viewer      │  │
+│  │ • Reg Map    │  │ • Vivado     │  │ • FST/VCD Support    │  │
+│  └──────────────┘  └──────────────┘  └──────────────────────┘  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ Proj Mgmt    │  │ Lang Services│  │ EDA Integration      │  │
+│  │ • AST Parse  │  │ • Go to Def  │  │ • Vivado Synth       │  │
+│  │ • Hierarchy  │  │ • Hover      │  │ • Vivado Impl        │  │
+│  │ • IP Browser │  │ • Rename     │  │ • Report Parsing     │  │
+│  └──────────────┘  └──────────────┘  └──────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
----
+### Key Features
 
-## ❓ FAQ
+*   **Multi-Engine Linting**: Concurrently integrates three major linters—Verilator (hardware semantics), Verible (code style), and Vivado xvlog (native syntax)—to comprehensively ensure code quality.
+*   **Intelligent Code Generation**: Offers wizard-driven generators for AXI interfaces, FIFOs/RAMs, register maps (driven by CSV/JSON), and testbenches, significantly boosting productivity.
+*   **Integrated Simulation & Waveform**: Configure tasks via `hdl_tasks.json` to launch Icarus Verilog simulations directly within VS Code, with an integrated FST/VCD waveform viewer.
+*   **Powerful Project Management**: Leverages a high-performance Tree-sitter-based AST parser to provide a module hierarchy view, IP browser, and cross-file symbol navigation.
+*   **Professional Language Services**: Supports core IDE features like Go to Definition, Find All References, Rename Symbol, and Hover, delivering a smooth coding experience.
+*   **FSM Visualization**: Extracts state machine logic from RTL code with one click and visualizes it as a Mermaid diagram.
+*   **Deep Vivado Integration**: Invoke Vivado synthesis and implementation directly from the editor and parse its reports.
 
-**Q: How do I view waveforms?**
-A: Use **HDL Explorer > Module Hierarchy**: click `Run Simulation` / `View Waveform` from the view title or module row buttons. You can also run command `HDL: View Waveform` to open a waveform file manually.
+## Quick Start
 
-**Q: Can I use different linting rules for different projects?**
-A: Yes! Use VS Code **Workspace Settings** to override tool paths or active engines per project.
+1.  **Install the Extension**
+    *   Search for "HDL Helper" in the VS Code Marketplace and click install.
 
-**Q: Why Verilator?**
-A: Verilator is incredibly fast at catching "lint" errors that are actually "hardware" bugs (e.g., bit-width mismatches, undriven nets) which style-checkers like Verible might miss.
+2.  **(Recommended) Install External Tools**
+    *   **Verilator** (Windows: `choco install verilator`, Linux: `apt install verilator`)
+    *   **Verible** (Download from [GitHub Releases](https://github.com/chipsalliance/verible/releases))
+    *   **Icarus Verilog** (Windows: `choco install iverilog`, Linux: `apt install iverilog`)
 
-**Q: How do I generate a Register Map?**
-A: Create a CSV or JSON file defining your registers, then use `HDL: Generate Register Map from File` command. The wizard will guide you through output options.
+3.  **Open Your Project**
+    *   Open your project folder containing `.v` / `.sv` files in VS Code. The extension will automatically scan and build an index.
 
----
+4.  **Start Coding**
+    *   Use code snippets to quickly insert common templates.
+    *   Access all HDL Helper features via the Command Palette (`Ctrl+Shift+P`).
 
-## 📖 Documentation
+## Code Snippets
 
-Starting from 2026-04-11, `README.md` is the canonical documentation entry.
+HDL Helper provides a rich set of structured code snippets covering RTL, UVM, SVA, and constraints. The currently active snippet namespaces are:
+`sv.*`, `rtl.*`, `sva.*`, `sdc.*`, `xdc.*`, `sta.*`, `uvm.*`, and `tpl.rtl.*`.
 
-- Historical archive reference: [hdl-helper-description.md](./hdl-helper-description.md)
-- Snippet migration policy: `snippets/LEGACY_POLICY.md`
-- Regression references: `resources/regression/`
+## Project Status
 
----
-
-## 📈 Project Report (2026-04-11)
-
-### Current Stage
-
-HDL Helper has entered a **release-sealed and structurally stable** phase for the V3.x line.
-
-- Snippet system has been migrated to active namespaces: `sv.*`, `rtl.*`, `sva.*`, `sdc.*`, `xdc.*`, `sta.*`, `uvm.*`, plus template namespace `tpl.rtl.*`.
-- Legacy snippet trees (`snippets/design`, `snippets/verification`) are no longer active maintenance targets.
-- Simulation workflow has been consolidated around **Module Hierarchy** actions.
-- Multi-workspace safety, filelist parsing, encoding fallback, and waveform fallback have all received hardening updates.
-
-### Verified Release Health
-
-Final seal checks (2026-04-11):
-
-- `SEAL_CHK1_PACKAGE_LEGACY_REF_COUNT=0`
-- `SEAL_CHK2_MISSING_CONTRIB_PATHS=0`
-- `SEAL_CHK3_ACTIVE_PREFIX_TOTAL=270`
-- `SEAL_CHK3_ACTIVE_PREFIX_DUP_GROUPS=0`
-- `SEAL_CHK4_EMPTY_ACTIVE_JSON_FILES=0`
-- `SEAL_CHK5_JSON_PARSE_ERRORS=0`
-- `SEAL_CHK6_34_MAPPING_COUNT=2` (`sdc` + `xdc`)
-
-### Growth Opportunities (Next Development Space)
-
-1. Add `tpl.uvm.*` template family and associated regression checklist.
-2. Introduce snippet CI lint gates (prefix uniqueness, JSON schema checks, semantic smoke tests).
-3. Expand simulator backend support beyond Icarus (Verilator/XSIM/ModelSim/Questa orchestration).
-4. Add workspace-level telemetry hooks for command latency and parser/index refresh health.
-5. Build automated golden regression for snippets insertion and compile viability.
-6. Unify docs into a versioned docs site pipeline (README as entry, generated detailed pages).
-
-A full standalone report is available at `PROJECT_REPORT_2026-04-11.md`.
-
----
-
-**Enjoy coding with HDL Helper!** 🚀
-If you find bugs or have feature requests, please report them on [GitHub](https://github.com/Aligo-BTBKS/hdl-helper). Happy FPGA coding! 🎉
-
+As of 2026-04-11, the HDL Helper V3.x line has entered a "structurally stable and releasable" phase. Its core feature set is complete and ready for production use.

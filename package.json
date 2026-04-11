@@ -17,7 +17,7 @@
   "main": "./out/main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Aligo-BTBKS/hdl-helper"
+    "url": "https://github.com/MengyuanQiu/hdl-helper"
   },
   "contributes": {
     "commands": [
@@ -293,6 +293,26 @@
               }
             ]
           }
+        },
+        "hdl-helper.workbench.roleGroupedSources": {
+          "type": "boolean",
+          "default": false,
+          "description": "启用按工程角色分组的 Sources 视图 (实验性功能)。启用后，源文件将按 Design/Simulation/Verification 等角色分组显示。"
+        },
+        "hdl-helper.workbench.dualHierarchy": {
+          "type": "boolean",
+          "default": false,
+          "description": "启用独立的 Design Hierarchy 和 Simulation Hierarchy (实验性功能)。启用后，设计层级和仿真层级将分别显示。"
+        },
+        "hdl-helper.projectConfig.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "启用 project.json 配置驱动的工程管理 (实验性功能)。启用后，将使用 .hdl-helper/project.json 定义的 source sets 和 targets。"
+        },
+        "hdl-helper.targetDrivenRuns.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "启用基于 target 的仿真运行管理 (实验性功能)。启用后，仿真任务将与 active target 关联。"
         }
       }
     },

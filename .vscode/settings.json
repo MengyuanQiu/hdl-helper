@@ -10,5 +10,6 @@
 	"typescript.tsc.autoDetect": "off",
 	"hdl-helper.linter.rules": {
 		"parameter-name-style": "true"
-	}
+	},
+	"kiroAgent.configureMCP": "Disabled"
 }

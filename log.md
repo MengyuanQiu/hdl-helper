@@ -510,3 +510,131 @@
   - push(tag): `V3.2.0 -> V3.2.0`（成功）
 - 结论:
   - V3.2.0 发布说明与封版标签均已完成上云，origin/main 与本地 HEAD 对齐。
+
+---
+
+## 2026-04-11 - Phase 0: Workbench Architecture Foundation
+
+- 目标: 完成 Phase 0 开工前锁定项，为 Iteration 1-6 建立稳定基础。
+- 变更文件:
+  - src/project/types.ts（新增）
+  - src/project/stateService.ts（新增）
+  - docs/FALLBACK_POLICY.md（新增）
+  - docs/FEATURE_FLAGS.md（新增）
+  - package.json（新增 4 个 feature flags）
+  - log.md
+- 关键变更:
+  - **任务 0.1 - 锁定内部核心类型**:
+    - 定义 Role、PhysicalFileType、SourceOfTruth、TargetKind 等核心枚举。
+    - 定义 NormalizedProjectConfig、NormalizedSourceSet、NormalizedTarget 配置类型。
+    - 定义 FileClassificationResult、TargetContext、WorkbenchState 语义模型。
+    - 定义 ExplorerViewModel、RunRecord、ToolchainStatus 等视图模型。
+  - **任务 0.2 - 锁定状态模型接口**:
+    - 实现 StateService 集中状态管理服务。
+    - 提供 activeProject、activeTarget、designTop、simulationTop 状态读写。
+    - 提供 projectConfigStatus、indexStatus、lastRunByTarget、toolchainStatus 管理。
+    - 支持状态持久化（workspace memento）与事件发射（StateChangeEvent）。
+  - **任务 0.3 - 锁定回退策略文档**:
+    - 定义 4 种失败场景的明确回退行为（Case A-D）。
+    - 明确"无 silent failure"原则：所有降级必须可见、可诊断。
+    - 定义诊断严重性级别（Error/Warning/Info）与功能降级矩阵。
+  - **任务 0.4 - 锁定 Feature Flags**:
+    - 新增 `hdl-helper.workbench.roleGroupedSources`（默认 false）。
+    - 新增 `hdl-helper.workbench.dualHierarchy`（默认 false）。
+    - 新增 `hdl-helper.projectConfig.enabled`（默认 false）。
+    - 新增 `hdl-helper.targetDrivenRuns.enabled`（默认 false）。
+    - 定义 flag 依赖关系与 4 阶段推出策略。
+- 验证:
+  - src/project/types.ts 诊断检查: No errors found。
+  - src/project/stateService.ts 诊断检查: No errors found。
+  - package.json 诊断检查: No errors found。
+  - npm run -s compile: 通过（Exit Code: 0）。
+- 架构约束确认:
+  - ✅ TreeProvider 只负责渲染（types 中 ExplorerViewModel 明确分离）。
+  - ✅ TargetContext 是工程语义统一入口（types 中已定义）。
+  - ✅ project.json 是主真相（SourceOfTruth 枚举明确优先级）。
+  - ✅ 第一阶段使用 deterministic snapshot rebuild（StateService 支持完整状态快照）。
+  - ✅ 所有 fallback 可见可诊断（FALLBACK_POLICY.md 明确要求）。
+- 结论:
+  - Phase 0 四项任务全部完成并通过验证。
+  - 核心类型、状态模型、回退策略、feature flags 已锁定。
+  - 可以安全进入 Iteration 1（V1-A）：Role-grouped Sources UI Foundation。
+
+## 2026-04-11 - Metadata & Release Artifacts Correction
+
+- 目标: 修复审查发现的 3 个严重度问题，确保仓库元数据、发布产物与变更日志的一致性与完整性。
+- 变更文件:
+  - package.json（修复 repository URL）
+  - RELEASE_NOTES_V3.2.0.md（恢复缺失的发布说明）
+  - CHANGELOG.md（新增 V3.2.0 版本条目）
+  - log.md
+- 关键修复:
+  - **问题 1 - 高严重度：仓库元数据与远端迁移状态不一致**:
+    - 修复前: `"url": "https://github.com/Aligo-BTBKS/hdl-helper"`
+    - 修复后: `"url": "https://github.com/MengyuanQiu/hdl-helper"`
+    - 影响: 避免 Marketplace/README 跳转错误与发布信息混乱。
+  - **问题 2 - 中严重度：发布记录声明的 Release 说明产物缺失**:
+    - 恢复 RELEASE_NOTES_V3.2.0.md（中英双语，1800+ 行）。
+    - 包含版本定位、重点更新、质量指标、兼容性、后续路线。
+    - 可直接用于 GitHub Release 页面。
+  - **问题 3 - 中严重度：标签发布与变更日志版本节未对齐**:
+    - 在 CHANGELOG.md 新增 `[3.2.0] - 2026-04-11` 条目。
+    - 包含 Added/Changed/Fixed/Quality Metrics 四个分类。
+    - 覆盖仿真入口重构、多工作区支持、Snippets 迁移、Phase 0 基础等关键变更。
+- 验证:
+  - package.json 诊断检查: No errors found。
+  - RELEASE_NOTES_V3.2.0.md 诊断检查: No errors found。
+  - CHANGELOG.md 诊断检查: No errors found。
+  - npm run -s compile: 通过（Exit Code: 0）。
+- 结论:
+  - 3 个严重度问题已全部修复并通过验证。
+  - 仓库元数据、发布产物、变更日志现已对齐一致。
+  - 可复现发布包完整性已恢复。
+  - 可以继续进行 Iteration 1 的开发工作。
+
+## 2026-04-11 - Iteration 1 Day 1: Service Skeletons
+
+- 目标: 完成 Iteration 1 (V1-A) Day 1 任务，创建核心服务骨架。
+- 变更文件:
+  - src/project/projectConfigService.ts（新增）
+  - src/project/classificationService.ts（新增）
+  - src/project/targetContextService.ts（新增）
+  - log.md
+- 关键变更:
+  - **ProjectConfigService（300+ 行）**:
+    - 负责读取、解析、验证 .hdl-helper/project.json。
+    - 实现 schema 校验（version、name、sourceSets、targets 等必填字段）。
+    - 实现配置规范化（RawProjectConfig → NormalizedProjectConfig）。
+    - 支持配置状态管理（Valid/Missing/Invalid/NotEnabled）。
+    - 支持缓存机制，避免重复读取。
+  - **ClassificationService（350+ 行）**:
+    - 负责文件角色分类（Design/Simulation/Verification/Constraints/Scripts/IpGenerated）。
+    - 支持 config-driven 分类（优先级最高）。
+    - 支持 heuristic 分类（回退策略）。
+    - 实现路径规则（rtl/、tb/、sva/、constraints/、scripts/、ip/ 等）。
+    - 实现文件名规则（tb_*、*_tb、sva_*、*_bind 等）。
+    - 实现扩展名规则（.xdc、.sdc、.tcl、.xci 等）。
+    - 支持 shared file 处理（primary + secondary roles）。
+  - **TargetContextService（250+ 行）**:
+    - 负责解析有效 target context（hierarchy、runs、diagnostics 的语义入口）。
+    - 实现 top 解析（target.top > tops.design/simulation by kind）。
+    - 实现 includeDirs 合并（source sets + target-local）。
+    - 实现 defines 合并（source sets + target-local）。
+    - 支持 heuristic fallback context（无 config 时）。
+    - 支持 first valid target fallback（activeTarget 无效时）。
+- 架构遵循:
+  - ✅ 服务骨架不依赖 UI 层。
+  - ✅ 分类逻辑与渲染逻辑分离。
+  - ✅ Target context 是语义统一入口。
+  - ✅ 支持 config-driven 与 heuristic 双模式。
+  - ✅ 所有 fallback 行为明确可追溯。
+- 验证:
+  - src/project/projectConfigService.ts 诊断检查: No errors found。
+  - src/project/classificationService.ts 诊断检查: No errors found。
+  - src/project/targetContextService.ts 诊断检查: No errors found。
+  - npm run -s compile: 通过（Exit Code: 0）。
+  - npm run -s lint: 通过（Exit Code: 0）。
+- 结论:
+  - Day 1 任务全部完成并通过验证。
+  - 三个核心服务骨架已就位，接口清晰，职责明确。
+  - 可以进入 Day 2：实现最小 ClassificationService + debug command。
