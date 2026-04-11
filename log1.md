@@ -480,3 +480,36 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（30 passing）。
+
+## 2026-04-11 - Iteration 4 Day 6: One-click Open Last Run Artifacts
+
+- 目标: 继续推进 Iteration 4，提供 active target 语境下一键回看运行产物（波形/日志）的统一入口。
+- 变更文件:
+  - src/commands/openLastRunArtifactsByTarget.ts
+  - src/extension.ts
+  - src/test/extension.test.ts
+  - package.json
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - 新增命令 `HDL: Open Last Run Artifacts (Active Target)`：
+    - 解析 active target 对应最近运行记录；
+    - 自动识别可用产物（Open Waveform / Open Log）；
+    - 多产物时弹出动作选择；
+    - 无可用产物时输出明确缺失原因（record 缺失、路径缺失、文件不存在）。
+  - 新增可测试 helper：
+    - `getAvailableArtifactActions`
+    - `getMissingArtifactReasons`
+  - 新命令接入：
+    - Command Palette
+    - `HDL: Quick Actions`
+    - `HDL: Open Hierarchy Tools`
+  - 新增最小回归测试：
+    - `Artifact action helper returns both actions when files are available`
+    - `Artifact missing helper reports missing record context`
+    - `Artifact missing helper reports missing waveform and log files`
+  - 设置指南补充一键回看最近产物命令说明。
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（33 passing）。

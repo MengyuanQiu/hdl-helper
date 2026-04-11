@@ -234,6 +234,12 @@
         "title": "HDL: Open Recent Runs",
         "category": "HDL Helper",
         "icon": "$(list-ordered)"
+      },
+      {
+        "command": "hdl-helper.openLastRunArtifactsByTarget",
+        "title": "HDL: Open Last Run Artifacts (Active Target)",
+        "category": "HDL Helper",
+        "icon": "$(run-all)"
       }
     ],
     "configuration": {

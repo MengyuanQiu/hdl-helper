@@ -26,6 +26,7 @@ import { formatRunRecords } from '../commands/debugRecentRuns';
 import { pickRunRecordForTarget } from '../commands/openLastWaveformByTarget';
 import { getLogPathFromRunRecord } from '../commands/openLastLogByTarget';
 import { getRecentRunActions, getRecentRunEntries, prioritizeActiveTarget } from '../commands/openRecentRuns';
+import { getAvailableArtifactActions, getMissingArtifactReasons } from '../commands/openLastRunArtifactsByTarget';
 import { buildConfigIssues } from '../project/configDiagnostics';
 // import * as myExtension from '../../extension';
 
@@ -551,5 +552,35 @@ suite('Extension Test Suite', () => {
 		const prioritized = prioritizeActiveTarget(entries, 'sim_default');
 		assert.strictEqual(prioritized[0].targetId, 'sim_default');
 		assert.strictEqual(prioritized[1].targetId, 'design_default');
+	});
+
+	test('Artifact action helper returns both actions when files are available', () => {
+		const actions = getAvailableArtifactActions({
+			targetId: 'sim_default',
+			timestamp: 123,
+			success: true,
+			waveformPath: 'C:/repo/build/tb_top.fst',
+			logPath: 'C:/repo/build/tb_top.run.log'
+		}, () => true);
+
+		assert.deepStrictEqual(actions, ['Open Waveform', 'Open Log']);
+	});
+
+	test('Artifact missing helper reports missing record context', () => {
+		const reasons = getMissingArtifactReasons(undefined);
+		assert.ok(reasons.some(reason => reason.includes('No run record matched')));
+	});
+
+	test('Artifact missing helper reports missing waveform and log files', () => {
+		const reasons = getMissingArtifactReasons({
+			targetId: 'sim_default',
+			timestamp: 123,
+			success: true,
+			waveformPath: 'C:/repo/build/tb_top.fst',
+			logPath: 'C:/repo/build/tb_top.run.log'
+		}, () => false);
+
+		assert.ok(reasons.some(reason => reason.includes('Waveform file not found')));
+		assert.ok(reasons.some(reason => reason.includes('Log file not found')));
 	});
 });

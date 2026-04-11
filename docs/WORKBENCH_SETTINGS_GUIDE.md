@@ -32,6 +32,8 @@ This guide lists workbench-related settings that can be configured directly in V
 - Quick Actions: `HDL: Quick Actions` -> `Open Last Log (Active Target)`
 - Command Palette: `HDL: Open Recent Runs`
 - Quick Actions: `HDL: Quick Actions` -> `Open Recent Runs`
+- Command Palette: `HDL: Open Last Run Artifacts (Active Target)`
+- Quick Actions: `HDL: Quick Actions` -> `Open Last Run Artifacts (Active Target)`
 - Command Palette: `HDL: Open Dual Hierarchy Regression Checklist`
 - Quick Actions: `HDL: Quick Actions` -> `Open Dual Hierarchy Regression Checklist`
 
@@ -50,6 +52,7 @@ This guide lists workbench-related settings that can be configured directly in V
   - Open Last Waveform (Active Target)
   - Open Last Log (Active Target)
   - Open Recent Runs
+  - Open Last Run Artifacts (Active Target)
   - Clear Top Module
 - In `Hierarchy Tools`, entries are grouped with prefixes for faster scanning:
   - `[Settings] ...`
@@ -82,6 +85,7 @@ This guide lists workbench-related settings that can be configured directly in V
   - Use `HDL: Open Last Waveform (Active Target)` to reopen waveform by active target context.
   - Use `HDL: Open Last Log (Active Target)` to reopen latest run log by active target context.
   - Use `HDL: Open Recent Runs` to browse recent run records and open waveform/log interactively (active target record is prioritized and marked).
+  - Use `HDL: Open Last Run Artifacts (Active Target)` for one-step reopen of the newest available artifact in active target run context.
 
 ## Sources View UI Behavior Settings
 

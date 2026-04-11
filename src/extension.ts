@@ -18,6 +18,7 @@ import { debugRecentRunsByTarget } from './commands/debugRecentRuns';
 import { openLastWaveformByTarget } from './commands/openLastWaveformByTarget';
 import { openLastLogByTarget } from './commands/openLastLogByTarget';
 import { openRecentRuns } from './commands/openRecentRuns';
+import { openLastRunArtifactsByTarget } from './commands/openLastRunArtifactsByTarget';
 import { debugDualHierarchyState } from './commands/debugDualHierarchyState';
 import { openDualHierarchyRegressionChecklist } from './commands/openDualHierarchyRegressionChecklist';
 import { openProjectConfigFromWorkspace } from './commands/openProjectConfig';
@@ -312,6 +313,11 @@ export function activate(context: vscode.ExtensionContext) {
                 description: 'Browse target-keyed run history and open waveform/log',
                 detail: 'Diagnostics'
             },
+            {
+                label: 'Open Last Run Artifacts (Active Target)',
+                description: 'One-click reopen waveform/log for the active target run',
+                detail: 'Diagnostics'
+            },
         ], {
             placeHolder: 'HDL Helper Quick Actions'
         });
@@ -386,6 +392,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
         if (action.label === 'Open Recent Runs') {
             await vscode.commands.executeCommand('hdl-helper.openRecentRuns');
+            return;
+        }
+        if (action.label === 'Open Last Run Artifacts (Active Target)') {
+            await vscode.commands.executeCommand('hdl-helper.openLastRunArtifactsByTarget');
         }
     }));
 
@@ -455,6 +465,11 @@ export function activate(context: vscode.ExtensionContext) {
                 label: '[Action] Open Recent Runs',
                 description: 'Browse target-keyed run history and open waveform/log',
                 command: 'hdl-helper.openRecentRuns'
+            },
+            {
+                label: '[Action] Open Last Run Artifacts (Active Target)',
+                description: 'One-click reopen waveform/log for the active target run',
+                command: 'hdl-helper.openLastRunArtifactsByTarget'
             }
         ], {
             placeHolder: 'Hierarchy Tools (Settings / Diagnostics / Action)'
@@ -770,6 +785,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openRecentRuns', async () => {
         await openRecentRuns(stateService);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openLastRunArtifactsByTarget', async () => {
+        await openLastRunArtifactsByTarget(stateService);
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runSimulation', async (moduleName: string, sourceUri?: vscode.Uri) => {
