@@ -12,8 +12,9 @@ This guide lists workbench-related settings that can be configured directly in V
 2. Search keyword: `HDL Helper`
 3. Adjust settings under `HDL Helper` section
 
-You can also run extension command:
-- `HDL: Open Workbench Settings`
+ You can also run extension command:
+ - Command Palette: run `HDL: Open Workbench Settings Guide` to open this document directly
+ - Quick Actions: run `HDL: Quick Actions` and choose `Open Workbench Settings Guide`
 
 ## Core Workbench Toggles
 

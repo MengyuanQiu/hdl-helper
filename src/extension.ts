@@ -219,6 +219,11 @@ export function activate(context: vscode.ExtensionContext) {
                 description: 'Configure explorer grouping, source scan filters, and fallback behavior',
                 detail: 'Configuration'
             },
+            {
+                label: 'Open Workbench Settings Guide',
+                description: 'Open docs/WORKBENCH_SETTINGS_GUIDE.md in editor',
+                detail: 'Documentation'
+            },
         ], {
             placeHolder: 'HDL Helper Quick Actions'
         });
@@ -253,6 +258,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
         if (action.label === 'Open Workbench Settings') {
             await vscode.commands.executeCommand('hdl-helper.openWorkbenchSettings');
+            return;
+        }
+        if (action.label === 'Open Workbench Settings Guide') {
+            await vscode.commands.executeCommand('hdl-helper.openWorkbenchSettingsGuide');
         }
     }));
 
@@ -451,6 +460,22 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openWorkbenchSettings', async () => {
         await vscode.commands.executeCommand('workbench.action.openSettings', 'hdl-helper.workbench');
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openWorkbenchSettingsGuide', async () => {
+        const workspaceFolder = resolveWorkspaceForContext();
+        const guidePath = workspaceFolder
+            ? path.join(workspaceFolder.uri.fsPath, 'docs', 'WORKBENCH_SETTINGS_GUIDE.md')
+            : '';
+
+        if (guidePath && fs.existsSync(guidePath)) {
+            const guideUri = vscode.Uri.file(guidePath);
+            await vscode.window.showTextDocument(guideUri, { preview: false });
+            return;
+        }
+
+        await vscode.commands.executeCommand('workbench.action.openSettings', 'hdl-helper.workbench');
+        vscode.window.showWarningMessage('WORKBENCH_SETTINGS_GUIDE.md not found. Opened Workbench settings instead.');
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runSimulation', async (moduleName: string, sourceUri?: vscode.Uri) => {

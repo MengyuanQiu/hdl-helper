@@ -762,3 +762,23 @@
   - npm -s test: 通过（3 passing）。
 - 结论:
   - Workbench 设置项不仅可配，而且可被快速发现和使用。
+
+## 2026-04-11 - Iteration 1 Day 4: Settings Guide Command
+
+- 目标: 进一步强化设置可发现性，提供“文档直达”入口。
+- 变更文件:
+  - package.json
+  - src/extension.ts
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log.md
+- 关键变更:
+  - 新增命令 `HDL: Open Workbench Settings Guide`（Command Palette 可直接触发）。
+  - Quick Actions 增加 `Open Workbench Settings Guide` 入口。
+  - 命令行为: 优先打开 `docs/WORKBENCH_SETTINGS_GUIDE.md`，若文档不存在则回退打开 Workbench 设置并给出 warning。
+  - 设置指南文档补充“如何直接打开指南”的入口说明。
+- 验证:
+  - npm run -s compile: 通过。
+  - npm run -s lint: 通过。
+  - npm -s test: 通过（3 passing）。
+- 结论:
+  - 设置入口形成“配置页直达 + 文档直达”的双通道，用户自助配置路径更短。

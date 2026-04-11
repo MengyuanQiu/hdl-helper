@@ -146,6 +146,12 @@
         "title": "HDL: Open Workbench Settings",
         "category": "HDL Helper",
         "icon": "$(settings-gear)"
+      },
+      {
+        "command": "hdl-helper.openWorkbenchSettingsGuide",
+        "title": "HDL: Open Workbench Settings Guide",
+        "category": "HDL Helper",
+        "icon": "$(book)"
       }
     ],
     "configuration": {
