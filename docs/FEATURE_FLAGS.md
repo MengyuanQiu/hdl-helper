@@ -67,7 +67,8 @@ Enables independent Design Hierarchy and Simulation Hierarchy views. When enable
 - Separate commands:
   - "Set as Design Top"
   - "Set as Simulation Top"
-- Each hierarchy built from scoped source context
+- Legacy "Set as Top Module" remains available and maps to Design/Simulation top based on module context.
+- Each hierarchy built from scoped top context; hierarchy failures are isolated per section.
 
 #### Dependencies
 - Requires `roleGroupedSources` to be enabled

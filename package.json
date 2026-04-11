@@ -2,7 +2,7 @@
   "name": "hdl-helper",
   "displayName": "HDL Helper",
   "description": "FPGA/IC 全能助手：双引擎语法检查 (Vivado/Verible)、一键格式化、自动 Testbench、智能例化、LSP 跳转与大纲。",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "publisher": "Cyrus",
   "engines": {
     "vscode": "^1.90.0"
@@ -47,13 +47,35 @@
         "category": "HDL Helper"
       },
       {
+        "command": "hdl-helper.debugDualHierarchyState",
+        "title": "HDL: Debug Dual Hierarchy State",
+        "category": "HDL Helper",
+        "icon": "$(output)"
+      },
+      {
         "command": "hdl-helper.quickStart",
         "title": "HDL: Quick Actions",
         "category": "HDL Helper"
       },
       {
+        "command": "hdl-helper.openHierarchyTools",
+        "title": "HDL: Open Hierarchy Tools",
+        "category": "HDL Helper",
+        "icon": "$(tools)"
+      },
+      {
         "command": "hdl-helper.setTopModule",
         "title": "HDL: Set as Top Module",
+        "category": "HDL Helper"
+      },
+      {
+        "command": "hdl-helper.setDesignTopModule",
+        "title": "HDL: Set as Design Top",
+        "category": "HDL Helper"
+      },
+      {
+        "command": "hdl-helper.setSimulationTopModule",
+        "title": "HDL: Set as Simulation Top",
         "category": "HDL Helper"
       },
       {
@@ -152,6 +174,24 @@
         "title": "HDL: Open Workbench Settings Guide",
         "category": "HDL Helper",
         "icon": "$(book)"
+      },
+      {
+        "command": "hdl-helper.openDualHierarchyRegressionChecklist",
+        "title": "HDL: Open Dual Hierarchy Regression Checklist",
+        "category": "HDL Helper",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "hdl-helper.openSourceFile",
+        "title": "HDL: Open Source File",
+        "category": "HDL Helper",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "hdl-helper.revealSourceFileInExplorer",
+        "title": "HDL: Reveal Source File In Explorer",
+        "category": "HDL Helper",
+        "icon": "$(folder-opened)"
       }
     ],
     "configuration": {
@@ -499,9 +539,9 @@
           "group": "navigation"
         },
         {
-          "command": "hdl-helper.clearTopModule",
+          "command": "hdl-helper.openHierarchyTools",
           "when": "view == hdl-hierarchy-view",
-          "group": "navigation"
+          "group": "navigation@3"
         },
         {
           "command": "hdl-helper.runSimulationFromHierarchy",
@@ -512,16 +552,6 @@
           "command": "hdl-helper.viewWaveformFromHierarchy",
           "when": "view == hdl-hierarchy-view",
           "group": "navigation@2"
-        },
-        {
-          "command": "hdl-helper.openWorkbenchSettings",
-          "when": "view == hdl-hierarchy-view",
-          "group": "navigation@3"
-        },
-        {
-          "command": "hdl-helper.openSimulationSettings",
-          "when": "view == hdl-hierarchy-view",
-          "group": "navigation@4"
         },
         {
           "command": "hdl-helper.refreshIpExplorer",
@@ -536,9 +566,29 @@
           "group": "1_modification"
         },
         {
-          "command": "hdl-helper.clearTopModule",
-          "when": "view == hdl-hierarchy-view",
+          "command": "hdl-helper.setDesignTopModule",
+          "when": "view == hdl-hierarchy-view && viewItem == module && config.hdl-helper.workbench.dualHierarchy",
           "group": "1_modification"
+        },
+        {
+          "command": "hdl-helper.setSimulationTopModule",
+          "when": "view == hdl-hierarchy-view && viewItem == module && config.hdl-helper.workbench.dualHierarchy",
+          "group": "1_modification"
+        },
+        {
+          "command": "hdl-helper.clearTopModule",
+          "when": "view == hdl-hierarchy-view && (viewItem == module || viewItem == design-hierarchy-root || viewItem == simulation-hierarchy-root || viewItem == legacy-hierarchy-root)",
+          "group": "1_modification"
+        },
+        {
+          "command": "hdl-helper.openSourceFile",
+          "when": "view == hdl-hierarchy-view && viewItem =~ /^sources-file\\./",
+          "group": "navigation@1"
+        },
+        {
+          "command": "hdl-helper.revealSourceFileInExplorer",
+          "when": "view == hdl-hierarchy-view && viewItem =~ /^sources-file\\./",
+          "group": "navigation@2"
         },
         {
           "command": "hdl-helper.copyInstantiation",

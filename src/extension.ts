@@ -13,10 +13,15 @@ import { generateAxiCommand } from './commands/generateAxi';
 import { generateMemoryCommand } from './commands/generateMemory';
 import { generateRegistersCommand } from './commands/generateRegisters';
 import { debugProjectClassification } from './commands/debugProjectClassification';
+import { debugDualHierarchyState } from './commands/debugDualHierarchyState';
+import { openDualHierarchyRegressionChecklist } from './commands/openDualHierarchyRegressionChecklist';
 import { activateLanguageServer, deactivateLanguageServer } from './languageClient';
 // 引入 V2.0 工程核心
 import { ProjectManager } from './project/projectManager';
 import { HdlTreeProvider } from './project/hdlTreeProvider';
+import { StateService } from './project/stateService';
+import { HierarchyService } from './project/hierarchyService';
+import { mapLegacyTopSelection } from './project/topSelectionPolicy';
 import { HdlModule } from './project/hdlSymbol';
 import { VerilogDefinitionProvider } from './providers/defProvider';
 import { VerilogHoverProvider } from './providers/hoverProvider';
@@ -36,6 +41,7 @@ import { HdlCodeActionProvider } from './providers/codeActionProvider';
 
 // 全局变量，方便 deactivate 使用
 let projectManager: ProjectManager;
+const hierarchyService = new HierarchyService();
 
 function resolveWorkspaceForContext(sourceUri?: vscode.Uri): vscode.WorkspaceFolder | undefined {
     if (sourceUri) {
@@ -54,6 +60,27 @@ function resolveWorkspaceForContext(sourceUri?: vscode.Uri): vscode.WorkspaceFol
     }
 
     return vscode.workspace.workspaceFolders?.[0];
+}
+
+function resolveSourceItemUri(item?: unknown): vscode.Uri | undefined {
+    if (!item || typeof item !== 'object') {
+        return undefined;
+    }
+
+    const candidate = item as {
+        resourceUri?: vscode.Uri;
+        file?: { uri?: string };
+    };
+
+    if (candidate.resourceUri instanceof vscode.Uri) {
+        return candidate.resourceUri;
+    }
+
+    if (candidate.file?.uri) {
+        return vscode.Uri.file(candidate.file.uri);
+    }
+
+    return undefined;
 }
 
 function findLatestWaveformInBuild(buildDir: string): string | undefined {
@@ -75,7 +102,7 @@ function findLatestWaveformInBuild(buildDir: string): string | undefined {
 }
 
 function isLikelyTestbench(mod: HdlModule): boolean {
-    return mod.ports.length === 0 || mod.name.toLowerCase().startsWith('tb');
+    return hierarchyService.isLikelyTestbench(mod);
 }
 
 async function pickModuleFromHierarchy(projectManager: ProjectManager, actionLabel: string): Promise<HdlModule | undefined> {
@@ -151,7 +178,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     // C. 初始化 Tree Provider
     const treeProvider = new HdlTreeProvider(projectManager);
+    const stateService = new StateService(context);
     const ipCatalogProvider = new IpCatalogProvider();
+    context.subscriptions.push(stateService);
+
+    // Restore persisted dual-hierarchy tops at startup.
+    treeProvider.setDesignTopModule(stateService.getDesignTop() ?? null);
+    treeProvider.setSimulationTopModule(stateService.getSimulationTop() ?? null);
 
     // D. 注册侧边栏视图
     vscode.window.registerTreeDataProvider(
@@ -168,6 +201,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (
             event.affectsConfiguration('hdl-helper.workbench.roleGroupedSources') ||
             event.affectsConfiguration('hdl-helper.projectConfig.enabled') ||
+            event.affectsConfiguration('hdl-helper.workbench.dualHierarchy') ||
             event.affectsConfiguration('hdl-helper.workbench.sources.includePatterns') ||
             event.affectsConfiguration('hdl-helper.workbench.sources.excludePatterns') ||
             event.affectsConfiguration('hdl-helper.workbench.sources.showEmptyGroups') ||
@@ -224,6 +258,16 @@ export function activate(context: vscode.ExtensionContext) {
                 description: 'Open docs/WORKBENCH_SETTINGS_GUIDE.md in editor',
                 detail: 'Documentation'
             },
+            {
+                label: 'Debug Dual Hierarchy State',
+                description: 'Print current dual-hierarchy roots/tops/flags to output channel',
+                detail: 'Diagnostics'
+            },
+            {
+                label: 'Open Dual Hierarchy Regression Checklist',
+                description: 'Open resources/regression/DUAL_HIERARCHY_MANUAL_REGRESSION.md',
+                detail: 'Diagnostics'
+            },
         ], {
             placeHolder: 'HDL Helper Quick Actions'
         });
@@ -262,7 +306,58 @@ export function activate(context: vscode.ExtensionContext) {
         }
         if (action.label === 'Open Workbench Settings Guide') {
             await vscode.commands.executeCommand('hdl-helper.openWorkbenchSettingsGuide');
+            return;
         }
+        if (action.label === 'Debug Dual Hierarchy State') {
+            await vscode.commands.executeCommand('hdl-helper.debugDualHierarchyState');
+            return;
+        }
+        if (action.label === 'Open Dual Hierarchy Regression Checklist') {
+            await vscode.commands.executeCommand('hdl-helper.openDualHierarchyRegressionChecklist');
+        }
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openHierarchyTools', async () => {
+        const picked = await vscode.window.showQuickPick([
+            {
+                label: '[Settings] Workbench Settings',
+                description: 'Open explorer/workbench settings',
+                command: 'hdl-helper.openWorkbenchSettings'
+            },
+            {
+                label: '[Settings] Simulation Settings',
+                description: 'Open simulation task/path settings',
+                command: 'hdl-helper.openSimulationSettings'
+            },
+            {
+                label: '[Settings] Workbench Settings Guide',
+                description: 'Open docs/WORKBENCH_SETTINGS_GUIDE.md',
+                command: 'hdl-helper.openWorkbenchSettingsGuide'
+            },
+            {
+                label: '[Diagnostics] Debug Dual Hierarchy State',
+                description: 'Print roots/tops/flags to output channel',
+                command: 'hdl-helper.debugDualHierarchyState'
+            },
+            {
+                label: '[Diagnostics] Dual Hierarchy Regression Checklist',
+                description: 'Open manual regression checklist',
+                command: 'hdl-helper.openDualHierarchyRegressionChecklist'
+            },
+            {
+                label: '[Action] Clear Top Module',
+                description: 'Clear design/simulation/legacy top selection',
+                command: 'hdl-helper.clearTopModule'
+            }
+        ], {
+            placeHolder: 'Hierarchy Tools (Settings / Diagnostics / Action)'
+        });
+
+        if (!picked) {
+            return;
+        }
+
+        await vscode.commands.executeCommand(picked.command);
     }));
 
     // =========================================================================
@@ -338,18 +433,73 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
     // --- E. 工程管理命令 (Set/Clear Top) ---
-    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.setTopModule', (item: HdlModule) => {
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.setTopModule', async (item: HdlModule) => {
         if (item && item.name) {
             treeProvider.setTopModule(item.name);
-            vscode.window.showInformationMessage(`Top Module set to: ${item.name}`);
+
+            const mapping = mapLegacyTopSelection(item, hierarchyService);
+            if (mapping.simulationTop) {
+                treeProvider.setSimulationTopModule(mapping.simulationTop);
+                await stateService.setSimulationTop(mapping.simulationTop);
+                vscode.window.showInformationMessage(`Top Module set to: ${item.name} (mapped to Simulation Top)`);
+            } else {
+                treeProvider.setDesignTopModule(mapping.designTop!);
+                await stateService.setDesignTop(mapping.designTop!);
+                vscode.window.showInformationMessage(`Top Module set to: ${item.name} (mapped to Design Top)`);
+            }
         } else {
             vscode.window.showErrorMessage("只能将模块定义设为 Top");
         }
     }));
 
-    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.clearTopModule', () => {
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.setDesignTopModule', async (item: HdlModule) => {
+        if (item && item.name) {
+            treeProvider.setDesignTopModule(item.name);
+            await stateService.setDesignTop(item.name);
+            vscode.window.showInformationMessage(`Design Top set to: ${item.name}`);
+            return;
+        }
+
+        vscode.window.showErrorMessage('Can only set a module definition as Design Top.');
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.setSimulationTopModule', async (item: HdlModule) => {
+        if (item && item.name) {
+            treeProvider.setSimulationTopModule(item.name);
+            await stateService.setSimulationTop(item.name);
+            vscode.window.showInformationMessage(`Simulation Top set to: ${item.name}`);
+            return;
+        }
+
+        vscode.window.showErrorMessage('Can only set a module definition as Simulation Top.');
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.clearTopModule', async () => {
         treeProvider.setTopModule(null);
+        treeProvider.clearScopedTops();
+        await stateService.setDesignTop(undefined);
+        await stateService.setSimulationTop(undefined);
         vscode.window.showInformationMessage(`已清除 Top Module 设置`);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openSourceFile', async (item?: unknown) => {
+        const uri = resolveSourceItemUri(item);
+        if (!uri) {
+            vscode.window.showWarningMessage('No source file selected.');
+            return;
+        }
+
+        await vscode.window.showTextDocument(uri, { preview: false });
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.revealSourceFileInExplorer', async (item?: unknown) => {
+        const uri = resolveSourceItemUri(item);
+        if (!uri) {
+            vscode.window.showWarningMessage('No source file selected.');
+            return;
+        }
+
+        await vscode.commands.executeCommand('revealInExplorer', uri);
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.refreshProject', async () => {
@@ -476,6 +626,23 @@ export function activate(context: vscode.ExtensionContext) {
 
         await vscode.commands.executeCommand('workbench.action.openSettings', 'hdl-helper.workbench');
         vscode.window.showWarningMessage('WORKBENCH_SETTINGS_GUIDE.md not found. Opened Workbench settings instead.');
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openDualHierarchyRegressionChecklist', async () => {
+        const workspaceFolder = resolveWorkspaceForContext();
+        await openDualHierarchyRegressionChecklist({
+            workspaceRoot: workspaceFolder?.uri.fsPath,
+            existsSync: fs.existsSync,
+            openChecklist: async (filePath: string) => {
+                await vscode.window.showTextDocument(vscode.Uri.file(filePath), { preview: false });
+            },
+            runFallbackDebug: async () => {
+                await vscode.commands.executeCommand('hdl-helper.debugDualHierarchyState');
+            },
+            showWarning: (message: string) => {
+                vscode.window.showWarningMessage(message);
+            }
+        });
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runSimulation', async (moduleName: string, sourceUri?: vscode.Uri) => {
@@ -622,6 +789,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.debugProjectClassification', async () => {
         await debugProjectClassification(classificationOutputChannel);
+    }));
+
+    const dualHierarchyOutputChannel = vscode.window.createOutputChannel('HDL Helper - Dual Hierarchy');
+    context.subscriptions.push(dualHierarchyOutputChannel);
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.debugDualHierarchyState', async () => {
+        await debugDualHierarchyState(treeProvider, stateService, dualHierarchyOutputChannel);
     }));
 
     // G. 生成接口文档 (Markdown) - 右键菜单触发

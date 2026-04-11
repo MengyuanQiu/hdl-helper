@@ -5,8 +5,11 @@ import * as path from 'path';
 import { ClassificationService } from './classificationService';
 import { ProjectConfigService } from './projectConfigService';
 import { ExplorerViewModelBuilder } from './explorerViewModelBuilder';
+import { HierarchyService } from './hierarchyService';
 import {
     FileClassificationResult,
+    Role,
+    SourceOfTruth,
     ProjectConfigStatus,
     SourcesSection
 } from './types';
@@ -46,23 +49,93 @@ class SourceGroupItem extends vscode.TreeItem {
                 ? vscode.TreeItemCollapsibleState.Collapsed
                 : vscode.TreeItemCollapsibleState.None
         );
-        this.description = `${files.length}`;
+        this.description = files.length === 1 ? '1 file' : `${files.length} files`;
         this.iconPath = new vscode.ThemeIcon(icon);
         this.contextValue = 'sources-group';
     }
 }
 
 class SourceFileItem extends vscode.TreeItem {
-    constructor(readonly filePath: string) {
-        super(path.basename(filePath), vscode.TreeItemCollapsibleState.None);
-        this.iconPath = new vscode.ThemeIcon('file-code');
-        this.contextValue = 'sources-file';
-        this.resourceUri = vscode.Uri.file(filePath);
+    constructor(readonly file: FileClassificationResult) {
+        super(
+            `[${SourceFileItem.roleBadge(file.rolePrimary)}] ${path.basename(file.uri)}`,
+            vscode.TreeItemCollapsibleState.None
+        );
+        this.iconPath = new vscode.ThemeIcon(SourceFileItem.iconForRole(file.rolePrimary));
+        this.contextValue = `sources-file.${file.rolePrimary}`;
+        this.resourceUri = vscode.Uri.file(file.uri);
         this.command = {
             command: 'vscode.open',
             title: 'Open File',
-            arguments: [vscode.Uri.file(filePath)]
+            arguments: [vscode.Uri.file(file.uri)]
         };
+
+        this.tooltip = SourceFileItem.buildTooltip(file);
+    }
+
+    private static roleBadge(role: Role): string {
+        switch (role) {
+            case Role.Design:
+                return 'D';
+            case Role.Simulation:
+                return 'SIM';
+            case Role.Verification:
+                return 'VER';
+            case Role.Constraints:
+                return 'CST';
+            case Role.Scripts:
+                return 'SCR';
+            case Role.IpGenerated:
+                return 'IP';
+            default:
+                return 'U';
+        }
+    }
+
+    private static iconForRole(role: Role): string {
+        switch (role) {
+            case Role.Design:
+                return 'symbol-module';
+            case Role.Simulation:
+                return 'beaker';
+            case Role.Verification:
+                return 'checklist';
+            case Role.Constraints:
+                return 'symbol-key';
+            case Role.Scripts:
+                return 'terminal-powershell';
+            case Role.IpGenerated:
+                return 'package';
+            default:
+                return 'question';
+        }
+    }
+
+    private static sourceTag(source: SourceOfTruth): string {
+        switch (source) {
+            case SourceOfTruth.ProjectConfig:
+                return 'config';
+            case SourceOfTruth.TargetLocal:
+                return 'target';
+            case SourceOfTruth.Filelist:
+                return 'filelist';
+            case SourceOfTruth.TaskReference:
+                return 'task';
+            default:
+                return 'heuristic';
+        }
+    }
+
+    private static buildTooltip(file: FileClassificationResult): vscode.MarkdownString {
+        const tip = new vscode.MarkdownString(undefined, true);
+        tip.isTrusted = false;
+        tip.supportHtml = false;
+        tip.appendMarkdown(`**${path.basename(file.uri)}**\n\n`);
+        tip.appendMarkdown(`- Role: ${file.rolePrimary}\n`);
+        tip.appendMarkdown(`- Source: ${SourceFileItem.sourceTag(file.sourceOfTruth)}\n`);
+        tip.appendMarkdown(`- In Active Target: ${file.inActiveTarget ? 'yes' : 'no'}\n`);
+        tip.appendMarkdown(`- Path: ${file.uri}`);
+        return tip;
     }
 }
 
@@ -74,14 +147,50 @@ class LegacyHierarchyRootItem extends vscode.TreeItem {
     }
 }
 
+class DesignHierarchyRootItem extends vscode.TreeItem {
+    constructor() {
+        super('Design Hierarchy', vscode.TreeItemCollapsibleState.Expanded);
+        this.iconPath = new vscode.ThemeIcon('symbol-namespace');
+        this.contextValue = 'design-hierarchy-root';
+    }
+}
+
+class SimulationHierarchyRootItem extends vscode.TreeItem {
+    constructor() {
+        super('Simulation Hierarchy', vscode.TreeItemCollapsibleState.Expanded);
+        this.iconPath = new vscode.ThemeIcon('beaker');
+        this.contextValue = 'simulation-hierarchy-root';
+    }
+}
+
+type HierarchyKind = 'design' | 'simulation';
+
+class ScopedModuleItem {
+    constructor(
+        readonly module: HdlModule,
+        readonly kind: HierarchyKind
+    ) {}
+}
+
+class ScopedInstanceItem {
+    constructor(
+        readonly instance: HdlInstance,
+        readonly kind: HierarchyKind
+    ) {}
+}
+
 type HdlTreeItem =
     | HdlModule
     | HdlInstance
+    | ScopedModuleItem
+    | ScopedInstanceItem
     | HdlInfoItem
     | SourcesRootItem
     | SourceGroupItem
     | SourceFileItem
-    | LegacyHierarchyRootItem;
+    | LegacyHierarchyRootItem
+    | DesignHierarchyRootItem
+    | SimulationHierarchyRootItem;
 
 export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
     // 事件发射器：当数据变化时，通知 VS Code 刷新 UI
@@ -90,6 +199,10 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
     
     // 当前选中的 Top 模块名
     private topModuleName: string | null = null;
+    private designTopModuleName: string | null = null;
+    private simulationTopModuleName: string | null = null;
+    private readonly hierarchyService = new HierarchyService();
+    private scopedModuleNameCache: Partial<Record<HierarchyKind, Set<string>>> = {};
 
     constructor(private projectManager: ProjectManager) {
     }
@@ -102,10 +215,27 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
         this.refresh(); // 触发刷新
     }
 
+    public setDesignTopModule(name: string | null) {
+        this.designTopModuleName = name;
+        this.refresh();
+    }
+
+    public setSimulationTopModule(name: string | null) {
+        this.simulationTopModuleName = name;
+        this.refresh();
+    }
+
+    public clearScopedTops() {
+        this.designTopModuleName = null;
+        this.simulationTopModuleName = null;
+        this.refresh();
+    }
+
     /**
      * 强制刷新 UI
      */
     refresh(): void {
+        this.scopedModuleNameCache = {};
         this._onDidChangeTreeData.fire();
     }
 
@@ -127,11 +257,12 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
 
         if (element instanceof SourceFileItem) {
             const item = element;
-            const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(element.filePath));
+            const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(element.file.uri));
             if (folder) {
-                item.description = path.relative(folder.uri.fsPath, element.filePath);
+                const rel = path.relative(folder.uri.fsPath, element.file.uri);
+                item.description = `${rel} (${element.file.sourceOfTruth})`;
             } else {
-                item.description = element.filePath;
+                item.description = `${element.file.uri} (${element.file.sourceOfTruth})`;
             }
             return item;
         }
@@ -140,47 +271,33 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
             return element;
         }
 
+        if (element instanceof DesignHierarchyRootItem) {
+            return element;
+        }
+
+        if (element instanceof SimulationHierarchyRootItem) {
+            return element;
+        }
+
+        if (element instanceof ScopedModuleItem) {
+            return this.createModuleTreeItem(element.module);
+        }
+
+        if (element instanceof ScopedInstanceItem) {
+            const moduleDef = this.projectManager.getModuleInWorkspace(
+                element.instance.type,
+                element.instance.fileUri
+            );
+            const hasChildren = moduleDef !== undefined && this.isModuleInScopeSync(moduleDef.name, element.kind);
+            return this.createInstanceTreeItem(element.instance, hasChildren);
+        }
+
         if (element instanceof HdlModule) {
-            // ---> 情况 A: 这是一个模块定义 (Module)
-            // 无论是根节点还是子节点，它都默认是“可折叠的”
-            const item = new vscode.TreeItem(element.name, vscode.TreeItemCollapsibleState.Collapsed);
-            item.description = path.basename(element.fileUri.fsPath); // 灰色文件名
-            item.iconPath = new vscode.ThemeIcon('symbol-class'); // 类图标
-            item.contextValue = 'module'; // 用于右键菜单判断
-            
-            // 点击行为：跳转到定义
-            item.command = {
-                command: 'vscode.open',
-                title: 'Open File',
-                arguments: [element.fileUri, { selection: element.range }]
-            };
-            return item;
+            return this.createModuleTreeItem(element);
         } else {
-            // ---> 情况 B: 这是一个实例化 (Instance)
-            // 显示格式: u_inst : module_type
-            const label = `${element.name} : ${element.type}`;
-            
-            // 🔥 核心逻辑：先去数据库查一下，这个实例化的类型，有没有对应的定义？
             const moduleDef = this.projectManager.getModuleInWorkspace(element.type, element.fileUri);
             const hasChildren = moduleDef !== undefined;
-            
-            // 如果有定义，就是 Collapsed (有箭头)；如果是黑盒/IP，就是 None (无箭头)
-            const state = hasChildren 
-                ? vscode.TreeItemCollapsibleState.Collapsed 
-                : vscode.TreeItemCollapsibleState.None;
-
-            const item = new vscode.TreeItem(label, state);
-            
-            item.iconPath = new vscode.ThemeIcon('symbol-field'); // 字段图标
-            item.contextValue = 'instance';
-            
-            // 点击行为：跳转到实例化代码所在行
-            item.command = {
-                command: 'vscode.open',
-                title: 'Open File',
-                arguments: [element.fileUri, { selection: element.range }]
-            };
-            return item;
+            return this.createInstanceTreeItem(element, hasChildren);
         }
     }
 
@@ -202,6 +319,9 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
 
             if (this.isRoleGroupedSourcesEnabled()) {
                 const roots: HdlTreeItem[] = [new SourcesRootItem()];
+                if (this.isDualHierarchyEnabled()) {
+                    roots.push(new DesignHierarchyRootItem(), new SimulationHierarchyRootItem());
+                }
                 if (this.isLegacyHierarchyVisibleWithSources()) {
                     roots.push(new LegacyHierarchyRootItem());
                 }
@@ -217,7 +337,7 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
         }
 
         if (element instanceof SourceGroupItem) {
-            return element.files.map(file => new SourceFileItem(file.uri));
+            return element.files.map(file => new SourceFileItem(file));
         }
 
         if (element instanceof SourceFileItem) {
@@ -226,6 +346,30 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
 
         if (element instanceof LegacyHierarchyRootItem) {
             return this.getLegacyRootChildren();
+        }
+
+        if (element instanceof DesignHierarchyRootItem) {
+            return this.getScopedHierarchyChildren('design');
+        }
+
+        if (element instanceof SimulationHierarchyRootItem) {
+            return this.getScopedHierarchyChildren('simulation');
+        }
+
+        if (element instanceof ScopedModuleItem) {
+            return element.module.instances.map(instance => new ScopedInstanceItem(instance, element.kind));
+        }
+
+        if (element instanceof ScopedInstanceItem) {
+            const moduleDef = this.projectManager.getModuleInWorkspace(
+                element.instance.type,
+                element.instance.fileUri
+            );
+            if (moduleDef && await this.isModuleInScope(moduleDef.name, element.kind)) {
+                return moduleDef.instances.map(instance => new ScopedInstanceItem(instance, element.kind));
+            }
+
+            return [];
         }
 
         if (element instanceof HdlInfoItem) {
@@ -264,6 +408,14 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
         return vscode.workspace
             .getConfiguration('hdl-helper')
             .get<boolean>('workbench.sources.showLegacyHierarchy', true);
+    }
+
+    private isDualHierarchyEnabled(): boolean {
+        const dualHierarchy = vscode.workspace
+            .getConfiguration('hdl-helper')
+            .get<boolean>('workbench.dualHierarchy', false);
+
+        return this.isRoleGroupedSourcesEnabled() && dualHierarchy;
     }
 
     private getLegacyRootChildren(): HdlTreeItem[] {
@@ -305,6 +457,158 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
                 }
             )
         ];
+    }
+
+    private async getScopedHierarchyChildren(kind: HierarchyKind): Promise<HdlTreeItem[]> {
+        const scopedNames = await this.getScopedModuleNameSet(kind);
+        const scopedModules = this.projectManager
+            .getAllModules()
+            .filter(module => scopedNames.has(module.name));
+
+        const topName = this.resolveScopedTop(kind, scopedModules);
+        if (!topName) {
+            return [
+                new HdlInfoItem(
+                    kind === 'design' ? 'Design top is not set' : 'Simulation top is not set',
+                    kind === 'design'
+                        ? 'Right-click a module and run Set as Design Top'
+                        : 'Right-click a module and run Set as Simulation Top',
+                    'info'
+                )
+            ];
+        }
+
+        const topModule = this.projectManager.getModule(topName);
+        if (topModule && scopedNames.has(topModule.name)) {
+            return [new ScopedModuleItem(topModule, kind)];
+        }
+
+        if (topModule && !scopedNames.has(topModule.name)) {
+            return [
+                new HdlInfoItem(
+                    `${kind === 'design' ? 'Design' : 'Simulation'} top is out of scoped sources`,
+                    `${topName} is outside ${kind} hierarchy source scope. Adjust top or source grouping.`,
+                    'warning'
+                )
+            ];
+        }
+
+        return [
+            new HdlInfoItem(
+                `${kind === 'design' ? 'Design' : 'Simulation'} top not found`,
+                `${topName} is not in the current project index. Click to rescan.`,
+                'warning',
+                {
+                    command: 'hdl-helper.refreshProject',
+                    title: 'Rescan Project'
+                }
+            )
+        ];
+    }
+
+    private resolveScopedTop(kind: HierarchyKind, scopedModules: HdlModule[]): string | undefined {
+        if (kind === 'design' && this.designTopModuleName) {
+            return this.designTopModuleName;
+        }
+        if (kind === 'simulation' && this.simulationTopModuleName) {
+            return this.simulationTopModuleName;
+        }
+
+        if (kind === 'design' && this.topModuleName) {
+            return this.topModuleName;
+        }
+
+        const candidates = scopedModules.length > 0
+            ? scopedModules
+            : this.projectManager.getAllModules();
+
+        if (candidates.length === 0) {
+            return undefined;
+        }
+
+        return kind === 'simulation'
+            ? this.hierarchyService.inferSimulationTop(candidates)
+            : this.hierarchyService.inferDesignTop(candidates);
+    }
+
+    private async getScopedModuleNameSet(kind: HierarchyKind): Promise<Set<string>> {
+        const cached = this.scopedModuleNameCache[kind];
+        if (cached) {
+            return cached;
+        }
+
+        const sources = await this.getMergedSourcesSection();
+        const allModules = this.projectManager.getAllModules();
+        const fileSet = kind === 'design'
+            ? this.toNormalizedFileSet([...sources.designSources, ...sources.ipGenerated])
+            : this.toNormalizedFileSet([
+                ...sources.designSources,
+                ...sources.simulationSources,
+                ...sources.verificationSources,
+                ...sources.ipGenerated
+            ]);
+
+        const scopedNames = new Set(
+            allModules
+                .filter(module => fileSet.has(path.normalize(module.fileUri.fsPath)))
+                .map(module => module.name)
+        );
+
+        // Fallback to full module set to avoid empty hierarchy when source scan is incomplete.
+        if (scopedNames.size === 0) {
+            allModules.forEach(module => scopedNames.add(module.name));
+        }
+
+        this.scopedModuleNameCache[kind] = scopedNames;
+        return scopedNames;
+    }
+
+    private async isModuleInScope(moduleName: string, kind: HierarchyKind): Promise<boolean> {
+        const scopedNames = await this.getScopedModuleNameSet(kind);
+        return scopedNames.has(moduleName);
+    }
+
+    private isModuleInScopeSync(moduleName: string, kind: HierarchyKind): boolean {
+        const scopedNames = this.scopedModuleNameCache[kind];
+        if (!scopedNames) {
+            return true;
+        }
+
+        return scopedNames.has(moduleName);
+    }
+
+    private toNormalizedFileSet(files: FileClassificationResult[]): Set<string> {
+        return new Set(files.map(file => path.normalize(file.uri)));
+    }
+
+    private createModuleTreeItem(module: HdlModule): vscode.TreeItem {
+        const item = new vscode.TreeItem(module.name, vscode.TreeItemCollapsibleState.Collapsed);
+        item.description = path.basename(module.fileUri.fsPath);
+        item.iconPath = new vscode.ThemeIcon('symbol-class');
+        item.contextValue = 'module';
+        item.command = {
+            command: 'vscode.open',
+            title: 'Open File',
+            arguments: [module.fileUri, { selection: module.range }]
+        };
+        return item;
+    }
+
+    private createInstanceTreeItem(instance: HdlInstance, hasChildren: boolean): vscode.TreeItem {
+        const label = `${instance.name} : ${instance.type}`;
+        const state = hasChildren
+            ? vscode.TreeItemCollapsibleState.Collapsed
+            : vscode.TreeItemCollapsibleState.None;
+
+        const item = new vscode.TreeItem(label, state);
+        item.iconPath = new vscode.ThemeIcon('symbol-field');
+        item.contextValue = 'instance';
+        item.command = {
+            command: 'vscode.open',
+            title: 'Open File',
+            arguments: [instance.fileUri, { selection: instance.range }]
+        };
+        return item;
     }
 
     private async getMergedSourcesSection(): Promise<SourcesSection> {
