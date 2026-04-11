@@ -17,6 +17,7 @@ import { debugActiveTargetContext } from './commands/debugActiveTargetContext';
 import { debugRecentRunsByTarget } from './commands/debugRecentRuns';
 import { openLastWaveformByTarget } from './commands/openLastWaveformByTarget';
 import { openLastLogByTarget } from './commands/openLastLogByTarget';
+import { openRecentRuns } from './commands/openRecentRuns';
 import { debugDualHierarchyState } from './commands/debugDualHierarchyState';
 import { openDualHierarchyRegressionChecklist } from './commands/openDualHierarchyRegressionChecklist';
 import { openProjectConfigFromWorkspace } from './commands/openProjectConfig';
@@ -306,6 +307,11 @@ export function activate(context: vscode.ExtensionContext) {
                 description: 'Open latest simulation log from target-keyed run record',
                 detail: 'Diagnostics'
             },
+            {
+                label: 'Open Recent Runs',
+                description: 'Browse target-keyed run history and open waveform/log',
+                detail: 'Diagnostics'
+            },
         ], {
             placeHolder: 'HDL Helper Quick Actions'
         });
@@ -376,6 +382,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
         if (action.label === 'Open Last Log (Active Target)') {
             await vscode.commands.executeCommand('hdl-helper.openLastLogByTarget');
+            return;
+        }
+        if (action.label === 'Open Recent Runs') {
+            await vscode.commands.executeCommand('hdl-helper.openRecentRuns');
         }
     }));
 
@@ -440,6 +450,11 @@ export function activate(context: vscode.ExtensionContext) {
                 label: '[Action] Open Last Log (Active Target)',
                 description: 'Open latest simulation log from target-keyed run record',
                 command: 'hdl-helper.openLastLogByTarget'
+            },
+            {
+                label: '[Action] Open Recent Runs',
+                description: 'Browse target-keyed run history and open waveform/log',
+                command: 'hdl-helper.openRecentRuns'
             }
         ], {
             placeHolder: 'Hierarchy Tools (Settings / Diagnostics / Action)'
@@ -751,6 +766,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openLastLogByTarget', async () => {
         await openLastLogByTarget(stateService);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openRecentRuns', async () => {
+        await openRecentRuns(stateService);
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runSimulation', async (moduleName: string, sourceUri?: vscode.Uri) => {

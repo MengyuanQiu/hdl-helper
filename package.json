@@ -228,6 +228,12 @@
         "title": "HDL: Open Last Log (Active Target)",
         "category": "HDL Helper",
         "icon": "$(output)"
+      },
+      {
+        "command": "hdl-helper.openRecentRuns",
+        "title": "HDL: Open Recent Runs",
+        "category": "HDL Helper",
+        "icon": "$(list-ordered)"
       }
     ],
     "configuration": {

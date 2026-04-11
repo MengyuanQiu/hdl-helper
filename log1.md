@@ -428,3 +428,33 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（27 passing）。
+
+## 2026-04-11 - Iteration 4 Day 4: Recent Runs Interactive Picker
+
+- 目标: 继续推进 Iteration 4，提供可交互的 Recent Runs 入口，支持从历史记录直接打开波形/日志。
+- 变更文件:
+  - src/commands/openRecentRuns.ts
+  - src/extension.ts
+  - src/test/extension.test.ts
+  - package.json
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - 新增命令 `HDL: Open Recent Runs`：
+    - 按时间倒序列出 target-keyed run records；
+    - 支持二次动作选择（Open Waveform / Open Log）；
+    - 自动校验文件存在性并给出缺失提示。
+  - 命令接入：
+    - Command Palette
+    - `HDL: Quick Actions`
+    - `HDL: Open Hierarchy Tools`
+  - 新增 helper 与最小回归测试：
+    - `getRecentRunEntries`（按 timestamp 降序）
+    - `getRecentRunActions`（根据记录可用路径输出可执行动作）
+    - `Recent runs entries helper sorts by timestamp descending`
+    - `Recent runs actions helper returns waveform and log actions when paths exist`
+  - 设置指南补充 Recent Runs 交互命令说明。
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（29 passing）。

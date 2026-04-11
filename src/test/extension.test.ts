@@ -25,6 +25,7 @@ import { getProjectConfigPath, openProjectConfig } from '../commands/openProject
 import { formatRunRecords } from '../commands/debugRecentRuns';
 import { pickRunRecordForTarget } from '../commands/openLastWaveformByTarget';
 import { getLogPathFromRunRecord } from '../commands/openLastLogByTarget';
+import { getRecentRunActions, getRecentRunEntries } from '../commands/openRecentRuns';
 import { buildConfigIssues } from '../project/configDiagnostics';
 // import * as myExtension from '../../extension';
 
@@ -501,5 +502,35 @@ suite('Extension Test Suite', () => {
 		});
 
 		assert.strictEqual(logPath, 'C:/repo/build/tb_top.run.log');
+	});
+
+	test('Recent runs entries helper sorts by timestamp descending', () => {
+		const entries = getRecentRunEntries({
+			old_target: {
+				targetId: 'old_target',
+				timestamp: 100,
+				success: true
+			},
+			new_target: {
+				targetId: 'new_target',
+				timestamp: 200,
+				success: false
+			}
+		});
+
+		assert.strictEqual(entries[0].targetId, 'new_target');
+		assert.strictEqual(entries[1].targetId, 'old_target');
+	});
+
+	test('Recent runs actions helper returns waveform and log actions when paths exist', () => {
+		const actions = getRecentRunActions({
+			targetId: 'sim_default',
+			timestamp: 100,
+			success: true,
+			waveformPath: 'C:/repo/build/tb_top.fst',
+			logPath: 'C:/repo/build/tb_top.run.log'
+		});
+
+		assert.deepStrictEqual(actions, ['Open Waveform', 'Open Log']);
 	});
 });
