@@ -493,3 +493,18 @@
   - push: `fe4b9ba..801deb3  main -> main`（成功）
 - 结论:
   - 文档合并与日志同步的最终状态已完成上云，origin/main 已对齐本地 HEAD。
+## 2026-04-11 - Iteration 25
+
+- 目标: 生成可直接用于 GitHub Release 页的中英双语发布说明，并完成 V3.2.0 标签发布。
+- 变更文件:
+  - RELEASE_NOTES_V3.2.0.md
+  - log.md
+- 关键变更:
+  - 新增双语发布说明，覆盖版本定位、重点更新、质量指标、兼容性与后续路线。
+  - 发布说明内容可直接粘贴到 GitHub Release 页面。
+- Git 计划:
+  - commit 发布说明与日志记录
+  - 创建封版 tag: V3.2.0
+  - 推送 main 与 tag 到 origin
+- 结果:
+  - 待执行并回填 commit 与 push 结果。
