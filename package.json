@@ -240,6 +240,12 @@
         "title": "HDL: Open Last Run Artifacts (Active Target)",
         "category": "HDL Helper",
         "icon": "$(run-all)"
+      },
+      {
+        "command": "hdl-helper.openRunRecordArtifacts",
+        "title": "HDL: Open Run Record Artifacts",
+        "category": "HDL Helper",
+        "icon": "$(symbol-event)"
       }
     ],
     "configuration": {

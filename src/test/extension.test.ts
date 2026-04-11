@@ -27,6 +27,7 @@ import { pickRunRecordForTarget } from '../commands/openLastWaveformByTarget';
 import { getLogPathFromRunRecord } from '../commands/openLastLogByTarget';
 import { getRecentRunActions, getRecentRunEntries, prioritizeActiveTarget } from '../commands/openRecentRuns';
 import { getAvailableArtifactActions, getMissingArtifactReasons } from '../commands/openLastRunArtifactsByTarget';
+import { pickRunRecordByTarget } from '../commands/openRunRecordArtifacts';
 import { buildConfigIssues } from '../project/configDiagnostics';
 // import * as myExtension from '../../extension';
 
@@ -582,5 +583,24 @@ suite('Extension Test Suite', () => {
 
 		assert.ok(reasons.some(reason => reason.includes('Waveform file not found')));
 		assert.ok(reasons.some(reason => reason.includes('Log file not found')));
+	});
+
+	test('Run record picker returns undefined for unknown target', () => {
+		const record = pickRunRecordByTarget({}, 'unknown_target');
+		assert.strictEqual(record, undefined);
+	});
+
+	test('Run record picker returns record for existing target', () => {
+		const record = pickRunRecordByTarget({
+			sim_default: {
+				targetId: 'sim_default',
+				timestamp: 123,
+				success: true,
+				logPath: 'C:/repo/build/tb_top.run.log'
+			}
+		}, 'sim_default');
+
+		assert.strictEqual(record?.targetId, 'sim_default');
+		assert.strictEqual(record?.success, true);
 	});
 });

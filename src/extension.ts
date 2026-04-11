@@ -19,6 +19,7 @@ import { openLastWaveformByTarget } from './commands/openLastWaveformByTarget';
 import { openLastLogByTarget } from './commands/openLastLogByTarget';
 import { openRecentRuns } from './commands/openRecentRuns';
 import { openLastRunArtifactsByTarget } from './commands/openLastRunArtifactsByTarget';
+import { openRunRecordArtifacts } from './commands/openRunRecordArtifacts';
 import { debugDualHierarchyState } from './commands/debugDualHierarchyState';
 import { openDualHierarchyRegressionChecklist } from './commands/openDualHierarchyRegressionChecklist';
 import { openProjectConfigFromWorkspace } from './commands/openProjectConfig';
@@ -187,8 +188,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 
     // C. 初始化 Tree Provider
-    const treeProvider = new HdlTreeProvider(projectManager);
     const stateService = new StateService(context);
+    const treeProvider = new HdlTreeProvider(projectManager, () => stateService.getAllRunRecords());
     const ipCatalogProvider = new IpCatalogProvider();
     context.subscriptions.push(stateService);
 
@@ -318,6 +319,11 @@ export function activate(context: vscode.ExtensionContext) {
                 description: 'One-click reopen waveform/log for the active target run',
                 detail: 'Diagnostics'
             },
+            {
+                label: 'Open Run Record Artifacts',
+                description: 'Open waveform/log for a selected target record',
+                detail: 'Diagnostics'
+            },
         ], {
             placeHolder: 'HDL Helper Quick Actions'
         });
@@ -396,6 +402,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
         if (action.label === 'Open Last Run Artifacts (Active Target)') {
             await vscode.commands.executeCommand('hdl-helper.openLastRunArtifactsByTarget');
+            return;
+        }
+        if (action.label === 'Open Run Record Artifacts') {
+            await vscode.commands.executeCommand('hdl-helper.openRecentRuns');
         }
     }));
 
@@ -789,6 +799,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openLastRunArtifactsByTarget', async () => {
         await openLastRunArtifactsByTarget(stateService);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openRunRecordArtifacts', async (targetId: string) => {
+        if (!targetId || typeof targetId !== 'string') {
+            return;
+        }
+        await openRunRecordArtifacts(stateService, targetId);
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runSimulation', async (moduleName: string, sourceUri?: vscode.Uri) => {

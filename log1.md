@@ -513,3 +513,30 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（33 passing）。
+
+## 2026-04-11 - Iteration 4 Day 7: Tasks and Runs Explorer Section
+
+- 目标: 推进 Iteration 4 的可见性收口，在 Explorer 中落地 `Tasks and Runs` 分组并支持记录项直接打开产物。
+- 变更文件:
+  - src/project/hdlTreeProvider.ts
+  - src/commands/openRunRecordArtifacts.ts
+  - src/extension.ts
+  - src/test/extension.test.ts
+  - package.json
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - Explorer 新增 `Tasks and Runs` 根节点（`targetDrivenRuns.enabled=true` 时显示）。
+  - 节点子项按 run timestamp 倒序展示 target-keyed 运行记录。
+  - 新增命令 `HDL: Open Run Record Artifacts`：
+    - 支持从指定 target 记录直接打开 waveform/log（单一动作自动执行，多动作可选）。
+  - `RunRecordItem` 点击行为绑定到上述命令，实现“树内直接回看”。
+  - `HdlTreeProvider` 增加 run record provider 注入，避免在 provider 中直接持有状态服务。
+  - 新增最小回归测试：
+    - `Run record picker returns undefined for unknown target`
+    - `Run record picker returns record for existing target`
+  - 设置指南补充 `Tasks and Runs` 分组与记录项点击行为说明。
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（35 passing）。

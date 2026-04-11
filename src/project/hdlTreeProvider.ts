@@ -11,6 +11,7 @@ import { TargetContextService } from './targetContextService';
 import {
     FileClassificationResult,
     Role,
+    RunRecord,
     SourceOfTruth,
     ProjectConfigStatus,
     SourcesSection
@@ -173,6 +174,29 @@ class DiagnosticsRootItem extends vscode.TreeItem {
     }
 }
 
+class TasksRunsRootItem extends vscode.TreeItem {
+    constructor() {
+        super('Tasks and Runs', vscode.TreeItemCollapsibleState.Expanded);
+        this.iconPath = new vscode.ThemeIcon('run-all');
+        this.contextValue = 'tasks-runs-root';
+    }
+}
+
+class RunRecordItem extends vscode.TreeItem {
+    constructor(readonly targetId: string, readonly record: RunRecord) {
+        super(targetId, vscode.TreeItemCollapsibleState.None);
+        this.description = record.success ? 'success' : 'failed';
+        this.tooltip = `${record.taskName || 'n/a'} | ${new Date(record.timestamp).toLocaleString()}`;
+        this.iconPath = new vscode.ThemeIcon(record.success ? 'pass' : 'warning');
+        this.contextValue = 'run-record';
+        this.command = {
+            command: 'hdl-helper.openRunRecordArtifacts',
+            title: 'Open Run Record Artifacts',
+            arguments: [targetId]
+        };
+    }
+}
+
 type HierarchyKind = 'design' | 'simulation';
 
 class ScopedModuleItem {
@@ -201,7 +225,9 @@ type HdlTreeItem =
     | LegacyHierarchyRootItem
     | DesignHierarchyRootItem
     | SimulationHierarchyRootItem
-    | DiagnosticsRootItem;
+    | DiagnosticsRootItem
+    | TasksRunsRootItem
+    | RunRecordItem;
 
 export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
     // 事件发射器：当数据变化时，通知 VS Code 刷新 UI
@@ -214,8 +240,10 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
     private simulationTopModuleName: string | null = null;
     private readonly hierarchyService = new HierarchyService();
     private scopedModuleNameCache: Partial<Record<HierarchyKind, Set<string>>> = {};
+    private readonly getRunRecords: () => Record<string, RunRecord>;
 
-    constructor(private projectManager: ProjectManager) {
+    constructor(private projectManager: ProjectManager, getRunRecords?: () => Record<string, RunRecord>) {
+        this.getRunRecords = getRunRecords || (() => ({}));
     }
 
     /**
@@ -294,6 +322,14 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
             return element;
         }
 
+        if (element instanceof TasksRunsRootItem) {
+            return element;
+        }
+
+        if (element instanceof RunRecordItem) {
+            return element;
+        }
+
         if (element instanceof ScopedModuleItem) {
             return this.createModuleTreeItem(element.module);
         }
@@ -340,6 +376,9 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
                 if (this.isProjectConfigDiagnosticsEnabled()) {
                     roots.push(new DiagnosticsRootItem());
                 }
+                if (this.isTargetDrivenRunsEnabled()) {
+                    roots.push(new TasksRunsRootItem());
+                }
                 if (this.isLegacyHierarchyVisibleWithSources()) {
                     roots.push(new LegacyHierarchyRootItem());
                 }
@@ -376,6 +415,10 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
 
         if (element instanceof DiagnosticsRootItem) {
             return this.getDiagnosticsChildren();
+        }
+
+        if (element instanceof TasksRunsRootItem) {
+            return this.getTasksRunsChildren();
         }
 
         if (element instanceof ScopedModuleItem) {
@@ -449,6 +492,30 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
         return folders.some(folder => vscode.workspace
             .getConfiguration('hdl-helper', folder.uri)
             .get<boolean>('projectConfig.enabled', false));
+    }
+
+    private isTargetDrivenRunsEnabled(): boolean {
+        const folders = vscode.workspace.workspaceFolders;
+        if (!folders || folders.length === 0) {
+            return false;
+        }
+
+        return folders.some(folder => vscode.workspace
+            .getConfiguration('hdl-helper', folder.uri)
+            .get<boolean>('targetDrivenRuns.enabled', false));
+    }
+
+    private async getTasksRunsChildren(): Promise<HdlTreeItem[]> {
+        const records = this.getRunRecords();
+        const entries = Object.entries(records)
+            .map(([targetId, record]) => ({ targetId, record }))
+            .sort((a, b) => b.record.timestamp - a.record.timestamp);
+
+        if (entries.length === 0) {
+            return [new HdlInfoItem('No recent runs', 'Run simulation to populate target records', 'info')];
+        }
+
+        return entries.map(entry => new RunRecordItem(entry.targetId, entry.record));
     }
 
     private async getDiagnosticsChildren(): Promise<HdlTreeItem[]> {
