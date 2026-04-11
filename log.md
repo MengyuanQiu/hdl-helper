@@ -502,9 +502,11 @@
 - 关键变更:
   - 新增双语发布说明，覆盖版本定位、重点更新、质量指标、兼容性与后续路线。
   - 发布说明内容可直接粘贴到 GitHub Release 页面。
-- Git 计划:
-  - commit 发布说明与日志记录
-  - 创建封版 tag: V3.2.0
-  - 推送 main 与 tag 到 origin
-- 结果:
-  - 待执行并回填 commit 与 push 结果。
+- Git 记录:
+  - commit: `cabaaf3`
+  - message: `release: add V3.2.0 bilingual release notes`
+  - tag: `V3.2.0`（annotated）
+  - push(main): `9e2c987..cabaaf3  main -> main`（成功）
+  - push(tag): `V3.2.0 -> V3.2.0`（成功）
+- 结论:
+  - V3.2.0 发布说明与封版标签均已完成上云，origin/main 与本地 HEAD 对齐。
