@@ -22,6 +22,7 @@ import {
 } from '../commands/createProjectConfig';
 import { buildTargetContextDebugSnapshot } from '../commands/debugActiveTargetContext';
 import { getProjectConfigPath, openProjectConfig } from '../commands/openProjectConfig';
+import { formatRunRecords } from '../commands/debugRecentRuns';
 import { buildConfigIssues } from '../project/configDiagnostics';
 // import * as myExtension from '../../extension';
 
@@ -443,5 +444,27 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(openCalls, 0);
 		assert.strictEqual(createCalls, 1);
 		assert.strictEqual(warningCalls, 1);
+	});
+
+	test('Recent runs formatter returns fallback line for empty records', () => {
+		const lines = formatRunRecords({});
+		assert.deepStrictEqual(lines, ['No run records available.']);
+	});
+
+	test('Recent runs formatter includes target and success fields', () => {
+		const lines = formatRunRecords({
+			sim_default: {
+				targetId: 'sim_default',
+				timestamp: 1000,
+				success: true,
+				taskName: 'Simulate tb_top',
+				waveformPath: 'C:/repo/build/tb_top.fst',
+				buildDir: 'C:/repo/build'
+			}
+		});
+
+		assert.ok(lines.some(line => line.includes('Target: sim_default')));
+		assert.ok(lines.some(line => line.includes('Success: true')));
+		assert.ok(lines.some(line => line.includes('Waveform: C:/repo/build/tb_top.fst')));
 	});
 });

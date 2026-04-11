@@ -23,6 +23,15 @@ export interface HdlSimTask {
     autoOpenWaveform?: boolean;
 }
 
+export interface HdlSimRunResult {
+    success: boolean;
+    taskName: string;
+    top: string;
+    buildDir: string;
+    waveformPath?: string;
+    message?: string;
+}
+
 interface SimRuntimeConfig {
     tasksFile: string;
     iverilogPath: string;
@@ -220,11 +229,17 @@ export class SimManager {
     /**
      * 运行仿真任务
      */
-    public static async runTask(task: HdlSimTask, projectManager: ProjectManager, workspaceUri?: vscode.Uri) {
+    public static async runTask(task: HdlSimTask, projectManager: ProjectManager, workspaceUri?: vscode.Uri): Promise<HdlSimRunResult> {
         const resolvedWorkspaceUri = this.resolveWorkspaceUri(projectManager, task.top, workspaceUri);
         if (!resolvedWorkspaceUri) {
             vscode.window.showErrorMessage('No workspace folder open for simulation.');
-            return;
+            return {
+                success: false,
+                taskName: task.name,
+                top: task.top,
+                buildDir: '',
+                message: 'No workspace folder open for simulation.'
+            };
         }
 
         const wsPath = resolvedWorkspaceUri.fsPath;
@@ -240,10 +255,22 @@ export class SimManager {
         const vvpPath = task.vvpPath || simConfig.vvpPath;
 
         if (!(await this.ensureToolAvailable(iverilogPath, workingDir, 'simulation.iverilogPath', 'Icarus Verilog (iverilog)'))) {
-            return;
+            return {
+                success: false,
+                taskName: task.name,
+                top: task.top,
+                buildDir,
+                message: `Icarus Verilog not found: ${iverilogPath}`
+            };
         }
         if (!(await this.ensureToolAvailable(vvpPath, workingDir, 'simulation.vvpPath', 'VVP runtime'))) {
-            return;
+            return {
+                success: false,
+                taskName: task.name,
+                top: task.top,
+                buildDir,
+                message: `VVP runtime not found: ${vvpPath}`
+            };
         }
         
         // 如果 sources 为空，我们自动把工程里的所有 HDL 目录和顶层文件加进去
@@ -260,7 +287,13 @@ export class SimManager {
                 sourceFileSet.add(topDef.fileUri.fsPath);
             } else {
                 vscode.window.showErrorMessage(`Simulation skipped: Cannot find top module '${task.top}'.`);
-                return;
+                return {
+                    success: false,
+                    taskName: task.name,
+                    top: task.top,
+                    buildDir,
+                    message: `Cannot find top module '${task.top}'.`
+                };
             }
 
             const workspaceSources = await this.resolveSourceFiles(['**/*.{v,sv,vh,svh}'], resolvedWorkspaceUri);
@@ -301,7 +334,13 @@ export class SimManager {
 
         if (srcFiles.length === 0) {
             vscode.window.showErrorMessage(`Simulation skipped: No source files resolved for task '${task.name}'.`);
-            return;
+            return {
+                success: false,
+                taskName: task.name,
+                top: task.top,
+                buildDir,
+                message: `No source files resolved for task '${task.name}'.`
+            };
         }
 
         if (!fs.existsSync(buildDir)) {
@@ -309,7 +348,7 @@ export class SimManager {
         }
 
         if (task.tool === 'iverilog') {
-            await this.runIverilog(
+            return await this.runIverilog(
                 task,
                 workingDir,
                 buildDir,
@@ -324,6 +363,13 @@ export class SimManager {
             );
         } else {
             vscode.window.showWarningMessage(`Simulator tool '${task.tool}' is not yet supported in this preview.`);
+            return {
+                success: false,
+                taskName: task.name,
+                top: task.top,
+                buildDir,
+                message: `Simulator tool '${task.tool}' is not supported yet.`
+            };
         }
     }
 
@@ -339,7 +385,7 @@ export class SimManager {
         autoOpenWaveform: boolean,
         iverilogPath: string,
         vvpPath: string
-    ) {
+    ): Promise<HdlSimRunResult> {
         this.outputChannel.show();
         this.outputChannel.clear();
         this.outputChannel.appendLine(`[Sim] Starting Icarus Verilog simulation for ${task.top}...`);
@@ -388,8 +434,23 @@ export class SimManager {
                 }
             }
 
+            return {
+                success: true,
+                taskName: task.name,
+                top: task.top,
+                buildDir,
+                waveformPath: waveformEnabled ? this.findWaveformFile(buildDir, task.top, waveformFormat) : undefined
+            };
+
         } catch (err: any) {
             this.outputChannel.appendLine(`[Error] Simulation failed:\n${err.message}`);
+            return {
+                success: false,
+                taskName: task.name,
+                top: task.top,
+                buildDir,
+                message: err?.message || 'Simulation failed.'
+            };
         }
     }
 

@@ -344,3 +344,33 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（21 passing）。
+
+## 2026-04-11 - Iteration 4 Day 1: Target-Keyed Run Record Groundwork
+
+- 目标: 启动 Iteration 4（Target-driven Runs），先打通“仿真结果按 target 记录”最小闭环。
+- 变更文件:
+  - src/simulation/simManager.ts
+  - src/commands/debugRecentRuns.ts
+  - src/extension.ts
+  - src/test/extension.test.ts
+  - package.json
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - `SimManager.runTask` 改为返回结构化结果 `HdlSimRunResult`（success/task/top/buildDir/waveformPath/message）。
+  - 在 `hdl-helper.targetDrivenRuns.enabled=true` 时：
+    - `runSimulation` 执行后写入 `StateService.setLastRunForTarget(...)`。
+    - target key 优先取 active `TargetContext.targetId`，否则回退 `heuristic:<top>`。
+  - 新增诊断命令 `HDL: Debug Recent Runs By Target`，可输出当前 workspace 中按 target 存储的最近运行记录。
+  - 命令接入：
+    - Command Palette（命令贡献）
+    - Quick Actions 诊断项
+    - Hierarchy Tools 诊断项
+  - 新增最小回归测试：
+    - `Recent runs formatter returns fallback line for empty records`
+    - `Recent runs formatter includes target and success fields`
+  - 设置指南补充 target-driven run record 与调试命令说明。
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（23 passing）。

@@ -14,6 +14,7 @@ import { generateMemoryCommand } from './commands/generateMemory';
 import { generateRegistersCommand } from './commands/generateRegisters';
 import { debugProjectClassification } from './commands/debugProjectClassification';
 import { debugActiveTargetContext } from './commands/debugActiveTargetContext';
+import { debugRecentRunsByTarget } from './commands/debugRecentRuns';
 import { debugDualHierarchyState } from './commands/debugDualHierarchyState';
 import { openDualHierarchyRegressionChecklist } from './commands/openDualHierarchyRegressionChecklist';
 import { openProjectConfigFromWorkspace } from './commands/openProjectConfig';
@@ -24,6 +25,8 @@ import { ProjectManager } from './project/projectManager';
 import { HdlTreeProvider } from './project/hdlTreeProvider';
 import { StateService } from './project/stateService';
 import { HierarchyService } from './project/hierarchyService';
+import { ProjectConfigService } from './project/projectConfigService';
+import { TargetContextService } from './project/targetContextService';
 import { mapLegacyTopSelection } from './project/topSelectionPolicy';
 import { HdlModule } from './project/hdlSymbol';
 import { VerilogDefinitionProvider } from './providers/defProvider';
@@ -272,6 +275,11 @@ export function activate(context: vscode.ExtensionContext) {
                 detail: 'Diagnostics'
             },
             {
+                label: 'Debug Recent Runs By Target',
+                description: 'Print target-keyed run history from workspace state',
+                detail: 'Diagnostics'
+            },
+            {
                 label: 'Open Dual Hierarchy Regression Checklist',
                 description: 'Open resources/regression/DUAL_HIERARCHY_MANUAL_REGRESSION.md',
                 detail: 'Diagnostics'
@@ -334,6 +342,10 @@ export function activate(context: vscode.ExtensionContext) {
             await vscode.commands.executeCommand('hdl-helper.debugActiveTargetContext');
             return;
         }
+        if (action.label === 'Debug Recent Runs By Target') {
+            await vscode.commands.executeCommand('hdl-helper.debugRecentRunsByTarget');
+            return;
+        }
         if (action.label === 'Open Dual Hierarchy Regression Checklist') {
             await vscode.commands.executeCommand('hdl-helper.openDualHierarchyRegressionChecklist');
             return;
@@ -373,6 +385,11 @@ export function activate(context: vscode.ExtensionContext) {
                 label: '[Diagnostics] Debug Active Target Context',
                 description: 'Print active target context and fallback path',
                 command: 'hdl-helper.debugActiveTargetContext'
+            },
+            {
+                label: '[Diagnostics] Debug Recent Runs By Target',
+                description: 'Print target-keyed run history from workspace state',
+                command: 'hdl-helper.debugRecentRunsByTarget'
             },
             {
                 label: '[Diagnostics] Dual Hierarchy Regression Checklist',
@@ -738,7 +755,43 @@ export function activate(context: vscode.ExtensionContext) {
         }
         
         // 执行任务
-        await SimManager.runTask(task, projectManager, workspaceFolder.uri);
+        const runResult = await SimManager.runTask(task, projectManager, workspaceFolder.uri);
+
+        const targetDrivenRunsEnabled = vscode.workspace
+            .getConfiguration('hdl-helper', workspaceFolder.uri)
+            .get<boolean>('targetDrivenRuns.enabled', false);
+
+        if (targetDrivenRunsEnabled) {
+            let targetId = `heuristic:${task.top}`;
+            const configEnabled = vscode.workspace
+                .getConfiguration('hdl-helper', workspaceFolder.uri)
+                .get<boolean>('projectConfig.enabled', false);
+
+            if (configEnabled) {
+                const configService = new ProjectConfigService(workspaceFolder.uri.fsPath);
+                const projectConfig = await configService.loadConfig();
+                const targetContextService = new TargetContextService(workspaceFolder.uri.fsPath, {
+                    projectConfig,
+                    designTop: stateService.getDesignTop(),
+                    simulationTop: stateService.getSimulationTop()
+                });
+                const activeContext = targetContextService.getActiveTargetContext();
+                if (activeContext?.targetId) {
+                    targetId = activeContext.targetId;
+                }
+                configService.dispose();
+            }
+
+            await stateService.setLastRunForTarget(targetId, {
+                targetId,
+                taskName: task.name,
+                timestamp: Date.now(),
+                success: runResult.success,
+                waveformPath: runResult.waveformPath,
+                buildDir: runResult.buildDir,
+                logPath: undefined
+            });
+        }
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.viewWaveform', async (waveformRef: string, sourceUri?: vscode.Uri) => {
@@ -849,6 +902,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.debugActiveTargetContext', async () => {
         await debugActiveTargetContext(targetContextOutputChannel, stateService);
+    }));
+
+    const recentRunsOutputChannel = vscode.window.createOutputChannel('HDL Helper - Recent Runs');
+    context.subscriptions.push(recentRunsOutputChannel);
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.debugRecentRunsByTarget', async () => {
+        await debugRecentRunsByTarget(stateService, recentRunsOutputChannel);
     }));
 
     const dualHierarchyOutputChannel = vscode.window.createOutputChannel('HDL Helper - Dual Hierarchy');

@@ -53,6 +53,12 @@
         "icon": "$(inspect)"
       },
       {
+        "command": "hdl-helper.debugRecentRunsByTarget",
+        "title": "HDL: Debug Recent Runs By Target",
+        "category": "HDL Helper",
+        "icon": "$(history)"
+      },
+      {
         "command": "hdl-helper.debugDualHierarchyState",
         "title": "HDL: Debug Dual Hierarchy State",
         "category": "HDL Helper",

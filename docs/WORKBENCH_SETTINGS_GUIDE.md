@@ -22,6 +22,8 @@ This guide lists workbench-related settings that can be configured directly in V
 - Quick Actions: `HDL: Quick Actions` -> `Debug Dual Hierarchy State`
 - Command Palette: `HDL: Debug Active Target Context`
 - Quick Actions: `HDL: Quick Actions` -> `Debug Active Target Context`
+- Command Palette: `HDL: Debug Recent Runs By Target`
+- Quick Actions: `HDL: Quick Actions` -> `Debug Recent Runs By Target`
 - Command Palette: `HDL: Open Project Config`
 - Quick Actions: `HDL: Quick Actions` -> `Open Project Config`
 - Command Palette: `HDL: Open Dual Hierarchy Regression Checklist`
@@ -37,6 +39,7 @@ This guide lists workbench-related settings that can be configured directly in V
   - Dual Hierarchy Regression Checklist
   - Debug Dual Hierarchy State
   - Debug Active Target Context
+  - Debug Recent Runs By Target
   - Open Project Config
   - Clear Top Module
 - In `Hierarchy Tools`, entries are grouped with prefixes for faster scanning:
@@ -65,6 +68,8 @@ This guide lists workbench-related settings that can be configured directly in V
 
 - `hdl-helper.targetDrivenRuns.enabled`
   - Enable target-oriented run management.
+  - When enabled, each simulation run stores the latest run result under a target key in workspace state.
+  - Use `HDL: Debug Recent Runs By Target` to inspect current stored run records.
 
 ## Sources View UI Behavior Settings
 
