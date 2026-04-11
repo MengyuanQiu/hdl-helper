@@ -309,6 +309,60 @@
           "default": false,
           "description": "启用独立的 Design Hierarchy 和 Simulation Hierarchy (实验性功能)。启用后，设计层级和仿真层级将分别显示。"
         },
+        "hdl-helper.workbench.sources.includePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/*.v",
+            "**/*.vh",
+            "**/*.sv",
+            "**/*.svh",
+            "**/*.sva",
+            "**/*.vhd",
+            "**/*.vhdl",
+            "**/*.xdc",
+            "**/*.sdc",
+            "**/*.tcl",
+            "**/*.xci"
+          ],
+          "description": "Sources 视图扫描文件的包含模式（glob）。可在 UI 中调整以匹配项目文件类型。"
+        },
+        "hdl-helper.workbench.sources.excludePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/.srcs/**",
+            "**/.sim/**",
+            "**/build/**",
+            "**/out/**"
+          ],
+          "description": "Sources 视图扫描文件的排除模式（glob）。用于过滤构建产物和第三方目录。"
+        },
+        "hdl-helper.workbench.sources.showEmptyGroups": {
+          "type": "boolean",
+          "default": true,
+          "description": "Sources 视图中是否显示 0 项分组。关闭后仅显示非空分组。"
+        },
+        "hdl-helper.workbench.sources.showLegacyHierarchy": {
+          "type": "boolean",
+          "default": true,
+          "description": "启用 roleGroupedSources 时，是否同时显示 Module Hierarchy (Legacy) 节点。"
+        },
+        "hdl-helper.workbench.heuristic.defaultHdlRole": {
+          "type": "string",
+          "enum": [
+            "design",
+            "unassigned"
+          ],
+          "default": "design",
+          "description": "Heuristic 模式下未知路径 HDL 文件的默认角色。"
+        },
         "hdl-helper.projectConfig.enabled": {
           "type": "boolean",
           "default": false,

@@ -201,7 +201,11 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
             }
 
             if (this.isRoleGroupedSourcesEnabled()) {
-                return [new SourcesRootItem(), new LegacyHierarchyRootItem()];
+                const roots: HdlTreeItem[] = [new SourcesRootItem()];
+                if (this.isLegacyHierarchyVisibleWithSources()) {
+                    roots.push(new LegacyHierarchyRootItem());
+                }
+                return roots;
             }
 
             return this.getLegacyRootChildren();
@@ -254,6 +258,12 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
         return vscode.workspace
             .getConfiguration('hdl-helper')
             .get<boolean>('workbench.roleGroupedSources', false);
+    }
+
+    private isLegacyHierarchyVisibleWithSources(): boolean {
+        return vscode.workspace
+            .getConfiguration('hdl-helper')
+            .get<boolean>('workbench.sources.showLegacyHierarchy', true);
     }
 
     private getLegacyRootChildren(): HdlTreeItem[] {
@@ -365,7 +375,7 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
     }
 
     private buildSourceGroupItems(sources: SourcesSection): HdlTreeItem[] {
-        return [
+        const groups = [
             new SourceGroupItem('Design Sources', sources.designSources, 'symbol-module'),
             new SourceGroupItem('Simulation Sources', sources.simulationSources, 'beaker'),
             new SourceGroupItem('Verification Sources', sources.verificationSources, 'checklist'),
@@ -374,10 +384,21 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
             new SourceGroupItem('IP / Generated', sources.ipGenerated, 'package'),
             new SourceGroupItem('Unassigned / Other HDL Files', sources.unassigned, 'question')
         ];
+
+        const showEmptyGroups = vscode.workspace
+            .getConfiguration('hdl-helper')
+            .get<boolean>('workbench.sources.showEmptyGroups', true);
+
+        if (showEmptyGroups) {
+            return groups;
+        }
+
+        return groups.filter(group => group.files.length > 0);
     }
 
     private async findSourceFiles(folder: vscode.WorkspaceFolder): Promise<vscode.Uri[]> {
-        const patterns = [
+        const config = vscode.workspace.getConfiguration('hdl-helper', folder.uri);
+        const patterns = config.get<string[]>('workbench.sources.includePatterns', [
             '**/*.v',
             '**/*.vh',
             '**/*.sv',
@@ -389,22 +410,26 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
             '**/*.sdc',
             '**/*.tcl',
             '**/*.xci'
-        ];
+        ]);
 
-        const excludes = [
+        const excludes = config.get<string[]>('workbench.sources.excludePatterns', [
             '**/node_modules/**',
             '**/.git/**',
             '**/.srcs/**',
             '**/.sim/**',
             '**/build/**',
             '**/out/**'
-        ];
+        ]);
+
+        const activePatterns = (patterns || []).filter(Boolean);
+        const activeExcludes = (excludes || []).filter(Boolean);
+        const excludeGlob = activeExcludes.length > 0 ? `{${activeExcludes.join(',')}}` : undefined;
 
         const files: vscode.Uri[] = [];
-        for (const pattern of patterns) {
+        for (const pattern of activePatterns) {
             const found = await vscode.workspace.findFiles(
                 new vscode.RelativePattern(folder, pattern),
-                `{${excludes.join(',')}}`
+                excludeGlob
             );
             files.push(...found);
         }

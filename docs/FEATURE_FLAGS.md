@@ -8,6 +8,8 @@
 
 Feature flags control the rollout of workbench architecture features. All new workbench features are introduced additively with flags **off by default** to ensure stability and backward compatibility.
 
+For user-facing UI configuration guidance (including non-flag workbench settings such as source patterns, empty-group visibility, and legacy section visibility), see `docs/WORKBENCH_SETTINGS_GUIDE.md`.
+
 ---
 
 ## Available Feature Flags

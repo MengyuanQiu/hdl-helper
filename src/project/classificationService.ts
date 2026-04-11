@@ -276,7 +276,7 @@ export class ClassificationService {
 
         // Compatibility default: unknown-path HDL source files are treated as design.
         if (role === Role.Unassigned && this.isHdlSourceType(physicalType)) {
-            role = Role.Design;
+            role = this.getDefaultHdlRole();
         }
 
         return {
@@ -317,6 +317,14 @@ export class ClassificationService {
         return physicalType === PhysicalFileType.Verilog
             || physicalType === PhysicalFileType.SystemVerilog
             || physicalType === PhysicalFileType.VHDL;
+    }
+
+    private getDefaultHdlRole(): Role {
+        const configured = vscode.workspace
+            .getConfiguration('hdl-helper', vscode.Uri.file(this.context.workspaceRoot))
+            .get<string>('workbench.heuristic.defaultHdlRole', 'design');
+
+        return configured === 'unassigned' ? Role.Unassigned : Role.Design;
     }
 
     private detectPhysicalType(uri: vscode.Uri): PhysicalFileType {

@@ -167,7 +167,12 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
         if (
             event.affectsConfiguration('hdl-helper.workbench.roleGroupedSources') ||
-            event.affectsConfiguration('hdl-helper.projectConfig.enabled')
+            event.affectsConfiguration('hdl-helper.projectConfig.enabled') ||
+            event.affectsConfiguration('hdl-helper.workbench.sources.includePatterns') ||
+            event.affectsConfiguration('hdl-helper.workbench.sources.excludePatterns') ||
+            event.affectsConfiguration('hdl-helper.workbench.sources.showEmptyGroups') ||
+            event.affectsConfiguration('hdl-helper.workbench.sources.showLegacyHierarchy') ||
+            event.affectsConfiguration('hdl-helper.workbench.heuristic.defaultHdlRole')
         ) {
             treeProvider.refresh();
         }
