@@ -347,6 +347,16 @@ export function activate(context: vscode.ExtensionContext) {
                 detail: 'Diagnostics'
             },
             {
+                label: 'Inspect Project Classification Summary (Active)',
+                description: 'Inspect aggregated counters for active-target files',
+                detail: 'Diagnostics'
+            },
+            {
+                label: 'Inspect Project Classification Summary (Shared)',
+                description: 'Inspect aggregated counters for shared files',
+                detail: 'Diagnostics'
+            },
+            {
                 label: 'Inspect Project Classification (Active Files)',
                 description: 'Inspect files scoped to active target context',
                 detail: 'Diagnostics'
@@ -489,6 +499,14 @@ export function activate(context: vscode.ExtensionContext) {
             await vscode.commands.executeCommand('hdl-helper.inspectProjectClassificationSummary');
             return;
         }
+        if (action.label === 'Inspect Project Classification Summary (Active)') {
+            await vscode.commands.executeCommand('hdl-helper.inspectProjectClassificationSummaryActive');
+            return;
+        }
+        if (action.label === 'Inspect Project Classification Summary (Shared)') {
+            await vscode.commands.executeCommand('hdl-helper.inspectProjectClassificationSummaryShared');
+            return;
+        }
         if (action.label === 'Inspect Project Classification (Active Files)') {
             await vscode.commands.executeCommand('hdl-helper.inspectProjectClassification', 'active');
             return;
@@ -601,6 +619,16 @@ export function activate(context: vscode.ExtensionContext) {
                 label: '[Diagnostics] Inspect Project Classification Summary',
                 description: 'Inspect aggregated classification counters by scope',
                 command: 'hdl-helper.inspectProjectClassificationSummary'
+            },
+            {
+                label: '[Diagnostics] Inspect Project Classification Summary (Active)',
+                description: 'Inspect aggregated counters for active-target files',
+                command: 'hdl-helper.inspectProjectClassificationSummaryActive'
+            },
+            {
+                label: '[Diagnostics] Inspect Project Classification Summary (Shared)',
+                description: 'Inspect aggregated counters for shared files',
+                command: 'hdl-helper.inspectProjectClassificationSummaryShared'
             },
             {
                 label: '[Diagnostics] Inspect Project Classification (Active Files)',
@@ -1237,6 +1265,14 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.inspectProjectClassificationSummary', async (arg?: unknown) => {
         await inspectProjectClassificationSummary(classificationOutputChannel, arg);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.inspectProjectClassificationSummaryActive', async () => {
+        await vscode.commands.executeCommand('hdl-helper.inspectProjectClassificationSummary', 'active');
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.inspectProjectClassificationSummaryShared', async () => {
+        await vscode.commands.executeCommand('hdl-helper.inspectProjectClassificationSummary', 'shared');
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.debugProjectClassificationView', async (arg?: unknown) => {

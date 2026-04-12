@@ -1290,3 +1290,29 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（77 passing）。
+
+## 2026-04-12 - Iteration 5 Day 36: Summary Scope Alias Commands and Fast Paths
+
+- 目标: 继续推进 Iteration 5.5 inspector 可达性，为 summary 新增 active/shared 别名命令，减少 scope 选择步骤。
+- 变更文件:
+  - src/extension.ts
+  - package.json
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - 新增别名命令：
+    - `hdl-helper.inspectProjectClassificationSummaryActive`
+    - `hdl-helper.inspectProjectClassificationSummaryShared`
+  - 命令行为：
+    - active 别名直接调用 `inspectProjectClassificationSummary` 并传入 `active`
+    - shared 别名直接调用 `inspectProjectClassificationSummary` 并传入 `shared`
+  - 快速入口接线：
+    - Quick Actions
+    - Hierarchy Tools
+    - Command Palette
+    - HDL Explorer title bar
+    - Diagnostics root 右键菜单
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（77 passing）。
