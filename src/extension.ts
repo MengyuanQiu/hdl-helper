@@ -22,6 +22,7 @@ import { openLastRunArtifactsByTarget } from './commands/openLastRunArtifactsByT
 import { openRunRecordArtifacts } from './commands/openRunRecordArtifacts';
 import { rerunTargetRun, resolveTargetIdFromRerunArg } from './commands/rerunTargetRun';
 import { openSimulationTasksFile } from './commands/openSimulationTasksFile';
+import { runActiveTargetSimulation } from './commands/runActiveTargetSimulation';
 import { debugDualHierarchyState } from './commands/debugDualHierarchyState';
 import { openDualHierarchyRegressionChecklist } from './commands/openDualHierarchyRegressionChecklist';
 import { openProjectConfigFromWorkspace } from './commands/openProjectConfig';
@@ -356,6 +357,11 @@ export function activate(context: vscode.ExtensionContext) {
                 detail: 'Action'
             },
             {
+                label: 'Run Active Target Simulation',
+                description: 'Resolve active target top and run simulation',
+                detail: 'Action'
+            },
+            {
                 label: 'Open Run Record Artifacts',
                 description: 'Open waveform/log for a selected target record',
                 detail: 'Diagnostics'
@@ -448,6 +454,10 @@ export function activate(context: vscode.ExtensionContext) {
             await vscode.commands.executeCommand('hdl-helper.rerunTargetRun');
             return;
         }
+        if (action.label === 'Run Active Target Simulation') {
+            await vscode.commands.executeCommand('hdl-helper.runActiveTargetSimulation');
+            return;
+        }
         if (action.label === 'Open Run Record Artifacts') {
             await vscode.commands.executeCommand('hdl-helper.openRecentRuns');
         }
@@ -534,6 +544,11 @@ export function activate(context: vscode.ExtensionContext) {
                 label: '[Action] Rerun Active Target',
                 description: 'Run simulation again for active target run record',
                 command: 'hdl-helper.rerunTargetRun'
+            },
+            {
+                label: '[Action] Run Active Target Simulation',
+                description: 'Resolve active target top and run simulation',
+                command: 'hdl-helper.runActiveTargetSimulation'
             }
         ], {
             placeHolder: 'Hierarchy Tools (Settings / Diagnostics / Action)'
@@ -899,6 +914,10 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.rerunTargetRun', async (arg?: unknown) => {
         const targetId = resolveTargetIdFromRerunArg(arg);
         await rerunTargetRun(stateService, targetId);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runActiveTargetSimulation', async () => {
+        await runActiveTargetSimulation(stateService);
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.runSimulation', async (moduleName: string, sourceUri?: vscode.Uri) => {

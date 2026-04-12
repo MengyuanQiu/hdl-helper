@@ -30,6 +30,7 @@ import { getAvailableArtifactActions, getMissingArtifactReasons } from '../comma
 import { pickRunRecordByTarget } from '../commands/openRunRecordArtifacts';
 import { resolveRerunTop, resolveTargetIdFromRerunArg } from '../commands/rerunTargetRun';
 import { getSimulationTasksFilePath, openSimulationTasksFile } from '../commands/openSimulationTasksFile';
+import { buildConfigFallbackWarning, resolveFallbackSimulationTop } from '../commands/runActiveTargetSimulation';
 import { buildConfigIssues } from '../project/configDiagnostics';
 // import * as myExtension from '../../extension';
 
@@ -515,6 +516,17 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(written.length, 1);
 		assert.ok((written[0] || '').includes('"tasks"'));
 		assert.strictEqual(opened.length, 1);
+	});
+
+	test('Active target simulation fallback top prefers simulation top', () => {
+		assert.strictEqual(resolveFallbackSimulationTop('dut_top', 'tb_top'), 'tb_top');
+		assert.strictEqual(resolveFallbackSimulationTop('dut_top', undefined), 'dut_top');
+		assert.strictEqual(resolveFallbackSimulationTop(undefined, undefined), undefined);
+	});
+
+	test('Active target simulation fallback warning includes target id when available', () => {
+		assert.ok(buildConfigFallbackWarning('sim_default').includes("sim_default"));
+		assert.ok(buildConfigFallbackWarning(undefined).includes('Unable to resolve active target context'));
 	});
 
 	test('Recent runs formatter returns fallback line for empty records', () => {

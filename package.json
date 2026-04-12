@@ -264,6 +264,12 @@
         "title": "HDL: Run Simulation Task Item",
         "category": "HDL Helper",
         "icon": "$(play)"
+      },
+      {
+        "command": "hdl-helper.runActiveTargetSimulation",
+        "title": "HDL: Run Active Target Simulation",
+        "category": "HDL Helper",
+        "icon": "$(play-circle)"
       }
     ],
     "configuration": {
@@ -681,6 +687,16 @@
           "command": "hdl-helper.openSimulationTasksFile",
           "when": "view == hdl-hierarchy-view && viewItem == tasks-runs-root",
           "group": "navigation@2"
+        },
+        {
+          "command": "hdl-helper.runActiveTargetSimulation",
+          "when": "view == hdl-hierarchy-view && viewItem == tasks-runs-root",
+          "group": "inline@1"
+        },
+        {
+          "command": "hdl-helper.runActiveTargetSimulation",
+          "when": "view == hdl-hierarchy-view && viewItem == recent-runs-group",
+          "group": "inline@1"
         },
         {
           "command": "hdl-helper.copyInstantiation",

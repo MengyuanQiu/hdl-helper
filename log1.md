@@ -675,3 +675,34 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（46 passing）。
+
+## 2026-04-12 - Iteration 4 Day 12: Run Active Target Simulation
+
+- 目标: 继续推进 Iteration 4，让运行入口真正以 active target context 为中心。
+- 变更文件:
+  - src/commands/runActiveTargetSimulation.ts
+  - src/extension.ts
+  - src/test/extension.test.ts
+  - package.json
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - 新增命令 `HDL: Run Active Target Simulation`：
+    - projectConfig 模式优先解析 active target 的 `top`
+    - 当 active target 无法解析 top 时，回退到 heuristic（simulationTop/designTop）并给出可见 warning
+    - 复用 `hdl-helper.runSimulation` 执行链路，保持 run record 写入与后续回看一致
+  - 新增 helper：
+    - `resolveFallbackSimulationTop`
+    - `buildConfigFallbackWarning`
+  - 入口接入：
+    - Command Palette
+    - `HDL: Quick Actions`
+    - `HDL: Open Hierarchy Tools`
+    - `Tasks and Runs` 根节点 / `Recent Runs` 分组右键菜单
+  - 新增最小回归测试：
+    - `Active target simulation fallback top prefers simulation top`
+    - `Active target simulation fallback warning includes target id when available`
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（48 passing）。
