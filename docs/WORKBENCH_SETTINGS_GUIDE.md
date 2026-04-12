@@ -92,6 +92,7 @@ This guide lists workbench-related settings that can be configured directly in V
   - Source set file resolution is now centralized via `SourceSetService`, and `TargetContextService` consumes that service as the single source-set resolution path.
   - Shared files referenced by multiple source sets now keep deterministic `primary role + secondary roles` semantics in classification results, and Sources tooltip shows secondary roles plus matched source set names.
   - `HDL: Debug Current Project Classification` now includes observability summary for shared-file count, active-target-covered file count, and per-source-set file coverage.
+  - Classification debug output now uses a reusable report formatter template (`formatClassificationDebugReport`), so the same output model can be reused by future inspector/detail views.
 
 - `hdl-helper.targetDrivenRuns.enabled`
   - Enable target-oriented run management.

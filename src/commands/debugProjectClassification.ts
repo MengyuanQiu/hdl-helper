@@ -10,7 +10,7 @@
 import * as vscode from 'vscode';
 import { ClassificationService } from '../project/classificationService';
 import { ProjectConfigService } from '../project/projectConfigService';
-import { FileClassificationResult, Role, PhysicalFileType, SourceOfTruth } from '../project/types';
+import { FileClassificationResult } from '../project/types';
 
 export interface ClassificationObservabilityStats {
     totalFiles: number;
@@ -19,13 +19,30 @@ export interface ClassificationObservabilityStats {
     sourceSetCoverage: Record<string, number>;
 }
 
+export interface ClassificationDebugReportInput {
+    workspaceName: string;
+    workspaceRoot: string;
+    configStatus: string;
+    config?: {
+        name: string;
+        version: string;
+        sourceSetCount: number;
+        targetCount: number;
+        activeTarget?: string;
+    };
+    hdlFileCount: number;
+    roleCounts: Record<string, number>;
+    stats: ClassificationObservabilityStats;
+    results: FileClassificationResult[];
+}
+
 export function buildClassificationObservabilityStats(
     results: FileClassificationResult[]
 ): ClassificationObservabilityStats {
     const sourceSetCoverage: Record<string, number> = {};
 
     for (const result of results) {
-        for (const sourceSetName of result.referencedBySourceSets || []) {
+        for (const sourceSetName of new Set(result.referencedBySourceSets || [])) {
             sourceSetCoverage[sourceSetName] = (sourceSetCoverage[sourceSetName] || 0) + 1;
         }
     }
@@ -36,6 +53,72 @@ export function buildClassificationObservabilityStats(
         activeTargetFiles: results.filter(result => result.inActiveTarget).length,
         sourceSetCoverage
     };
+}
+
+export function formatClassificationDebugReport(input: ClassificationDebugReportInput): string[] {
+    const lines: string[] = [];
+    lines.push(`Workspace: ${input.workspaceName}`);
+    lines.push(`Root: ${input.workspaceRoot}`);
+    lines.push('');
+
+    lines.push(`Project Config Status: ${input.configStatus}`);
+    if (input.config) {
+        lines.push(`  Name: ${input.config.name}`);
+        lines.push(`  Version: ${input.config.version}`);
+        lines.push(`  Source Sets: ${input.config.sourceSetCount}`);
+        lines.push(`  Targets: ${input.config.targetCount}`);
+        lines.push(`  Active Target: ${input.config.activeTarget || 'none'}`);
+    }
+    lines.push('');
+
+    lines.push(`Found ${input.hdlFileCount} HDL files`);
+    lines.push('');
+
+    lines.push('Classification Summary:');
+    lines.push('-'.repeat(80));
+    const roles = Object.keys(input.roleCounts).sort((a, b) => a.localeCompare(b));
+    for (const role of roles) {
+        lines.push(`  ${role}: ${input.roleCounts[role]} files`);
+    }
+    lines.push(`  shared files: ${input.stats.sharedFiles}`);
+    lines.push(`  active target files: ${input.stats.activeTargetFiles}`);
+    lines.push('');
+
+    lines.push('SourceSet Coverage:');
+    const sourceSetNames = Object.keys(input.stats.sourceSetCoverage).sort((a, b) => a.localeCompare(b));
+    if (sourceSetNames.length === 0) {
+        lines.push('  (none)');
+    } else {
+        for (const sourceSetName of sourceSetNames) {
+            lines.push(`  ${sourceSetName}: ${input.stats.sourceSetCoverage[sourceSetName]} files`);
+        }
+    }
+    lines.push('');
+
+    lines.push('Detailed Classification Results:');
+    lines.push('-'.repeat(80));
+
+    for (const result of input.results) {
+        lines.push('');
+        lines.push(`File: ${result.uri}`);
+        lines.push(`  Physical Type: ${result.physicalType}`);
+        lines.push(`  Role (Primary): ${result.rolePrimary}`);
+        if (result.roleSecondary.length > 0) {
+            lines.push(`  Role (Secondary): ${result.roleSecondary.join(', ')}`);
+        }
+        lines.push(`  Source of Truth: ${result.sourceOfTruth}`);
+        lines.push(`  In Active Target: ${result.inActiveTarget}`);
+        if (result.referencedBySourceSets && result.referencedBySourceSets.length > 0) {
+            lines.push(`  Referenced by Source Sets: ${result.referencedBySourceSets.join(', ')}`);
+        }
+        if (result.referencedByTargets && result.referencedByTargets.length > 0) {
+            lines.push(`  Referenced by Targets: ${result.referencedByTargets.join(', ')}`);
+        }
+    }
+
+    lines.push('');
+    lines.push('-'.repeat(80));
+    return lines;
 }
 
 /**
@@ -73,30 +156,14 @@ async function debugWorkspaceFolder(
     outputChannel: vscode.OutputChannel
 ): Promise<void> {
     const workspaceRoot = folder.uri.fsPath;
-    
-    outputChannel.appendLine(`Workspace: ${folder.name}`);
-    outputChannel.appendLine(`Root: ${workspaceRoot}`);
-    outputChannel.appendLine('');
 
     // Load project config if exists
     const configService = new ProjectConfigService(workspaceRoot);
     const config = await configService.loadConfig();
     const configStatus = configService.getStatus();
 
-    outputChannel.appendLine(`Project Config Status: ${configStatus}`);
-    if (config) {
-        outputChannel.appendLine(`  Name: ${config.name}`);
-        outputChannel.appendLine(`  Version: ${config.version}`);
-        outputChannel.appendLine(`  Source Sets: ${Object.keys(config.sourceSets).length}`);
-        outputChannel.appendLine(`  Targets: ${Object.keys(config.targets).length}`);
-        outputChannel.appendLine(`  Active Target: ${config.activeTarget || 'none'}`);
-    }
-    outputChannel.appendLine('');
-
     // Find all HDL files
     const hdlFiles = await findHdlFiles(folder);
-    outputChannel.appendLine(`Found ${hdlFiles.length} HDL files`);
-    outputChannel.appendLine('');
 
     // Classify files
     const classificationService = new ClassificationService({
@@ -110,51 +177,33 @@ async function debugWorkspaceFolder(
     // Group by role
     const byRole = groupByRole(results);
     const stats = buildClassificationObservabilityStats(results);
-
-    // Output summary
-    outputChannel.appendLine('Classification Summary:');
-    outputChannel.appendLine('-'.repeat(80));
+    const roleCounts: Record<string, number> = {};
     for (const [role, files] of Object.entries(byRole)) {
-        outputChannel.appendLine(`  ${role}: ${files.length} files`);
-    }
-    outputChannel.appendLine(`  shared files: ${stats.sharedFiles}`);
-    outputChannel.appendLine(`  active target files: ${stats.activeTargetFiles}`);
-    outputChannel.appendLine('');
-    outputChannel.appendLine('SourceSet Coverage:');
-    const sourceSetNames = Object.keys(stats.sourceSetCoverage).sort((a, b) => a.localeCompare(b));
-    if (sourceSetNames.length === 0) {
-        outputChannel.appendLine('  (none)');
-    } else {
-        for (const sourceSetName of sourceSetNames) {
-            outputChannel.appendLine(`  ${sourceSetName}: ${stats.sourceSetCoverage[sourceSetName]} files`);
-        }
-    }
-    outputChannel.appendLine('');
-
-    // Output detailed results
-    outputChannel.appendLine('Detailed Classification Results:');
-    outputChannel.appendLine('-'.repeat(80));
-    
-    for (const result of results) {
-        outputChannel.appendLine('');
-        outputChannel.appendLine(`File: ${result.uri}`);
-        outputChannel.appendLine(`  Physical Type: ${result.physicalType}`);
-        outputChannel.appendLine(`  Role (Primary): ${result.rolePrimary}`);
-        if (result.roleSecondary.length > 0) {
-            outputChannel.appendLine(`  Role (Secondary): ${result.roleSecondary.join(', ')}`);
-        }
-        outputChannel.appendLine(`  Source of Truth: ${result.sourceOfTruth}`);
-        outputChannel.appendLine(`  In Active Target: ${result.inActiveTarget}`);
-        if (result.referencedBySourceSets && result.referencedBySourceSets.length > 0) {
-            outputChannel.appendLine(`  Referenced by Source Sets: ${result.referencedBySourceSets.join(', ')}`);
-        }
-        if (result.referencedByTargets && result.referencedByTargets.length > 0) {
-            outputChannel.appendLine(`  Referenced by Targets: ${result.referencedByTargets.join(', ')}`);
-        }
+        roleCounts[role] = files.length;
     }
 
-    outputChannel.appendLine('');
-    outputChannel.appendLine('-'.repeat(80));
+    const lines = formatClassificationDebugReport({
+        workspaceName: folder.name,
+        workspaceRoot,
+        configStatus,
+        config: config
+            ? {
+                name: config.name,
+                version: config.version,
+                sourceSetCount: Object.keys(config.sourceSets).length,
+                targetCount: Object.keys(config.targets).length,
+                activeTarget: config.activeTarget
+            }
+            : undefined,
+        hdlFileCount: hdlFiles.length,
+        roleCounts,
+        stats,
+        results
+    });
+
+    for (const line of lines) {
+        outputChannel.appendLine(line);
+    }
 }
 
 async function findHdlFiles(folder: vscode.WorkspaceFolder): Promise<vscode.Uri[]> {

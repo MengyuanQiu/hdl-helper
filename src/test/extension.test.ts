@@ -23,7 +23,7 @@ import {
 	inferDefaultTops
 } from '../commands/createProjectConfig';
 import { buildTargetContextDebugSnapshot } from '../commands/debugActiveTargetContext';
-import { buildClassificationObservabilityStats } from '../commands/debugProjectClassification';
+import { buildClassificationObservabilityStats, formatClassificationDebugReport } from '../commands/debugProjectClassification';
 import { getProjectConfigPath, openProjectConfig } from '../commands/openProjectConfig';
 import { formatRunRecords } from '../commands/debugRecentRuns';
 import { pickRunRecordForTarget } from '../commands/openLastWaveformByTarget';
@@ -250,6 +250,78 @@ suite('Extension Test Suite', () => {
 			design: 2,
 			simulation: 2
 		});
+	});
+
+	test('Classification observability stats deduplicates repeated source-set names per file', () => {
+		const stats = buildClassificationObservabilityStats([
+			{
+				uri: 'C:/repo/shared/common_pkg.sv',
+				physicalType: PhysicalFileType.SystemVerilog,
+				rolePrimary: Role.Design,
+				roleSecondary: [Role.Verification],
+				sourceOfTruth: SourceOfTruth.ProjectConfig,
+				inActiveTarget: true,
+				referencedBySourceSets: ['design', 'design', 'verification']
+			}
+		]);
+
+		assert.deepStrictEqual(stats.sourceSetCoverage, {
+			design: 1,
+			verification: 1
+		});
+	});
+
+	test('Classification debug report formatter renders deterministic sections', () => {
+		const lines = formatClassificationDebugReport({
+			workspaceName: 'repo',
+			workspaceRoot: 'C:/repo',
+			configStatus: 'valid',
+			config: {
+				name: 'repo',
+				version: '1.0',
+				sourceSetCount: 2,
+				targetCount: 1,
+				activeTarget: 'sim_default'
+			},
+			hdlFileCount: 2,
+			roleCounts: {
+				simulation: 1,
+				design: 1
+			},
+			stats: {
+				totalFiles: 2,
+				sharedFiles: 1,
+				activeTargetFiles: 1,
+				sourceSetCoverage: {
+					simulation: 2,
+					design: 1
+				}
+			},
+			results: [
+				{
+					uri: 'C:/repo/tb/tb_top.sv',
+					physicalType: PhysicalFileType.SystemVerilog,
+					rolePrimary: Role.Simulation,
+					roleSecondary: [],
+					sourceOfTruth: SourceOfTruth.ProjectConfig,
+					inActiveTarget: true,
+					referencedBySourceSets: ['simulation']
+				}
+			]
+		});
+
+		assert.ok(lines.includes('Classification Summary:'));
+		assert.ok(lines.includes('SourceSet Coverage:'));
+		assert.ok(lines.includes('  shared files: 1'));
+		assert.ok(lines.includes('  active target files: 1'));
+		assert.ok(lines.includes('  design: 1 files'));
+		assert.ok(lines.includes('  simulation: 1 files'));
+		assert.ok(lines.includes('  simulation: 2 files'));
+		assert.ok(lines.includes('Detailed Classification Results:'));
+
+		const designIndex = lines.indexOf('  design: 1 files');
+		const simulationIndex = lines.indexOf('  simulation: 1 files');
+		assert.ok(designIndex >= 0 && simulationIndex >= 0 && designIndex < simulationIndex);
 	});
 
 	test('Dual hierarchy keeps Design/Simulation tops independent', async () => {

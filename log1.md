@@ -918,3 +918,23 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（61 passing）。
+
+## 2026-04-12 - Iteration 5 Day 21: Reusable Classification Debug Template
+
+- 目标: 继续推进 Iteration 5，把分类调试输出收敛为可复用模板，便于后续 Inspector 复用同一输出模型。
+- 变更文件:
+  - src/commands/debugProjectClassification.ts
+  - src/test/extension.test.ts
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - 新增 `formatClassificationDebugReport(...)`，统一渲染 workspace 配置摘要、分类统计、source-set 覆盖、详细文件条目。
+  - `debugProjectClassification` 改为构建输入并调用 formatter，命令层只负责采集数据与输出。
+  - `buildClassificationObservabilityStats` 增强：同一文件内重复 source-set 名称按去重计数。
+  - 新增最小回归测试：
+    - `Classification observability stats deduplicates repeated source-set names per file`
+    - `Classification debug report formatter renders deterministic sections`
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（63 passing）。
