@@ -12,6 +12,7 @@ import { ProjectConfigStatus, Role, TargetKind } from '../project/types';
 import { getLatestLogEntries, getLatestWaveformEntries, HdlTreeProvider, prioritizeTargetEntries } from '../project/hdlTreeProvider';
 import { HdlInstance, HdlModule, HdlPort } from '../project/hdlSymbol';
 import { mapLegacyTopSelection } from '../project/topSelectionPolicy';
+import { TargetContextService } from '../project/targetContextService';
 import {
 	getDualHierarchyChecklistPath,
 	openDualHierarchyRegressionChecklist
@@ -311,6 +312,72 @@ suite('Extension Test Suite', () => {
 		const tops = inferDefaultTops([dutOnly]);
 		assert.strictEqual(tops.design, 'dut_only');
 		assert.strictEqual(tops.simulation, undefined);
+	});
+
+	test('Target context service resolves files from source sets with include and exclude patterns', () => {
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hdl-helper-target-context-'));
+		const rtlDir = path.join(tempRoot, 'rtl');
+		const tbDir = path.join(tempRoot, 'tb');
+		fs.mkdirSync(rtlDir, { recursive: true });
+		fs.mkdirSync(tbDir, { recursive: true });
+
+		const dutPath = path.join(rtlDir, 'dut.sv');
+		const skipPath = path.join(rtlDir, 'skip_internal.sv');
+		const tbPath = path.join(tbDir, 'tb_top.sv');
+		fs.writeFileSync(dutPath, 'module dut; endmodule\n', 'utf8');
+		fs.writeFileSync(skipPath, 'module skip_internal; endmodule\n', 'utf8');
+		fs.writeFileSync(tbPath, 'module tb_top; endmodule\n', 'utf8');
+
+		const service = new TargetContextService(tempRoot, {
+			projectConfig: {
+				version: '1.0',
+				name: 'repo',
+				root: tempRoot,
+				sourceSets: {
+					design: {
+						name: 'design',
+						role: Role.Design,
+						includes: ['rtl/**/*.sv'],
+						excludes: ['rtl/skip*.sv']
+					},
+					simulation: {
+						name: 'simulation',
+						role: Role.Simulation,
+						includes: ['tb/**/*.sv', 'rtl/**/*.sv']
+					}
+				},
+				tops: {
+					design: 'dut',
+					simulation: 'tb_top'
+				},
+				targets: {
+					design_default: {
+						id: 'design_default',
+						kind: TargetKind.Design,
+						top: 'dut',
+						sourceSets: ['design']
+					},
+					sim_default: {
+						id: 'sim_default',
+						kind: TargetKind.Simulation,
+						top: 'tb_top',
+						sourceSets: ['simulation']
+					}
+				},
+				activeTarget: 'sim_default'
+			}
+		});
+
+		const designContext = service.resolveTargetContext('design_default');
+		assert.ok(designContext?.resolvedFiles.includes(path.normalize(dutPath)));
+		assert.ok(!designContext?.resolvedFiles.includes(path.normalize(skipPath)));
+		assert.ok(!designContext?.resolvedFiles.includes(path.normalize(tbPath)));
+
+		const simContext = service.resolveTargetContext('sim_default');
+		assert.ok(simContext?.resolvedFiles.includes(path.normalize(dutPath)));
+		assert.ok(simContext?.resolvedFiles.includes(path.normalize(tbPath)));
+
+		fs.rmSync(tempRoot, { recursive: true, force: true });
 	});
 
 	test('Active target context debug snapshot reports heuristic mode when project config is disabled', () => {

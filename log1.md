@@ -800,3 +800,24 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（54 passing）。
+
+## 2026-04-12 - Iteration 4 Day 16: TargetContext Resolved Files
+
+- 目标: 继续收口 Iteration 4，补齐 `TargetContextService.resolveFiles` 的可用实现，避免 context 中 `resolvedFiles` 长期为空。
+- 变更文件:
+  - src/project/targetContextService.ts
+  - src/test/extension.test.ts
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - `TargetContextService` 实现 source-set 文件解析：
+    - 按 target.sourceSets 聚合 source set includes/excludes
+    - 基于工作区递归扫描 + glob 匹配生成 deterministic `resolvedFiles`
+    - 加入服务内缓存（workspace files / source-set files）以降低重复计算成本
+  - glob 匹配增强：支持 `**/` 的零或多级目录匹配语义。
+  - 新增最小回归测试：
+    - `Target context service resolves files from source sets with include and exclude patterns`
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（55 passing）。

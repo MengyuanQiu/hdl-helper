@@ -86,6 +86,7 @@ This guide lists workbench-related settings that can be configured directly in V
 - `hdl-helper.projectConfig.enabled`
   - Enable project.json-driven classification and context.
   - When enabled, explorer shows `Diagnostics` section with project config issues (missing/invalid config, unresolved target tops, validation warnings, and active-target fallback issues).
+  - Active target context now resolves non-empty `resolvedFiles` from configured source sets using include/exclude patterns.
 
 - `hdl-helper.targetDrivenRuns.enabled`
   - Enable target-oriented run management.
