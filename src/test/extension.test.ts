@@ -8,8 +8,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { FilelistParser } from '../project/filelistParser';
 import { ClassificationService } from '../project/classificationService';
-import { NormalizedProjectConfig, ProjectConfigStatus, Role, SourceOfTruth, TargetKind } from '../project/types';
-import { getLatestLogEntries, getLatestWaveformEntries, HdlTreeProvider, prioritizeTargetEntries } from '../project/hdlTreeProvider';
+import { NormalizedProjectConfig, PhysicalFileType, ProjectConfigStatus, Role, SourceOfTruth, TargetKind } from '../project/types';
+import { buildSourceGroupDescription, getLatestLogEntries, getLatestWaveformEntries, HdlTreeProvider, prioritizeTargetEntries } from '../project/hdlTreeProvider';
 import { HdlInstance, HdlModule, HdlPort } from '../project/hdlSymbol';
 import { mapLegacyTopSelection } from '../project/topSelectionPolicy';
 import { SourceSetService } from '../project/sourceSetService';
@@ -23,6 +23,7 @@ import {
 	inferDefaultTops
 } from '../commands/createProjectConfig';
 import { buildTargetContextDebugSnapshot } from '../commands/debugActiveTargetContext';
+import { buildClassificationObservabilityStats } from '../commands/debugProjectClassification';
 import { getProjectConfigPath, openProjectConfig } from '../commands/openProjectConfig';
 import { formatRunRecords } from '../commands/debugRecentRuns';
 import { pickRunRecordForTarget } from '../commands/openLastWaveformByTarget';
@@ -184,6 +185,71 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(result.inActiveTarget, true);
 
 		fs.rmSync(tempRoot, { recursive: true, force: true });
+	});
+
+	test('Source group description includes shared and active metadata', () => {
+		const description = buildSourceGroupDescription([
+			{
+				uri: 'C:/repo/rtl/dut.sv',
+				physicalType: PhysicalFileType.SystemVerilog,
+				rolePrimary: Role.Design,
+				roleSecondary: [],
+				sourceOfTruth: SourceOfTruth.ProjectConfig,
+				inActiveTarget: true,
+				referencedBySourceSets: ['design']
+			},
+			{
+				uri: 'C:/repo/shared/common_pkg.sv',
+				physicalType: PhysicalFileType.SystemVerilog,
+				rolePrimary: Role.Design,
+				roleSecondary: [Role.Verification],
+				sourceOfTruth: SourceOfTruth.ProjectConfig,
+				inActiveTarget: false,
+				referencedBySourceSets: ['design', 'verification']
+			}
+		]);
+
+		assert.strictEqual(description, '2 files | 1 shared | 1 active');
+	});
+
+	test('Classification observability stats includes shared, active and source-set coverage', () => {
+		const stats = buildClassificationObservabilityStats([
+			{
+				uri: 'C:/repo/rtl/dut.sv',
+				physicalType: PhysicalFileType.SystemVerilog,
+				rolePrimary: Role.Design,
+				roleSecondary: [],
+				sourceOfTruth: SourceOfTruth.ProjectConfig,
+				inActiveTarget: true,
+				referencedBySourceSets: ['design']
+			},
+			{
+				uri: 'C:/repo/shared/common_pkg.sv',
+				physicalType: PhysicalFileType.SystemVerilog,
+				rolePrimary: Role.Design,
+				roleSecondary: [Role.Simulation],
+				sourceOfTruth: SourceOfTruth.ProjectConfig,
+				inActiveTarget: true,
+				referencedBySourceSets: ['design', 'simulation']
+			},
+			{
+				uri: 'C:/repo/tb/tb_top.sv',
+				physicalType: PhysicalFileType.SystemVerilog,
+				rolePrimary: Role.Simulation,
+				roleSecondary: [],
+				sourceOfTruth: SourceOfTruth.ProjectConfig,
+				inActiveTarget: false,
+				referencedBySourceSets: ['simulation']
+			}
+		]);
+
+		assert.strictEqual(stats.totalFiles, 3);
+		assert.strictEqual(stats.sharedFiles, 1);
+		assert.strictEqual(stats.activeTargetFiles, 2);
+		assert.deepStrictEqual(stats.sourceSetCoverage, {
+			design: 2,
+			simulation: 2
+		});
 	});
 
 	test('Dual hierarchy keeps Design/Simulation tops independent', async () => {

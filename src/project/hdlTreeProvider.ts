@@ -97,6 +97,22 @@ class SourcesRootItem extends vscode.TreeItem {
     }
 }
 
+export function buildSourceGroupDescription(files: FileClassificationResult[]): string {
+    const total = files.length;
+    const shared = files.filter(file => file.roleSecondary.length > 0).length;
+    const active = files.filter(file => file.inActiveTarget).length;
+
+    const parts = [total === 1 ? '1 file' : `${total} files`];
+    if (shared > 0) {
+        parts.push(shared === 1 ? '1 shared' : `${shared} shared`);
+    }
+    if (active > 0) {
+        parts.push(active === 1 ? '1 active' : `${active} active`);
+    }
+
+    return parts.join(' | ');
+}
+
 class SourceGroupItem extends vscode.TreeItem {
     constructor(
         label: string,
@@ -109,7 +125,7 @@ class SourceGroupItem extends vscode.TreeItem {
                 ? vscode.TreeItemCollapsibleState.Collapsed
                 : vscode.TreeItemCollapsibleState.None
         );
-        this.description = files.length === 1 ? '1 file' : `${files.length} files`;
+        this.description = buildSourceGroupDescription(files);
         this.iconPath = new vscode.ThemeIcon(icon);
         this.contextValue = 'sources-group';
     }

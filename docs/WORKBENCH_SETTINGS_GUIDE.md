@@ -24,6 +24,8 @@ This guide lists workbench-related settings that can be configured directly in V
 - Quick Actions: `HDL: Quick Actions` -> `Debug Active Target Context`
 - Command Palette: `HDL: Debug Recent Runs By Target`
 - Quick Actions: `HDL: Quick Actions` -> `Debug Recent Runs By Target`
+- Command Palette: `HDL: Debug Current Project Classification`
+- Quick Actions: `HDL: Quick Actions` -> `Debug Current Project Classification`
 - Command Palette: `HDL: Open Project Config`
 - Quick Actions: `HDL: Quick Actions` -> `Open Project Config`
 - Command Palette: `HDL: Open Last Waveform (Active Target)`
@@ -89,6 +91,7 @@ This guide lists workbench-related settings that can be configured directly in V
   - Active target context now resolves non-empty `resolvedFiles` from configured source sets using include/exclude patterns.
   - Source set file resolution is now centralized via `SourceSetService`, and `TargetContextService` consumes that service as the single source-set resolution path.
   - Shared files referenced by multiple source sets now keep deterministic `primary role + secondary roles` semantics in classification results, and Sources tooltip shows secondary roles plus matched source set names.
+  - `HDL: Debug Current Project Classification` now includes observability summary for shared-file count, active-target-covered file count, and per-source-set file coverage.
 
 - `hdl-helper.targetDrivenRuns.enabled`
   - Enable target-oriented run management.

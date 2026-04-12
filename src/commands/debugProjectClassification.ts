@@ -12,6 +12,32 @@ import { ClassificationService } from '../project/classificationService';
 import { ProjectConfigService } from '../project/projectConfigService';
 import { FileClassificationResult, Role, PhysicalFileType, SourceOfTruth } from '../project/types';
 
+export interface ClassificationObservabilityStats {
+    totalFiles: number;
+    sharedFiles: number;
+    activeTargetFiles: number;
+    sourceSetCoverage: Record<string, number>;
+}
+
+export function buildClassificationObservabilityStats(
+    results: FileClassificationResult[]
+): ClassificationObservabilityStats {
+    const sourceSetCoverage: Record<string, number> = {};
+
+    for (const result of results) {
+        for (const sourceSetName of result.referencedBySourceSets || []) {
+            sourceSetCoverage[sourceSetName] = (sourceSetCoverage[sourceSetName] || 0) + 1;
+        }
+    }
+
+    return {
+        totalFiles: results.length,
+        sharedFiles: results.filter(result => result.roleSecondary.length > 0).length,
+        activeTargetFiles: results.filter(result => result.inActiveTarget).length,
+        sourceSetCoverage
+    };
+}
+
 /**
  * Debug project classification command.
  * Shows classification results in output channel.
@@ -83,12 +109,25 @@ async function debugWorkspaceFolder(
 
     // Group by role
     const byRole = groupByRole(results);
+    const stats = buildClassificationObservabilityStats(results);
 
     // Output summary
     outputChannel.appendLine('Classification Summary:');
     outputChannel.appendLine('-'.repeat(80));
     for (const [role, files] of Object.entries(byRole)) {
         outputChannel.appendLine(`  ${role}: ${files.length} files`);
+    }
+    outputChannel.appendLine(`  shared files: ${stats.sharedFiles}`);
+    outputChannel.appendLine(`  active target files: ${stats.activeTargetFiles}`);
+    outputChannel.appendLine('');
+    outputChannel.appendLine('SourceSet Coverage:');
+    const sourceSetNames = Object.keys(stats.sourceSetCoverage).sort((a, b) => a.localeCompare(b));
+    if (sourceSetNames.length === 0) {
+        outputChannel.appendLine('  (none)');
+    } else {
+        for (const sourceSetName of sourceSetNames) {
+            outputChannel.appendLine(`  ${sourceSetName}: ${stats.sourceSetCoverage[sourceSetName]} files`);
+        }
     }
     outputChannel.appendLine('');
 

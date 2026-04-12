@@ -895,3 +895,26 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（59 passing）。
+
+## 2026-04-12 - Iteration 5 Day 20: Source Observability Metadata
+
+- 目标: 继续推进 Iteration 5，在 Explorer 与分类调试输出中补齐 shared-file / source-set 的可观测性元数据。
+- 变更文件:
+  - src/project/hdlTreeProvider.ts
+  - src/commands/debugProjectClassification.ts
+  - src/test/extension.test.ts
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - Sources 分组描述升级：显示 `files | shared | active`，提升 shared-file 与 active-target 覆盖可见性。
+  - `debugProjectClassification` 新增聚合统计 helper：
+    - shared file 数
+    - active target 覆盖文件数
+    - 每个 source set 的文件覆盖数
+  - 新增最小回归测试：
+    - `Source group description includes shared and active metadata`
+    - `Classification observability stats includes shared, active and source-set coverage`
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（61 passing）。
