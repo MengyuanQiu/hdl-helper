@@ -706,3 +706,31 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（48 passing）。
+
+## 2026-04-12 - Iteration 4 Day 13: Active Target Highlighting in Tasks and Runs
+
+- 目标: 继续推进 Iteration 4 的 active-target 语义一致性，在 Explorer 的 `Tasks and Runs` 中补齐 active record 的可见性与优先级。
+- 变更文件:
+  - src/commands/openRecentRuns.ts
+  - src/project/hdlTreeProvider.ts
+  - src/extension.ts
+  - src/test/extension.test.ts
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - `openRecentRuns` 导出 `resolveActiveTargetIdForRuns`，统一 active target 解析逻辑供其他入口复用。
+  - `HdlTreeProvider` 新增通用 helper：
+    - `prioritizeTargetEntries`（按 active target 置顶）
+  - `Tasks and Runs` 三个分组增强：
+    - `Recent Runs`
+    - `Last Waveform`
+    - `Last Logs`
+    均按 active target 置顶并在条目标签前标记 `[ACTIVE]`。
+  - extension 在初始化 TreeProvider 时注入 active target resolver 回调，实现 explorer 侧与命令侧一致的 target 选择策略。
+  - 新增最小回归测试：
+    - `Target entry prioritizer moves active target to top`
+    - `Target entry prioritizer keeps order when active target is missing`
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（50 passing）。

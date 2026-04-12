@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
 import { FilelistParser } from '../project/filelistParser';
 import { ClassificationService } from '../project/classificationService';
 import { ProjectConfigStatus, Role, TargetKind } from '../project/types';
-import { getLatestLogEntries, getLatestWaveformEntries, HdlTreeProvider } from '../project/hdlTreeProvider';
+import { getLatestLogEntries, getLatestWaveformEntries, HdlTreeProvider, prioritizeTargetEntries } from '../project/hdlTreeProvider';
 import { HdlInstance, HdlModule, HdlPort } from '../project/hdlSymbol';
 import { mapLegacyTopSelection } from '../project/topSelectionPolicy';
 import {
@@ -802,5 +802,25 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(entries.length, 2);
 		assert.strictEqual(entries[0].targetId, 'new_target');
 		assert.strictEqual(entries[1].targetId, 'old_target');
+	});
+
+	test('Target entry prioritizer moves active target to top', () => {
+		const entries = prioritizeTargetEntries([
+			{ targetId: 'design_default', value: 1 },
+			{ targetId: 'sim_default', value: 2 }
+		], 'sim_default');
+
+		assert.strictEqual(entries[0].targetId, 'sim_default');
+		assert.strictEqual(entries[1].targetId, 'design_default');
+	});
+
+	test('Target entry prioritizer keeps order when active target is missing', () => {
+		const entries = prioritizeTargetEntries([
+			{ targetId: 'design_default', value: 1 },
+			{ targetId: 'sim_default', value: 2 }
+		], 'unknown_target');
+
+		assert.strictEqual(entries[0].targetId, 'design_default');
+		assert.strictEqual(entries[1].targetId, 'sim_default');
 	});
 });

@@ -17,7 +17,7 @@ import { debugActiveTargetContext } from './commands/debugActiveTargetContext';
 import { debugRecentRunsByTarget } from './commands/debugRecentRuns';
 import { openLastWaveformByTarget } from './commands/openLastWaveformByTarget';
 import { openLastLogByTarget } from './commands/openLastLogByTarget';
-import { openRecentRuns } from './commands/openRecentRuns';
+import { openRecentRuns, resolveActiveTargetIdForRuns } from './commands/openRecentRuns';
 import { openLastRunArtifactsByTarget } from './commands/openLastRunArtifactsByTarget';
 import { openRunRecordArtifacts } from './commands/openRunRecordArtifacts';
 import { rerunTargetRun, resolveTargetIdFromRerunArg } from './commands/rerunTargetRun';
@@ -207,6 +207,14 @@ export function activate(context: vscode.ExtensionContext) {
                 top: task.top,
                 tool: task.tool
             }));
+        },
+        async () => {
+            const workspaceFolder = resolveWorkspaceForContext();
+            return resolveActiveTargetIdForRuns(
+                stateService,
+                stateService.getAllRunRecords(),
+                workspaceFolder
+            );
         }
     );
     const ipCatalogProvider = new IpCatalogProvider();

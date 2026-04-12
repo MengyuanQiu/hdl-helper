@@ -95,6 +95,7 @@ This guide lists workbench-related settings that can be configured directly in V
     - `Recent Runs`
     - `Last Waveform`
     - `Last Logs`
+  - Active target entries are prioritized and tagged with `[ACTIVE]` in `Recent Runs`, `Last Waveform`, and `Last Logs`.
   - Use `HDL: Open Simulation Tasks File` to open configured simulation task file (auto-create template if missing).
   - In `Simulation Tasks`, click a task item (or right-click and run `HDL: Run Simulation Task Item`) to trigger simulation for that task top.
   - Use `HDL: Debug Recent Runs By Target` to inspect current stored run records.

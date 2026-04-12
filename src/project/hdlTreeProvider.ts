@@ -63,6 +63,22 @@ export function getLatestLogEntries(
         .sort((a, b) => b.record.timestamp - a.record.timestamp);
 }
 
+export function prioritizeTargetEntries<T extends { targetId: string }>(
+    entries: T[],
+    activeTargetId: string | undefined
+): T[] {
+    if (!activeTargetId) {
+        return entries;
+    }
+
+    const active = entries.find(entry => entry.targetId === activeTargetId);
+    if (!active) {
+        return entries;
+    }
+
+    return [active, ...entries.filter(entry => entry.targetId !== activeTargetId)];
+}
+
 class HdlInfoItem extends vscode.TreeItem {
     constructor(label: string, description: string, icon: string, command?: vscode.Command) {
         super(label, vscode.TreeItemCollapsibleState.None);
@@ -271,8 +287,8 @@ class SimulationTaskItem extends vscode.TreeItem {
 }
 
 class LastWaveformItem extends vscode.TreeItem {
-    constructor(readonly entry: LatestArtifactEntry) {
-        super(entry.targetId, vscode.TreeItemCollapsibleState.None);
+    constructor(readonly entry: LatestArtifactEntry, isActive = false) {
+        super(isActive ? `[ACTIVE] ${entry.targetId}` : entry.targetId, vscode.TreeItemCollapsibleState.None);
         this.description = path.basename(entry.filePath);
         this.tooltip = `${entry.filePath}\n${new Date(entry.record.timestamp).toLocaleString()}`;
         this.iconPath = new vscode.ThemeIcon('graph-line');
@@ -286,8 +302,8 @@ class LastWaveformItem extends vscode.TreeItem {
 }
 
 class LastLogItem extends vscode.TreeItem {
-    constructor(readonly entry: LatestArtifactEntry) {
-        super(entry.targetId, vscode.TreeItemCollapsibleState.None);
+    constructor(readonly entry: LatestArtifactEntry, isActive = false) {
+        super(isActive ? `[ACTIVE] ${entry.targetId}` : entry.targetId, vscode.TreeItemCollapsibleState.None);
         this.description = path.basename(entry.filePath);
         this.tooltip = `${entry.filePath}\n${new Date(entry.record.timestamp).toLocaleString()}`;
         this.iconPath = new vscode.ThemeIcon('output');
@@ -301,8 +317,8 @@ class LastLogItem extends vscode.TreeItem {
 }
 
 class RunRecordItem extends vscode.TreeItem {
-    constructor(readonly targetId: string, readonly record: RunRecord) {
-        super(targetId, vscode.TreeItemCollapsibleState.None);
+    constructor(readonly targetId: string, readonly record: RunRecord, isActive = false) {
+        super(isActive ? `[ACTIVE] ${targetId}` : targetId, vscode.TreeItemCollapsibleState.None);
         this.description = record.success
             ? 'success'
             : `failed (${record.failureType || 'unknown'})`;
@@ -369,14 +385,17 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
     private scopedModuleNameCache: Partial<Record<HierarchyKind, Set<string>>> = {};
     private readonly getRunRecords: () => Record<string, RunRecord>;
     private readonly getSimulationTasks: () => Promise<SimulationTaskEntry[]>;
+    private readonly getActiveTargetId: () => Promise<string | undefined>;
 
     constructor(
         private projectManager: ProjectManager,
         getRunRecords?: () => Record<string, RunRecord>,
-        getSimulationTasks?: () => Promise<SimulationTaskEntry[]>
+        getSimulationTasks?: () => Promise<SimulationTaskEntry[]>,
+        getActiveTargetId?: () => Promise<string | undefined>
     ) {
         this.getRunRecords = getRunRecords || (() => ({}));
         this.getSimulationTasks = getSimulationTasks || (async () => []);
+        this.getActiveTargetId = getActiveTargetId || (async () => undefined);
     }
 
     /**
@@ -717,33 +736,36 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
 
     private async getRecentRunChildren(): Promise<HdlTreeItem[]> {
         const records = this.getRunRecords();
-        const entries = Object.entries(records)
+        const activeTargetId = await this.getActiveTargetId();
+        const entries = prioritizeTargetEntries(Object.entries(records)
             .map(([targetId, record]) => ({ targetId, record }))
-            .sort((a, b) => b.record.timestamp - a.record.timestamp);
+            .sort((a, b) => b.record.timestamp - a.record.timestamp), activeTargetId);
 
         if (entries.length === 0) {
             return [new HdlInfoItem('No recent runs', 'Run simulation to populate target records', 'info')];
         }
 
-        return entries.map(entry => new RunRecordItem(entry.targetId, entry.record));
+        return entries.map(entry => new RunRecordItem(entry.targetId, entry.record, entry.targetId === activeTargetId));
     }
 
     private async getLastWaveformChildren(): Promise<HdlTreeItem[]> {
-        const entries = getLatestWaveformEntries(this.getRunRecords());
+        const activeTargetId = await this.getActiveTargetId();
+        const entries = prioritizeTargetEntries(getLatestWaveformEntries(this.getRunRecords()), activeTargetId);
         if (entries.length === 0) {
             return [new HdlInfoItem('No waveform artifacts', 'Run simulation with waveform enabled', 'info')];
         }
 
-        return entries.map(entry => new LastWaveformItem(entry));
+        return entries.map(entry => new LastWaveformItem(entry, entry.targetId === activeTargetId));
     }
 
     private async getLastLogChildren(): Promise<HdlTreeItem[]> {
-        const entries = getLatestLogEntries(this.getRunRecords());
+        const activeTargetId = await this.getActiveTargetId();
+        const entries = prioritizeTargetEntries(getLatestLogEntries(this.getRunRecords()), activeTargetId);
         if (entries.length === 0) {
             return [new HdlInfoItem('No log artifacts', 'Run simulation to generate run logs', 'info')];
         }
 
-        return entries.map(entry => new LastLogItem(entry));
+        return entries.map(entry => new LastLogItem(entry, entry.targetId === activeTargetId));
     }
 
     private async getDiagnosticsChildren(): Promise<HdlTreeItem[]> {

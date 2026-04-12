@@ -43,7 +43,7 @@ export function getRecentRunActions(record: RunRecord): string[] {
 export async function openRecentRuns(stateService: StateService): Promise<void> {
     const records = stateService.getAllRunRecords();
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    const activeTargetId = await resolveActiveTargetId(stateService, records, workspaceFolder);
+    const activeTargetId = await resolveActiveTargetIdForRuns(stateService, records, workspaceFolder);
     const entries = prioritizeActiveTarget(getRecentRunEntries(records), activeTargetId);
     if (entries.length === 0) {
         vscode.window.showWarningMessage('No recent run records found for current workspace.');
@@ -102,7 +102,7 @@ export async function openRecentRuns(stateService: StateService): Promise<void> 
     }
 }
 
-async function resolveActiveTargetId(
+export async function resolveActiveTargetIdForRuns(
     stateService: StateService,
     records: Record<string, RunRecord>,
     workspaceFolder: vscode.WorkspaceFolder | undefined
