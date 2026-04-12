@@ -267,7 +267,9 @@ This guide lists workbench-related settings that can be configured directly in V
 - Run `npm run check:fixture-matrix` to validate required fixture directories, per-fixture README checklist coverage, baseline fixture artifacts, and the heuristic-only fixture no-project-config contract under `resources/regression/fixtures`.
 - Run `npm run check:fixture-sanity` to execute first-pass sanity across all required fixtures and generate `resources/regression/FIXTURE_SANITY_REPORT_2026-04-12.md`.
 - Run `npm run check:debug-commands-sanity` to validate debug command contribution/registration/test-evidence coverage and generate `resources/regression/DEBUG_COMMANDS_SANITY_REPORT_2026-04-12.md`.
-- Run `npm run ci:gate` for local pre-push quality gate (`compile + lint + project-config-integrity + fixture-matrix + debug-commands-sanity`).
+- Run `npm run check:fixture-validation` to validate fixture checklist dimensions (`sources grouping / hierarchy roots / target context / run resolution / diagnostics behavior`) and generate `resources/regression/FIXTURE_VALIDATION_REPORT_2026-04-12.md`.
+- Run `npm run check:semantic-workbench-signoff` to aggregate release evidence checks and generate `resources/regression/SEMANTIC_WORKBENCH_SIGNOFF_2026-04-12.md`.
+- Run `npm run ci:gate` for local pre-push quality gate (`compile + lint + project-config-integrity + fixture-matrix + debug-commands-sanity + fixture-validation`).
 - GitHub Actions workflow `.github/workflows/ci.yml` runs compile/lint/test plus project-config integrity, fixture-matrix, and debug-commands-sanity checks on `main` push and PR.
 - Use `HDL: Open Semantic Workbench Release Checklist` to open `resources/regression/SEMANTIC_WORKBENCH_RELEASE_CHECKLIST.md` for release sign-off items.
 

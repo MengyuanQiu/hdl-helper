@@ -1712,6 +1712,100 @@ suite('Extension Test Suite', () => {
 		fs.rmSync(tempRoot, { recursive: true, force: true });
 	});
 
+	test('Fixture validation report script validates fixture checklist dimensions and writes report', () => {
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hdl-helper-fixture-validation-'));
+		const fixtureRoot = path.join(tempRoot, 'resources', 'regression', 'fixtures');
+		const scriptPath = path.resolve(__dirname, '..', '..', 'scripts', 'run-fixture-validation-report.cjs');
+
+		const fixtureNames = [
+			'pure_rtl_project',
+			'rtl_tb_sva_project',
+			'multi_top_project',
+			'heuristic_only_project',
+			'shared_file_project',
+			'filelist_narrow_project'
+		];
+
+		const createFile = (fixtureName: string, relativePath: string, content: string) => {
+			const filePath = path.join(fixtureRoot, fixtureName, relativePath);
+			fs.mkdirSync(path.dirname(filePath), { recursive: true });
+			fs.writeFileSync(filePath, content, 'utf8');
+		};
+
+		for (const fixtureName of fixtureNames) {
+			if (fixtureName === 'heuristic_only_project') {
+				createFile(fixtureName, 'rtl/dut.sv', 'module dut; endmodule\n');
+				createFile(fixtureName, 'tb/tb_top.sv', 'module tb_top; endmodule\n');
+				continue;
+			}
+
+			createFile(fixtureName, 'rtl/dut.sv', 'module dut; endmodule\n');
+			createFile(fixtureName, '.hdl-helper/project.json', JSON.stringify({
+				version: '1.0',
+				name: fixtureName,
+				tops: {
+					design: 'dut',
+					simulation: 'tb_top'
+				},
+				sourceSets: {
+					design: {
+						role: 'design',
+						includes: ['rtl/**/*.sv']
+					}
+				},
+				targets: {
+					sim_default: {
+						kind: 'simulation',
+						sourceSets: ['design']
+					}
+				}
+			}, null, 2));
+		}
+
+		createFile('rtl_tb_sva_project', 'tb/tb_top.sv', 'module tb_top; endmodule\n');
+		createFile('multi_top_project', 'tb/tb_top.sv', 'module tb_top; endmodule\n');
+		createFile('shared_file_project', 'tb/tb_top.sv', 'module tb_top; endmodule\n');
+		createFile('filelist_narrow_project', 'tb/tb_top.sv', 'module tb_top; endmodule\n');
+
+		const output = cp.execFileSync(process.execPath, [scriptPath], {
+			cwd: tempRoot,
+			encoding: 'utf8'
+		});
+
+		const reportPath = path.join(tempRoot, 'resources', 'regression', 'FIXTURE_VALIDATION_REPORT_2026-04-12.md');
+		assert.ok(output.includes('Fixture validation passed.'));
+		assert.ok(fs.existsSync(reportPath));
+
+		const reportContent = fs.readFileSync(reportPath, 'utf8');
+		assert.ok(reportContent.includes('Overall: passed'));
+		fs.rmSync(tempRoot, { recursive: true, force: true });
+	});
+
+	test('Semantic workbench signoff script validates evidence reports and writes ready status', () => {
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hdl-helper-signoff-'));
+		const regressionRoot = path.join(tempRoot, 'resources', 'regression');
+		const scriptPath = path.resolve(__dirname, '..', '..', 'scripts', 'run-semantic-workbench-signoff-report.cjs');
+
+		fs.mkdirSync(regressionRoot, { recursive: true });
+		fs.writeFileSync(path.join(regressionRoot, 'FIXTURE_SANITY_REPORT_2026-04-12.md'), 'Overall: passed\n', 'utf8');
+		fs.writeFileSync(path.join(regressionRoot, 'DEBUG_COMMANDS_SANITY_REPORT_2026-04-12.md'), 'Overall: passed\n', 'utf8');
+		fs.writeFileSync(path.join(regressionRoot, 'FIXTURE_VALIDATION_REPORT_2026-04-12.md'), 'Overall: passed\n', 'utf8');
+		fs.writeFileSync(path.join(tempRoot, 'RELEASE_NOTES_V3.2.0.md'), 'Semantic Workbench Gate Status (2026-04-12)\n', 'utf8');
+
+		const output = cp.execFileSync(process.execPath, [scriptPath], {
+			cwd: tempRoot,
+			encoding: 'utf8'
+		});
+
+		const reportPath = path.join(regressionRoot, 'SEMANTIC_WORKBENCH_SIGNOFF_2026-04-12.md');
+		assert.ok(output.includes('Signoff checks passed.'));
+		assert.ok(fs.existsSync(reportPath));
+
+		const reportContent = fs.readFileSync(reportPath, 'utf8');
+		assert.ok(reportContent.includes('Final status: ready'));
+		fs.rmSync(tempRoot, { recursive: true, force: true });
+	});
+
 	test('Toolchain profile collector returns sorted deduplicated profile list', () => {
 		const profiles = collectToolchainProfileNames({
 			version: '1.0',

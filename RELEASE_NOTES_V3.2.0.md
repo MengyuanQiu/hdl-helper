@@ -58,6 +58,22 @@ V3.2.0 是 HDL Helper 的**稳定性与工程化收口版本**，完成了仿真
 ✅ Snippets 前缀: 0 重复
 ```
 
+### Semantic Workbench Gate Status (2026-04-12)
+
+```
+✅ compile/lint/test: 通过
+✅ project-config-integrity: 通过
+✅ fixture-matrix: 通过
+✅ fixture-sanity: 通过
+✅ debug-commands-sanity: 通过
+✅ fixture-validation: 通过
+```
+
+Evidence Reports:
+- `resources/regression/FIXTURE_SANITY_REPORT_2026-04-12.md`
+- `resources/regression/DEBUG_COMMANDS_SANITY_REPORT_2026-04-12.md`
+- `resources/regression/FIXTURE_VALIDATION_REPORT_2026-04-12.md`
+
 ### 兼容性
 
 - **向后兼容**：所有现有命令与配置保持兼容。
@@ -126,6 +142,22 @@ V3.2.0 is a **stability and engineering consolidation release** for HDL Helper, 
 ✅ Regression Samples: Covers A1/A2/B1/B3 scenarios
 ✅ Snippets Prefixes: 0 duplicates
 ```
+
+### Semantic Workbench Gate Status (2026-04-12)
+
+```
+✅ compile/lint/test: passed
+✅ project-config-integrity: passed
+✅ fixture-matrix: passed
+✅ fixture-sanity: passed
+✅ debug-commands-sanity: passed
+✅ fixture-validation: passed
+```
+
+Evidence Reports:
+- `resources/regression/FIXTURE_SANITY_REPORT_2026-04-12.md`
+- `resources/regression/DEBUG_COMMANDS_SANITY_REPORT_2026-04-12.md`
+- `resources/regression/FIXTURE_VALIDATION_REPORT_2026-04-12.md`
 
 ### Compatibility
 

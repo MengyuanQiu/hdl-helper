@@ -41,3 +41,6 @@ jobs:
 
       - name: Debug Commands Sanity
         run: npm run check:debug-commands-sanity
+
+      - name: Fixture Validation
+        run: npm run check:fixture-validation

@@ -1848,3 +1848,47 @@
   - npm run -s check:debug-commands-sanity: 通过。
   - npm run -s check:fixture-sanity: 通过。
   - npm run -s check:fixture-matrix: 通过。
+
+## 2026-04-12 - Iteration 6 Day 54: Final Release Closure
+
+- 目标: 完成 Iteration 6 最终收口，闭合 fixture 五项验证与 release decision，并生成最终 signoff 证据。
+- 变更文件:
+  - scripts/run-fixture-validation-report.cjs
+  - scripts/run-semantic-workbench-signoff-report.cjs
+  - src/test/extension.test.ts
+  - package.json
+  - .github/workflows/ci.yml
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - resources/regression/README.md
+  - resources/regression/FIXTURE_VALIDATION_REPORT_2026-04-12.md
+  - resources/regression/SEMANTIC_WORKBENCH_SIGNOFF_2026-04-12.md
+  - resources/regression/SEMANTIC_WORKBENCH_RELEASE_CHECKLIST.md
+  - RELEASE_NOTES_V3.2.0.md
+  - log1.md
+- 关键变更:
+  - 新增 `check:fixture-validation`：
+    - 按 fixture 维度生成 5 项验证报告（sources grouping / hierarchy roots / target context / run resolution / diagnostics behavior）。
+  - 新增 `check:semantic-workbench-signoff`：
+    - 聚合 fixture/debug/validation 报告结果
+    - 校验 release notes gate-status section 存在
+    - 输出最终 signoff 报告
+  - 新增脚本级测试：
+    - fixture validation report 脚本通过路径
+    - semantic signoff 脚本通过路径
+  - `ci:gate` 扩展为：
+    - `compile + lint + project-config-integrity + fixture-matrix + debug-commands-sanity + fixture-validation`
+  - checklist 最终收口：
+    - fixture 五项验证全部勾选完成并附 `FIXTURE_VALIDATION_REPORT_2026-04-12.md` 证据
+    - release decision 三项全部勾选完成并附 `SEMANTIC_WORKBENCH_SIGNOFF_2026-04-12.md` 证据
+  - release notes 新增 section：
+    - `Semantic Workbench Gate Status (2026-04-12)`
+- 验证:
+  - npm run -s compile: 通过。
+  - npm run -s lint: 通过。
+  - npm test -s: 通过（102 passing）。
+  - npm run -s check:project-config-integrity: 通过（当前根工作区无 `.hdl-helper/project.json`，按设计跳过）。
+  - npm run -s check:fixture-matrix: 通过。
+  - npm run -s check:fixture-sanity: 通过。
+  - npm run -s check:debug-commands-sanity: 通过。
+  - npm run -s check:fixture-validation: 通过。
+  - npm run -s check:semantic-workbench-signoff: 通过。
