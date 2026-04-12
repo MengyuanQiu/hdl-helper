@@ -10,7 +10,7 @@ import * as vscode from 'vscode';
 import { FilelistParser } from '../project/filelistParser';
 import { ClassificationService } from '../project/classificationService';
 import { NormalizedProjectConfig, PhysicalFileType, ProjectConfigStatus, Role, SourceOfTruth, TargetKind } from '../project/types';
-import { buildSourceGroupDescription, getLatestLogEntries, getLatestWaveformEntries, HdlTreeProvider, prioritizeTargetEntries } from '../project/hdlTreeProvider';
+import { buildSourceGroupDescription, buildToolchainStatusDiagnosticsEntries, getLatestLogEntries, getLatestWaveformEntries, HdlTreeProvider, prioritizeTargetEntries } from '../project/hdlTreeProvider';
 import { HdlInstance, HdlModule, HdlPort } from '../project/hdlSymbol';
 import { mapLegacyTopSelection } from '../project/topSelectionPolicy';
 import { SourceSetService } from '../project/sourceSetService';
@@ -1544,6 +1544,38 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(status.available, false);
 		assert.deepStrictEqual(status.missingTools, ['verible-verilog-lint', 'vvp']);
 		assert.strictEqual(status.lastChecked, 1234);
+	});
+
+	test('Toolchain diagnostics builder returns info entry when no snapshot exists', () => {
+		const entries = buildToolchainStatusDiagnosticsEntries({});
+
+		assert.strictEqual(entries.length, 1);
+		assert.strictEqual(entries[0].severity, 'info');
+		assert.ok(entries[0].message.includes('not collected yet'));
+	});
+
+	test('Toolchain diagnostics builder renders sorted warning/pass entries', () => {
+		const entries = buildToolchainStatusDiagnosticsEntries({
+			xsim: {
+				profile: 'xsim',
+				available: false,
+				missingTools: ['vvp'],
+				lastChecked: 1000
+			},
+			iverilog: {
+				profile: 'iverilog',
+				available: true,
+				missingTools: [],
+				lastChecked: 2000
+			}
+		});
+
+		assert.strictEqual(entries.length, 2);
+		assert.ok(entries[0].message.includes("'iverilog'"));
+		assert.strictEqual(entries[0].severity, 'pass');
+		assert.ok(entries[1].message.includes("'xsim'"));
+		assert.strictEqual(entries[1].severity, 'warning');
+		assert.ok(entries[1].message.includes('vvp'));
 	});
 
 	test('Open project config helper opens existing config file', async () => {

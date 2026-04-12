@@ -227,7 +227,8 @@ export function activate(context: vscode.ExtensionContext) {
                 stateService.getAllRunRecords(),
                 workspaceFolder
             );
-        }
+        },
+        () => stateService.getAllToolchainStatus()
     );
     const ipCatalogProvider = new IpCatalogProvider();
     context.subscriptions.push(stateService);
@@ -265,7 +266,10 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
     context.subscriptions.push(stateService.onStateChange(event => {
-        if (event === StateChangeEvent.RunRecorded) {
+        if (
+            event === StateChangeEvent.RunRecorded ||
+            event === StateChangeEvent.ToolchainStatusChanged
+        ) {
             treeProvider.refresh();
         }
     }));

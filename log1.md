@@ -1601,3 +1601,29 @@
   - npm run lint: 通过。
   - npm test: 通过（89 passing）。
   - npm run check:project-config-integrity: 通过（当前工作区无 `.hdl-helper/project.json`，按设计跳过）。
+
+## 2026-04-12 - Iteration 6 Day 47: Toolchain Health Diagnostics Visibility
+
+- 目标: 继续推进 Iteration 6 可观测性闭环，把 toolchain health 快照接入 Explorer `Diagnostics`，减少状态分散在输出面板的可见性损耗。
+- 变更文件:
+  - src/project/hdlTreeProvider.ts
+  - src/extension.ts
+  - src/test/extension.test.ts
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - `hdlTreeProvider` 新增 helper：
+    - `buildToolchainStatusDiagnosticsEntries`
+  - Diagnostics 新增 toolchain health 条目渲染：
+    - 无快照时显示 info 提示并引导运行 `HDL: Debug Toolchain Health By Profile`
+    - 有快照时按 profile 名排序输出 `pass` / `warning`
+    - warning 条目展示缺失工具列表与 lastChecked 信息
+  - extension 初始化 `HdlTreeProvider` 时注入 `stateService.getAllToolchainStatus()` 回调。
+  - explorer 刷新事件增强：`ToolchainStatusChanged` 与 `RunRecorded` 一样触发 `treeProvider.refresh()`。
+  - 回归补充：
+    - 无快照 info 条目测试
+    - 有快照 warning/pass 条目排序与内容测试
+- 验证:
+  - npm run -s compile: 通过。
+  - npm run -s lint: 通过。
+  - npm test -s: 通过（91 passing）。

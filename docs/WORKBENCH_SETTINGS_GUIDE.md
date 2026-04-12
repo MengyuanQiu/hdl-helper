@@ -139,6 +139,7 @@ This guide lists workbench-related settings that can be configured directly in V
 - `hdl-helper.projectConfig.enabled`
   - Enable project.json-driven classification and context.
   - When enabled, explorer shows `Diagnostics` section with project config issues (missing/invalid config, unresolved target tops, validation warnings, and active-target fallback issues).
+  - Diagnostics now also renders toolchain health snapshot entries by profile (`pass` / `warning`), with direct action to rerun `HDL: Debug Toolchain Health By Profile`.
   - Diagnostics now also checks per-target issues:
     - empty resolved files
     - missing resolved files

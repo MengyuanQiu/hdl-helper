@@ -15,7 +15,8 @@ import {
     RunRecord,
     SourceOfTruth,
     ProjectConfigStatus,
-    SourcesSection
+    SourcesSection,
+    ToolchainStatus
 } from './types';
 
 /**
@@ -77,6 +78,45 @@ export function prioritizeTargetEntries<T extends { targetId: string }>(
     }
 
     return [active, ...entries.filter(entry => entry.targetId !== activeTargetId)];
+}
+
+export interface ToolchainStatusDiagnosticsEntry {
+    severity: 'warning' | 'pass' | 'info';
+    message: string;
+    description: string;
+}
+
+export function buildToolchainStatusDiagnosticsEntries(
+    statusByProfile: Record<string, ToolchainStatus>
+): ToolchainStatusDiagnosticsEntry[] {
+    const profileNames = Object.keys(statusByProfile).sort((a, b) => a.localeCompare(b));
+    if (profileNames.length === 0) {
+        return [
+            {
+                severity: 'info',
+                message: 'Toolchain health snapshots are not collected yet.',
+                description: 'Run HDL: Debug Toolchain Health By Profile'
+            }
+        ];
+    }
+
+    return profileNames.map(profile => {
+        const status = statusByProfile[profile];
+        const checkedTime = new Date(status.lastChecked).toISOString();
+        if (!status.available) {
+            return {
+                severity: 'warning' as const,
+                message: `Toolchain profile '${profile}' missing tools: ${status.missingTools.join(', ') || '(none)'}`,
+                description: `lastChecked=${checkedTime}`
+            };
+        }
+
+        return {
+            severity: 'pass' as const,
+            message: `Toolchain profile '${profile}' is healthy.`,
+            description: `lastChecked=${checkedTime}`
+        };
+    });
 }
 
 class HdlInfoItem extends vscode.TreeItem {
@@ -408,16 +448,19 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
     private readonly getRunRecords: () => Record<string, RunRecord>;
     private readonly getSimulationTasks: () => Promise<SimulationTaskEntry[]>;
     private readonly getActiveTargetId: () => Promise<string | undefined>;
+    private readonly getToolchainStatusByProfile: () => Record<string, ToolchainStatus>;
 
     constructor(
         private projectManager: ProjectManager,
         getRunRecords?: () => Record<string, RunRecord>,
         getSimulationTasks?: () => Promise<SimulationTaskEntry[]>,
-        getActiveTargetId?: () => Promise<string | undefined>
+        getActiveTargetId?: () => Promise<string | undefined>,
+        getToolchainStatusByProfile?: () => Record<string, ToolchainStatus>
     ) {
         this.getRunRecords = getRunRecords || (() => ({}));
         this.getSimulationTasks = getSimulationTasks || (async () => []);
         this.getActiveTargetId = getActiveTargetId || (async () => undefined);
+        this.getToolchainStatusByProfile = getToolchainStatusByProfile || (() => ({}));
     }
 
     /**
@@ -888,6 +931,19 @@ export class HdlTreeProvider implements vscode.TreeDataProvider<HdlTreeItem> {
             }
 
             configService.dispose();
+        }
+
+        const toolchainEntries = buildToolchainStatusDiagnosticsEntries(this.getToolchainStatusByProfile());
+        for (const entry of toolchainEntries) {
+            items.push(new HdlInfoItem(
+                entry.message,
+                entry.description,
+                entry.severity,
+                {
+                    command: 'hdl-helper.debugToolchainHealthByProfile',
+                    title: 'Debug Toolchain Health By Profile'
+                }
+            ));
         }
 
         if (items.length > 0) {
