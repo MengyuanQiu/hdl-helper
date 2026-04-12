@@ -74,6 +74,8 @@ This guide lists workbench-related settings that can be configured directly in V
 - Quick Actions: `HDL: Quick Actions` -> `Configure Classification Inspector Top-File Limit`
 - Command Palette: `HDL: Open Dual Hierarchy Regression Checklist`
 - Quick Actions: `HDL: Quick Actions` -> `Open Dual Hierarchy Regression Checklist`
+- Command Palette: `HDL: Open Semantic Workbench Release Checklist`
+- Quick Actions: `HDL: Quick Actions` -> `Open Semantic Workbench Release Checklist`
 
 ## Toolbar Optimization
 
@@ -85,6 +87,7 @@ This guide lists workbench-related settings that can be configured directly in V
   - Configure Classification Inspector Top-File Limit
   - Workbench Settings Guide
   - Dual Hierarchy Regression Checklist
+  - Semantic Workbench Release Checklist
   - Debug Dual Hierarchy State
   - Debug Active Target Context
   - Debug Recent Runs By Target
@@ -228,6 +231,7 @@ This guide lists workbench-related settings that can be configured directly in V
   - missing filelist and explicit include path detection
 - Run `npm run ci:gate` for local pre-push quality gate (`compile + lint + project-config-integrity`).
 - GitHub Actions workflow `.github/workflows/ci.yml` runs compile/lint/test plus project-config integrity checks on `main` push and PR.
+- Use `HDL: Open Semantic Workbench Release Checklist` to open `resources/regression/SEMANTIC_WORKBENCH_RELEASE_CHECKLIST.md` for release sign-off items.
 
 ## Sources View UI Behavior Settings
 

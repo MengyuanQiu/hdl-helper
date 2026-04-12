@@ -19,6 +19,10 @@ import {
 	openDualHierarchyRegressionChecklist
 } from '../commands/openDualHierarchyRegressionChecklist';
 import {
+	getSemanticWorkbenchChecklistPath,
+	openSemanticWorkbenchReleaseChecklist
+} from '../commands/openSemanticWorkbenchReleaseChecklist';
+import {
 	buildProjectConfigTemplate,
 	inferDefaultTops
 } from '../commands/createProjectConfig';
@@ -965,6 +969,62 @@ suite('Extension Test Suite', () => {
 	test('Dual hierarchy checklist path helper returns undefined without workspace root', () => {
 		assert.strictEqual(getDualHierarchyChecklistPath(undefined), undefined);
 		assert.ok((getDualHierarchyChecklistPath('C:/repo') || '').endsWith('DUAL_HIERARCHY_MANUAL_REGRESSION.md'));
+	});
+
+	test('Semantic workbench checklist helper opens checklist when file exists', async () => {
+		const opened: string[] = [];
+		let fallbackCalls = 0;
+		let warningCalls = 0;
+
+		const result = await openSemanticWorkbenchReleaseChecklist({
+			workspaceRoot: 'C:/repo',
+			existsSync: () => true,
+			openChecklist: async (filePath: string) => {
+				opened.push(filePath);
+			},
+			runFallbackGuide: async () => {
+				fallbackCalls += 1;
+			},
+			showWarning: () => {
+				warningCalls += 1;
+			}
+		});
+
+		assert.strictEqual(result, 'opened');
+		assert.strictEqual(opened.length, 1);
+		assert.strictEqual(fallbackCalls, 0);
+		assert.strictEqual(warningCalls, 0);
+		assert.ok(opened[0].includes('SEMANTIC_WORKBENCH_RELEASE_CHECKLIST.md'));
+	});
+
+	test('Semantic workbench checklist helper falls back to guide when file missing', async () => {
+		let openedCalls = 0;
+		let fallbackCalls = 0;
+		let warningCalls = 0;
+
+		const result = await openSemanticWorkbenchReleaseChecklist({
+			workspaceRoot: 'C:/repo',
+			existsSync: () => false,
+			openChecklist: async () => {
+				openedCalls += 1;
+			},
+			runFallbackGuide: async () => {
+				fallbackCalls += 1;
+			},
+			showWarning: () => {
+				warningCalls += 1;
+			}
+		});
+
+		assert.strictEqual(result, 'fallback');
+		assert.strictEqual(openedCalls, 0);
+		assert.strictEqual(fallbackCalls, 1);
+		assert.strictEqual(warningCalls, 1);
+	});
+
+	test('Semantic workbench checklist path helper returns undefined without workspace root', () => {
+		assert.strictEqual(getSemanticWorkbenchChecklistPath(undefined), undefined);
+		assert.ok((getSemanticWorkbenchChecklistPath('C:/repo') || '').endsWith('SEMANTIC_WORKBENCH_RELEASE_CHECKLIST.md'));
 	});
 
 	test('Project config template builder creates required minimal schema fields', () => {

@@ -35,6 +35,7 @@ import { openSimulationTasksFile } from './commands/openSimulationTasksFile';
 import { runActiveTargetSimulation } from './commands/runActiveTargetSimulation';
 import { debugDualHierarchyState } from './commands/debugDualHierarchyState';
 import { openDualHierarchyRegressionChecklist } from './commands/openDualHierarchyRegressionChecklist';
+import { openSemanticWorkbenchReleaseChecklist } from './commands/openSemanticWorkbenchReleaseChecklist';
 import { openProjectConfigFromWorkspace } from './commands/openProjectConfig';
 import { createProjectConfig } from './commands/createProjectConfig';
 import { activateLanguageServer, deactivateLanguageServer } from './languageClient';
@@ -421,6 +422,11 @@ export function activate(context: vscode.ExtensionContext) {
                 detail: 'Diagnostics'
             },
             {
+                label: 'Open Semantic Workbench Release Checklist',
+                description: 'Open resources/regression/SEMANTIC_WORKBENCH_RELEASE_CHECKLIST.md',
+                detail: 'Diagnostics'
+            },
+            {
                 label: 'Create Project Config',
                 description: 'Generate .hdl-helper/project.json template from workspace',
                 detail: 'Configuration'
@@ -589,6 +595,10 @@ export function activate(context: vscode.ExtensionContext) {
             await vscode.commands.executeCommand('hdl-helper.openDualHierarchyRegressionChecklist');
             return;
         }
+        if (action.label === 'Open Semantic Workbench Release Checklist') {
+            await vscode.commands.executeCommand('hdl-helper.openSemanticWorkbenchReleaseChecklist');
+            return;
+        }
         if (action.label === 'Create Project Config') {
             await vscode.commands.executeCommand('hdl-helper.createProjectConfig');
             return;
@@ -749,6 +759,11 @@ export function activate(context: vscode.ExtensionContext) {
                 label: '[Diagnostics] Dual Hierarchy Regression Checklist',
                 description: 'Open manual regression checklist',
                 command: 'hdl-helper.openDualHierarchyRegressionChecklist'
+            },
+            {
+                label: '[Diagnostics] Semantic Workbench Release Checklist',
+                description: 'Open release checklist for semantic workbench gates',
+                command: 'hdl-helper.openSemanticWorkbenchReleaseChecklist'
             },
             {
                 label: '[Action] Clear Top Module',
@@ -1118,6 +1133,23 @@ export function activate(context: vscode.ExtensionContext) {
             },
             runFallbackDebug: async () => {
                 await vscode.commands.executeCommand('hdl-helper.debugDualHierarchyState');
+            },
+            showWarning: (message: string) => {
+                vscode.window.showWarningMessage(message);
+            }
+        });
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.openSemanticWorkbenchReleaseChecklist', async () => {
+        const workspaceFolder = resolveWorkspaceForContext();
+        await openSemanticWorkbenchReleaseChecklist({
+            workspaceRoot: workspaceFolder?.uri.fsPath,
+            existsSync: fs.existsSync,
+            openChecklist: async (filePath: string) => {
+                await vscode.window.showTextDocument(vscode.Uri.file(filePath), { preview: false });
+            },
+            runFallbackGuide: async () => {
+                await vscode.commands.executeCommand('hdl-helper.openWorkbenchSettingsGuide');
             },
             showWarning: (message: string) => {
                 vscode.window.showWarningMessage(message);

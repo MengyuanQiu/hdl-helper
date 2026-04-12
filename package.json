@@ -284,6 +284,12 @@
         "icon": "$(checklist)"
       },
       {
+        "command": "hdl-helper.openSemanticWorkbenchReleaseChecklist",
+        "title": "HDL: Open Semantic Workbench Release Checklist",
+        "category": "HDL Helper",
+        "icon": "$(verified)"
+      },
+      {
         "command": "hdl-helper.openSourceFile",
         "title": "HDL: Open Source File",
         "category": "HDL Helper",
@@ -911,6 +917,11 @@
           "command": "hdl-helper.debugToolchainHealthByProfile",
           "when": "view == hdl-hierarchy-view && viewItem == diagnostics-root",
           "group": "inline@12"
+        },
+        {
+          "command": "hdl-helper.openSemanticWorkbenchReleaseChecklist",
+          "when": "view == hdl-hierarchy-view && viewItem == diagnostics-root",
+          "group": "inline@13"
         },
         {
           "command": "hdl-helper.copyInstantiation",

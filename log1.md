@@ -1543,3 +1543,36 @@
   - npm run lint: 通过。
   - npm test: 通过（84 passing）。
   - npm run check:project-config-integrity: 通过（当前工作区无 `.hdl-helper/project.json`，按设计跳过）。
+
+## 2026-04-12 - Iteration 6 Day 45: Semantic Workbench Release Checklist Entry
+
+- 目标: 完成 Iteration 6 任务 D，提供可执行的 release checklist 文档与一键入口，覆盖 semantic workbench 发布前检查。
+- 变更文件:
+  - src/commands/openSemanticWorkbenchReleaseChecklist.ts
+  - resources/regression/SEMANTIC_WORKBENCH_RELEASE_CHECKLIST.md
+  - src/extension.ts
+  - package.json
+  - src/test/extension.test.ts
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - 新增命令：
+    - `hdl-helper.openSemanticWorkbenchReleaseChecklist`
+  - 新增 release checklist 文档：
+    - `resources/regression/SEMANTIC_WORKBENCH_RELEASE_CHECKLIST.md`
+  - 命令行为：
+    - 文档存在时直接打开
+    - 文档缺失时回退打开 `HDL: Open Workbench Settings Guide` 并给出 warning
+  - 入口接线：
+    - Command Palette
+    - Quick Actions
+    - Hierarchy Tools
+    - Diagnostics root 右键菜单
+  - 回归补充：
+    - checklist helper 打开路径测试
+    - checklist 缺失回退行为测试
+    - checklist path helper 测试
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（87 passing）。
