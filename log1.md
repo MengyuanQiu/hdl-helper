@@ -1368,3 +1368,27 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（78 passing）。
+
+## 2026-04-12 - Iteration 5 Day 39: Top-File Limit Quick Configuration Command
+
+- 目标: 继续推进 Iteration 5.5 inspector 可操作性，提供命令级快速配置入口，避免手改 settings.json。
+- 变更文件:
+  - src/extension.ts
+  - package.json
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - 新增命令：
+    - `hdl-helper.configureClassificationInspectorTopFileLimit`
+  - 命令行为：
+    - 显示预设选项（5/8/12/20）与自定义输入
+    - 输入校验范围 `1..50`
+    - 写回 `hdl-helper.workbench.classificationInspector.topFileLimit`（workspace scope）
+  - 快速入口接线：
+    - Quick Actions
+    - Hierarchy Tools（Settings 分组）
+    - Command Palette
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（78 passing）。

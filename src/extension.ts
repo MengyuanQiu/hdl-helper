@@ -17,6 +17,7 @@ import {
     debugProjectClassification,
     inspectProjectClassification,
     inspectProjectClassificationSummary,
+    normalizeClassificationInspectorTopFileLimit,
     resolveClassificationDebugPresetArg
 } from './commands/debugProjectClassification';
 import { debugActiveTargetContext } from './commands/debugActiveTargetContext';
@@ -317,6 +318,11 @@ export function activate(context: vscode.ExtensionContext) {
                 detail: 'Documentation'
             },
             {
+                label: 'Configure Classification Inspector Top-File Limit',
+                description: 'Set max entries shown in summary top-file preview',
+                detail: 'Configuration'
+            },
+            {
                 label: 'Debug Dual Hierarchy State',
                 description: 'Print current dual-hierarchy roots/tops/flags to output channel',
                 detail: 'Diagnostics'
@@ -485,6 +491,10 @@ export function activate(context: vscode.ExtensionContext) {
             await vscode.commands.executeCommand('hdl-helper.openWorkbenchSettingsGuide');
             return;
         }
+        if (action.label === 'Configure Classification Inspector Top-File Limit') {
+            await vscode.commands.executeCommand('hdl-helper.configureClassificationInspectorTopFileLimit');
+            return;
+        }
         if (action.label === 'Debug Dual Hierarchy State') {
             await vscode.commands.executeCommand('hdl-helper.debugDualHierarchyState');
             return;
@@ -607,6 +617,11 @@ export function activate(context: vscode.ExtensionContext) {
                 label: '[Settings] Workbench Settings Guide',
                 description: 'Open docs/WORKBENCH_SETTINGS_GUIDE.md',
                 command: 'hdl-helper.openWorkbenchSettingsGuide'
+            },
+            {
+                label: '[Settings] Configure Classification Inspector Top-File Limit',
+                description: 'Set max entries shown in summary top-file preview',
+                command: 'hdl-helper.configureClassificationInspectorTopFileLimit'
             },
             {
                 label: '[Diagnostics] Debug Dual Hierarchy State',
@@ -1281,6 +1296,67 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(`工程中共有 ${modules.length} 个模块。`);
         vscode.commands.executeCommand('workbench.debug.action.toggleRepl');
         modules.forEach(m => console.log(`📦 ${m.name} (${path.basename(m.fileUri.fsPath)})`));
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.configureClassificationInspectorTopFileLimit', async () => {
+        const workspaceFolder = resolveWorkspaceForContext();
+        if (!workspaceFolder) {
+            vscode.window.showWarningMessage('No workspace folder open');
+            return;
+        }
+
+        const config = vscode.workspace.getConfiguration('hdl-helper', workspaceFolder.uri);
+        const currentLimit = normalizeClassificationInspectorTopFileLimit(
+            config.get<number>('workbench.classificationInspector.topFileLimit'),
+            8
+        );
+
+        const picked = await vscode.window.showQuickPick([
+            { label: 'Use 5 entries', value: 5 },
+            { label: 'Use 8 entries (default)', value: 8 },
+            { label: 'Use 12 entries', value: 12 },
+            { label: 'Use 20 entries', value: 20 },
+            { label: 'Custom value...', value: -1 }
+        ], {
+            placeHolder: `Current top-file preview limit: ${currentLimit}`
+        });
+
+        if (!picked) {
+            return;
+        }
+
+        let nextLimit = picked.value;
+        if (picked.value < 0) {
+            const input = await vscode.window.showInputBox({
+                prompt: 'Enter top-file preview limit (1-50)',
+                value: String(currentLimit),
+                validateInput: value => {
+                    if (!/^\d+$/.test(value.trim())) {
+                        return 'Please enter an integer between 1 and 50.';
+                    }
+                    const parsed = Number(value.trim());
+                    if (parsed < 1 || parsed > 50) {
+                        return 'Please enter an integer between 1 and 50.';
+                    }
+                    return undefined;
+                }
+            });
+
+            if (!input) {
+                return;
+            }
+
+            nextLimit = Number(input.trim());
+        }
+
+        const normalizedLimit = normalizeClassificationInspectorTopFileLimit(nextLimit, 8);
+        await config.update(
+            'workbench.classificationInspector.topFileLimit',
+            normalizedLimit,
+            vscode.ConfigurationTarget.Workspace
+        );
+
+        vscode.window.showInformationMessage(`Classification inspector top-file limit set to ${normalizedLimit}.`);
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.debugProjectClassification', async () => {

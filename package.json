@@ -248,6 +248,12 @@
         "icon": "$(book)"
       },
       {
+        "command": "hdl-helper.configureClassificationInspectorTopFileLimit",
+        "title": "HDL: Configure Classification Inspector Top-File Limit",
+        "category": "HDL Helper",
+        "icon": "$(list-ordered)"
+      },
+      {
         "command": "hdl-helper.openSimulationTasksFile",
         "title": "HDL: Open Simulation Tasks File",
         "category": "HDL Helper",

@@ -64,6 +64,8 @@ This guide lists workbench-related settings that can be configured directly in V
 - Quick Actions: `HDL: Quick Actions` -> `Run Active Target Simulation`
 - Command Palette: `HDL: Open Simulation Tasks File`
 - Quick Actions: `HDL: Quick Actions` -> `Open Simulation Tasks File`
+- Command Palette: `HDL: Configure Classification Inspector Top-File Limit`
+- Quick Actions: `HDL: Quick Actions` -> `Configure Classification Inspector Top-File Limit`
 - Command Palette: `HDL: Open Dual Hierarchy Regression Checklist`
 - Quick Actions: `HDL: Quick Actions` -> `Open Dual Hierarchy Regression Checklist`
 
@@ -74,6 +76,7 @@ This guide lists workbench-related settings that can be configured directly in V
   - Workbench Settings
   - Simulation Settings
   - Simulation Tasks File
+  - Configure Classification Inspector Top-File Limit
   - Workbench Settings Guide
   - Dual Hierarchy Regression Checklist
   - Debug Dual Hierarchy State
@@ -119,6 +122,7 @@ This guide lists workbench-related settings that can be configured directly in V
   - Controls the max number of entries in `Top Files Preview` for classification summary.
   - Default: `8`
   - Range: `1` to `50`
+  - You can configure it quickly using `HDL: Configure Classification Inspector Top-File Limit`.
 
 - `hdl-helper.projectConfig.enabled`
   - Enable project.json-driven classification and context.
