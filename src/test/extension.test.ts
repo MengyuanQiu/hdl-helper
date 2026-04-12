@@ -349,12 +349,20 @@ suite('Extension Test Suite', () => {
 			sections.map(section => section.title),
 			['', '', '', 'Classification Summary:', 'SourceSet Coverage:', 'Detailed Classification Results:']
 		);
+		assert.deepStrictEqual(
+			sections.map(section => section.id),
+			['workspace', 'config', 'discovery', 'summary', 'source-set-coverage', 'details']
+		);
+		assert.deepStrictEqual(
+			sections.map(section => section.type),
+			['workspace', 'config', 'discovery', 'summary', 'source-set-coverage', 'details']
+		);
 	});
 
 	test('Classification debug section renderer emits headers and trailing separator', () => {
 		const rendered = renderClassificationDebugSections([
-			{ title: 'Section A', lines: ['  line-a'] },
-			{ title: '', lines: ['  line-b'] }
+			{ id: 'a', type: 'summary', title: 'Section A', lines: ['  line-a'] },
+			{ id: 'b', type: 'details', title: '', lines: ['  line-b'] }
 		]);
 
 		assert.ok(rendered.includes('Section A'));

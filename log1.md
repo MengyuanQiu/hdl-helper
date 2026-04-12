@@ -978,3 +978,25 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（65 passing）。
+
+## 2026-04-12 - Iteration 5 Day 24: Stable Section Metadata
+
+- 目标: 继续推进 Iteration 5，在 classification section model 中加入稳定标识，提升 Inspector 对结构化区块的消费能力。
+- 变更文件:
+  - src/project/types.ts
+  - src/commands/debugProjectClassification.ts
+  - src/test/extension.test.ts
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - `ClassificationDebugSection` 增加稳定元数据：
+    - `id`
+    - `type`（workspace/config/discovery/summary/source-set-coverage/details）
+  - `buildClassificationDebugSections(...)` 为每个 section 产出固定 id/type。
+  - 测试增强：
+    - 断言 builder 返回 section id/type 序列稳定
+    - renderer fixture 补齐 id/type 字段
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（65 passing）。

@@ -98,12 +98,17 @@ export function buildClassificationDebugSections(
     }
 
     return [
-        { title: '', lines: workspaceLines },
-        { title: '', lines: configLines },
-        { title: '', lines: discoveryLines },
-        { title: 'Classification Summary:', lines: summaryLines },
-        { title: 'SourceSet Coverage:', lines: sourceSetCoverageLines },
-        { title: 'Detailed Classification Results:', lines: detailLines }
+        { id: 'workspace', type: 'workspace', title: '', lines: workspaceLines },
+        { id: 'config', type: 'config', title: '', lines: configLines },
+        { id: 'discovery', type: 'discovery', title: '', lines: discoveryLines },
+        { id: 'summary', type: 'summary', title: 'Classification Summary:', lines: summaryLines },
+        {
+            id: 'source-set-coverage',
+            type: 'source-set-coverage',
+            title: 'SourceSet Coverage:',
+            lines: sourceSetCoverageLines
+        },
+        { id: 'details', type: 'details', title: 'Detailed Classification Results:', lines: detailLines }
     ];
 }
 

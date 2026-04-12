@@ -95,6 +95,7 @@ This guide lists workbench-related settings that can be configured directly in V
   - Classification debug output now uses a reusable report formatter template (`formatClassificationDebugReport`), so the same output model can be reused by future inspector/detail views.
   - The formatter input/observability structures are now defined in shared project types (`ClassificationDebugReportInput`, `ClassificationObservabilityStats`) to avoid command-local type drift.
   - Classification debug generation now follows `section model -> text renderer` (`buildClassificationDebugSections` + `renderClassificationDebugSections`), allowing future inspector views to consume structured sections directly.
+  - Classification sections now carry stable metadata (`id`, `type`) so downstream inspector/detail views can map, filter, and render sections deterministically without parsing titles.
 
 - `hdl-helper.targetDrivenRuns.enabled`
   - Enable target-oriented run management.

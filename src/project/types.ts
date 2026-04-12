@@ -186,10 +186,20 @@ export interface ClassificationDebugReportInput {
     results: FileClassificationResult[];
 }
 
+export type ClassificationDebugSectionType =
+    | 'workspace'
+    | 'config'
+    | 'discovery'
+    | 'summary'
+    | 'source-set-coverage'
+    | 'details';
+
 /**
  * Structured section model for classification debug rendering.
  */
 export interface ClassificationDebugSection {
+    id: string;
+    type: ClassificationDebugSectionType;
     title: string;
     lines: string[];
 }
