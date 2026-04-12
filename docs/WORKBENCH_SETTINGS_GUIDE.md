@@ -30,6 +30,8 @@ This guide lists workbench-related settings that can be configured directly in V
 - Quick Actions: `HDL: Quick Actions` -> `Debug Project Classification (View...)`
 - Command Palette: `HDL: Inspect Project Classification (Pick File)`
 - Quick Actions: `HDL: Quick Actions` -> `Inspect Project Classification (Pick File)`
+- Command Palette: `HDL: Inspect Project Classification Summary`
+- Quick Actions: `HDL: Quick Actions` -> `Inspect Project Classification Summary`
 - Quick Actions: `HDL: Quick Actions` -> `Inspect Project Classification (Active Files)`
 - Quick Actions: `HDL: Quick Actions` -> `Inspect Project Classification (Shared Files)`
 - Command Palette: `HDL: Debug Project Classification (All)`
@@ -77,6 +79,7 @@ This guide lists workbench-related settings that can be configured directly in V
   - Rerun Active Target
   - Run Active Target Simulation
   - Inspect Project Classification (Pick File)
+  - Inspect Project Classification Summary
   - Inspect Project Classification (Active Files)
   - Inspect Project Classification (Shared Files)
   - Clear Top Module
@@ -117,6 +120,7 @@ This guide lists workbench-related settings that can be configured directly in V
     - `Overview`
     - `Details Only`
   - Use `HDL: Inspect Project Classification (Pick File)` to select scope preset and classified file interactively, then inspect full metadata in the classification output channel.
+  - Use `HDL: Inspect Project Classification Summary` to inspect aggregated counters (sourceOfTruth/role/source-set coverage) under the selected scope preset.
   - Scope presets include:
     - `all`
     - `active`

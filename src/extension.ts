@@ -16,6 +16,7 @@ import {
     buildClassificationRenderOptionsByPreset,
     debugProjectClassification,
     inspectProjectClassification,
+    inspectProjectClassificationSummary,
     resolveClassificationDebugPresetArg
 } from './commands/debugProjectClassification';
 import { debugActiveTargetContext } from './commands/debugActiveTargetContext';
@@ -341,6 +342,11 @@ export function activate(context: vscode.ExtensionContext) {
                 detail: 'Diagnostics'
             },
             {
+                label: 'Inspect Project Classification Summary',
+                description: 'Inspect aggregated classification counters by scope',
+                detail: 'Diagnostics'
+            },
+            {
                 label: 'Inspect Project Classification (Active Files)',
                 description: 'Inspect files scoped to active target context',
                 detail: 'Diagnostics'
@@ -479,6 +485,10 @@ export function activate(context: vscode.ExtensionContext) {
             await vscode.commands.executeCommand('hdl-helper.inspectProjectClassification');
             return;
         }
+        if (action.label === 'Inspect Project Classification Summary') {
+            await vscode.commands.executeCommand('hdl-helper.inspectProjectClassificationSummary');
+            return;
+        }
         if (action.label === 'Inspect Project Classification (Active Files)') {
             await vscode.commands.executeCommand('hdl-helper.inspectProjectClassification', 'active');
             return;
@@ -586,6 +596,11 @@ export function activate(context: vscode.ExtensionContext) {
                 label: '[Diagnostics] Inspect Project Classification (Pick File)',
                 description: 'Inspect one classified file with interactive picker',
                 command: 'hdl-helper.inspectProjectClassification'
+            },
+            {
+                label: '[Diagnostics] Inspect Project Classification Summary',
+                description: 'Inspect aggregated classification counters by scope',
+                command: 'hdl-helper.inspectProjectClassificationSummary'
             },
             {
                 label: '[Diagnostics] Inspect Project Classification (Active Files)',
@@ -1218,6 +1233,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.inspectProjectClassification', async (arg?: unknown) => {
         await inspectProjectClassification(classificationOutputChannel, arg);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.inspectProjectClassificationSummary', async (arg?: unknown) => {
+        await inspectProjectClassificationSummary(classificationOutputChannel, arg);
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.debugProjectClassificationView', async (arg?: unknown) => {

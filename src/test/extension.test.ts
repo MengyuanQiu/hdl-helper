@@ -26,6 +26,7 @@ import { buildTargetContextDebugSnapshot } from '../commands/debugActiveTargetCo
 import {
 	buildClassificationInspectorDetailLines,
 	buildClassificationInspectorQuickPickItem,
+	buildClassificationInspectorSummaryLines,
 	buildClassificationDebugSections,
 	buildClassificationObservabilityStats,
 	buildClassificationRenderOptionsByPreset,
@@ -512,6 +513,55 @@ suite('Extension Test Suite', () => {
 			filterClassificationInspectorResults(results, 'heuristic').map(item => item.uri),
 			['C:/repo/misc/tmp.sv']
 		);
+	});
+
+	test('Classification inspector summary lines include deterministic breakdowns', () => {
+		const results = [
+			{
+				uri: 'C:/repo/rtl/dut.sv',
+				physicalType: PhysicalFileType.SystemVerilog,
+				rolePrimary: Role.Design,
+				roleSecondary: [],
+				sourceOfTruth: SourceOfTruth.ProjectConfig,
+				inActiveTarget: true,
+				referencedBySourceSets: ['design']
+			},
+			{
+				uri: 'C:/repo/shared/common_pkg.sv',
+				physicalType: PhysicalFileType.SystemVerilog,
+				rolePrimary: Role.Design,
+				roleSecondary: [Role.Verification],
+				sourceOfTruth: SourceOfTruth.ProjectConfig,
+				inActiveTarget: false,
+				referencedBySourceSets: ['design', 'verification']
+			},
+			{
+				uri: 'C:/repo/misc/tmp.sv',
+				physicalType: PhysicalFileType.SystemVerilog,
+				rolePrimary: Role.Design,
+				roleSecondary: [],
+				sourceOfTruth: SourceOfTruth.Heuristic,
+				inActiveTarget: false,
+				referencedBySourceSets: []
+			}
+		];
+
+		const lines = buildClassificationInspectorSummaryLines(results, 'all', {
+			workspaceName: 'repo',
+			workspaceRoot: 'C:/repo'
+		});
+
+		assert.ok(lines.includes('HDL Helper - Classification Inspector Summary'));
+		assert.ok(lines.includes('Inspector Scope: all'));
+		assert.ok(lines.includes('Workspace: repo'));
+		assert.ok(lines.includes('Matched Files: 3'));
+		assert.ok(lines.includes('Matched Active Target Files: 1'));
+		assert.ok(lines.includes('Matched Shared Files: 1'));
+		assert.ok(lines.includes('  heuristic: 1'));
+		assert.ok(lines.includes('  project_config: 2'));
+		assert.ok(lines.includes('  design: 3'));
+		assert.ok(lines.includes('  design: 2'));
+		assert.ok(lines.includes('  verification: 1'));
 	});
 
 	test('Classification debug formatter supports overview preset output', () => {

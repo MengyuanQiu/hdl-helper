@@ -1207,3 +1207,38 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（74 passing）。
+
+## 2026-04-12 - Iteration 5 Day 33: Inspector Summary Aggregation View
+
+- 目标: 继续推进 Iteration 5.5 inspector，新增聚合摘要视图，支持按 scope 输出 sourceOfTruth/role/source-set 覆盖统计。
+- 变更文件:
+  - src/commands/debugProjectClassification.ts
+  - src/extension.ts
+  - package.json
+  - src/test/extension.test.ts
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - 新增命令：
+    - `hdl-helper.inspectProjectClassificationSummary`
+  - 新增聚合 helper：
+    - `buildClassificationInspectorSummaryLines`
+  - 新增 scope 选择复用逻辑：
+    - inspector 详情与 summary 共用 scope 解析/选择流程
+  - summary 输出信息包含：
+    - matched files / active files / shared files
+    - sourceOfTruth breakdown
+    - primary role breakdown
+    - source-set coverage（按匹配结果）
+  - 快速入口接线：
+    - Quick Actions
+    - Hierarchy Tools
+    - Command Palette
+    - HDL Explorer title bar
+    - Diagnostics root 右键菜单
+  - 回归补充：
+    - inspector summary 聚合输出测试
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（75 passing）。

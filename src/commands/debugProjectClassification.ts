@@ -29,6 +29,12 @@ export type ClassificationInspectorScopePreset =
     | 'project-config'
     | 'heuristic';
 
+interface ClassificationInspectorScopePickItem {
+    label: string;
+    description: string;
+    preset: ClassificationInspectorScopePreset;
+}
+
 const sectionPriority: Record<ClassificationDebugSectionType, number> = {
     workspace: 10,
     config: 20,
@@ -149,6 +155,78 @@ export function buildClassificationInspectorDetailLines(
         lines.push(`Referenced by Targets: ${result.referencedByTargets.join(', ')}`);
     }
 
+    return lines;
+}
+
+export function buildClassificationInspectorSummaryLines(
+    results: FileClassificationResult[],
+    scopePreset: ClassificationInspectorScopePreset = 'all',
+    options: { workspaceName?: string; workspaceRoot?: string } = {}
+): string[] {
+    const truthCounts: Record<string, number> = {};
+    const roleCounts: Record<string, number> = {};
+
+    for (const result of results) {
+        truthCounts[result.sourceOfTruth] = (truthCounts[result.sourceOfTruth] || 0) + 1;
+        roleCounts[result.rolePrimary] = (roleCounts[result.rolePrimary] || 0) + 1;
+    }
+
+    const stats = buildClassificationObservabilityStats(results);
+    const lines: string[] = [
+        '='.repeat(80),
+        'HDL Helper - Classification Inspector Summary',
+        '='.repeat(80),
+        '',
+        `Inspector Scope: ${scopePreset}`
+    ];
+
+    if (options.workspaceName) {
+        lines.push(`Workspace: ${options.workspaceName}`);
+    }
+    if (options.workspaceRoot) {
+        lines.push(`Root: ${options.workspaceRoot}`);
+    }
+
+    lines.push(`Matched Files: ${results.length}`);
+    lines.push(`Matched Active Target Files: ${stats.activeTargetFiles}`);
+    lines.push(`Matched Shared Files: ${stats.sharedFiles}`);
+    lines.push('');
+    lines.push('Source of Truth Breakdown:');
+
+    const sortedTruthKeys = Object.keys(truthCounts).sort((a, b) => a.localeCompare(b));
+    if (sortedTruthKeys.length === 0) {
+        lines.push('  (none)');
+    } else {
+        for (const truth of sortedTruthKeys) {
+            lines.push(`  ${truth}: ${truthCounts[truth]}`);
+        }
+    }
+
+    lines.push('');
+    lines.push('Primary Role Breakdown:');
+    const sortedRoleKeys = Object.keys(roleCounts).sort((a, b) => a.localeCompare(b));
+    if (sortedRoleKeys.length === 0) {
+        lines.push('  (none)');
+    } else {
+        for (const role of sortedRoleKeys) {
+            lines.push(`  ${role}: ${roleCounts[role]}`);
+        }
+    }
+
+    lines.push('');
+    lines.push('Source Set Coverage (matched):');
+    const sortedSourceSetEntries = Object.entries(stats.sourceSetCoverage)
+        .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]));
+    if (sortedSourceSetEntries.length === 0) {
+        lines.push('  (none)');
+    } else {
+        for (const [sourceSetName, fileCount] of sortedSourceSetEntries) {
+            lines.push(`  ${sourceSetName}: ${fileCount}`);
+        }
+    }
+
+    lines.push('');
+    lines.push('-'.repeat(80));
     return lines;
 }
 
@@ -369,43 +447,12 @@ export async function inspectProjectClassification(
         return;
     }
 
-    let scopePreset = resolveClassificationInspectorScopeArg(arg);
+    const scopePreset = await resolveOrPickClassificationInspectorScope(
+        arg,
+        'Select classification inspector scope preset'
+    );
     if (!scopePreset) {
-        const pickedScope = await vscode.window.showQuickPick([
-            {
-                label: 'All Classified Files',
-                description: 'No scope filter',
-                preset: 'all' as const
-            },
-            {
-                label: 'Active Target Files',
-                description: 'Only files marked in active target context',
-                preset: 'active' as const
-            },
-            {
-                label: 'Shared Files',
-                description: 'Only files with secondary roles',
-                preset: 'shared' as const
-            },
-            {
-                label: 'Project Config Driven Files',
-                description: 'Only files with sourceOfTruth = project_config',
-                preset: 'project-config' as const
-            },
-            {
-                label: 'Heuristic Fallback Files',
-                description: 'Only files with sourceOfTruth = heuristic',
-                preset: 'heuristic' as const
-            }
-        ], {
-            placeHolder: 'Select classification inspector scope preset'
-        });
-
-        if (!pickedScope) {
-            return;
-        }
-
-        scopePreset = pickedScope.preset;
+        return;
     }
 
     const filteredResults = filterClassificationInspectorResults(input.results, scopePreset);
@@ -445,6 +492,66 @@ export async function inspectProjectClassification(
     if (action === 'Open File') {
         const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(pickedResult.result.uri));
         await vscode.window.showTextDocument(doc, { preview: false });
+    }
+}
+
+export async function inspectProjectClassificationSummary(
+    outputChannel: vscode.OutputChannel,
+    arg?: unknown
+): Promise<void> {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+        vscode.window.showWarningMessage('No workspace folder open');
+        return;
+    }
+
+    let folder = workspaceFolders[0];
+    if (workspaceFolders.length > 1) {
+        const pickedWorkspace = await vscode.window.showQuickPick(
+            workspaceFolders.map(candidate => ({
+                label: candidate.name,
+                description: candidate.uri.fsPath,
+                folder: candidate
+            })),
+            {
+                placeHolder: 'Select workspace for classification inspector summary'
+            }
+        );
+
+        if (!pickedWorkspace) {
+            return;
+        }
+
+        folder = pickedWorkspace.folder;
+    }
+
+    const input = await buildClassificationDebugReportInput(folder);
+    if (input.results.length === 0) {
+        vscode.window.showInformationMessage('No HDL files found for classification inspector summary.');
+        return;
+    }
+
+    const scopePreset = await resolveOrPickClassificationInspectorScope(
+        arg,
+        'Select classification summary scope preset'
+    );
+    if (!scopePreset) {
+        return;
+    }
+
+    const filteredResults = filterClassificationInspectorResults(input.results, scopePreset);
+    if (filteredResults.length === 0) {
+        vscode.window.showInformationMessage(`No classified files matched inspector scope '${scopePreset}'.`);
+        return;
+    }
+
+    outputChannel.clear();
+    outputChannel.show(true);
+    for (const line of buildClassificationInspectorSummaryLines(filteredResults, scopePreset, {
+        workspaceName: input.workspaceName,
+        workspaceRoot: input.workspaceRoot
+    })) {
+        outputChannel.appendLine(line);
     }
 }
 
@@ -490,6 +597,52 @@ export function resolveClassificationInspectorScopeArg(
         || pickScope(candidate.preset)
         || pickScope(candidate.view)
         || pickScope(candidate.mode);
+}
+
+function getClassificationInspectorScopePickItems(): ClassificationInspectorScopePickItem[] {
+    return [
+        {
+            label: 'All Classified Files',
+            description: 'No scope filter',
+            preset: 'all'
+        },
+        {
+            label: 'Active Target Files',
+            description: 'Only files marked in active target context',
+            preset: 'active'
+        },
+        {
+            label: 'Shared Files',
+            description: 'Only files with secondary roles',
+            preset: 'shared'
+        },
+        {
+            label: 'Project Config Driven Files',
+            description: 'Only files with sourceOfTruth = project_config',
+            preset: 'project-config'
+        },
+        {
+            label: 'Heuristic Fallback Files',
+            description: 'Only files with sourceOfTruth = heuristic',
+            preset: 'heuristic'
+        }
+    ];
+}
+
+async function resolveOrPickClassificationInspectorScope(
+    arg: unknown,
+    placeHolder: string
+): Promise<ClassificationInspectorScopePreset | undefined> {
+    const resolved = resolveClassificationInspectorScopeArg(arg);
+    if (resolved) {
+        return resolved;
+    }
+
+    const picked = await vscode.window.showQuickPick(getClassificationInspectorScopePickItems(), {
+        placeHolder
+    });
+
+    return picked?.preset;
 }
 
 export function filterClassificationInspectorResults(
