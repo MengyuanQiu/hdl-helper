@@ -53,6 +53,18 @@
         "icon": "$(preview)"
       },
       {
+        "command": "hdl-helper.debugProjectClassificationOverview",
+        "title": "HDL: Debug Project Classification (Overview)",
+        "category": "HDL Helper",
+        "icon": "$(list-selection)"
+      },
+      {
+        "command": "hdl-helper.debugProjectClassificationDetails",
+        "title": "HDL: Debug Project Classification (Details)",
+        "category": "HDL Helper",
+        "icon": "$(list-tree)"
+      },
+      {
         "command": "hdl-helper.debugActiveTargetContext",
         "title": "HDL: Debug Active Target Context",
         "category": "HDL Helper",

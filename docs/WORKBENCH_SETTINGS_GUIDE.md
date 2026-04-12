@@ -28,6 +28,10 @@ This guide lists workbench-related settings that can be configured directly in V
 - Quick Actions: `HDL: Quick Actions` -> `Debug Current Project Classification`
 - Command Palette: `HDL: Debug Project Classification (View...)`
 - Quick Actions: `HDL: Quick Actions` -> `Debug Project Classification (View...)`
+- Command Palette: `HDL: Debug Project Classification (Overview)`
+- Quick Actions: `HDL: Quick Actions` -> `Debug Project Classification (Overview)`
+- Command Palette: `HDL: Debug Project Classification (Details)`
+- Quick Actions: `HDL: Quick Actions` -> `Debug Project Classification (Details)`
 - Command Palette: `HDL: Open Project Config`
 - Quick Actions: `HDL: Quick Actions` -> `Open Project Config`
 - Command Palette: `HDL: Open Last Waveform (Active Target)`
@@ -104,6 +108,9 @@ This guide lists workbench-related settings that can be configured directly in V
     - `Overview`
     - `Details Only`
   - The same command can be invoked programmatically with a preset argument (for automation/buttons), e.g. `overview` / `details` / `all`.
+  - Alias commands are also available for direct invocation without arguments:
+    - `HDL: Debug Project Classification (Overview)`
+    - `HDL: Debug Project Classification (Details)`
 
 - `hdl-helper.targetDrivenRuns.enabled`
   - Enable target-oriented run management.

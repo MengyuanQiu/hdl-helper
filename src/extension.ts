@@ -335,6 +335,16 @@ export function activate(context: vscode.ExtensionContext) {
                 detail: 'Diagnostics'
             },
             {
+                label: 'Debug Project Classification (Overview)',
+                description: 'Run classification debug with overview preset',
+                detail: 'Diagnostics'
+            },
+            {
+                label: 'Debug Project Classification (Details)',
+                description: 'Run classification debug with details-only preset',
+                detail: 'Diagnostics'
+            },
+            {
                 label: 'Open Dual Hierarchy Regression Checklist',
                 description: 'Open resources/regression/DUAL_HIERARCHY_MANUAL_REGRESSION.md',
                 detail: 'Diagnostics'
@@ -444,6 +454,14 @@ export function activate(context: vscode.ExtensionContext) {
             await vscode.commands.executeCommand('hdl-helper.debugProjectClassificationView');
             return;
         }
+        if (action.label === 'Debug Project Classification (Overview)') {
+            await vscode.commands.executeCommand('hdl-helper.debugProjectClassificationOverview');
+            return;
+        }
+        if (action.label === 'Debug Project Classification (Details)') {
+            await vscode.commands.executeCommand('hdl-helper.debugProjectClassificationDetails');
+            return;
+        }
         if (action.label === 'Open Dual Hierarchy Regression Checklist') {
             await vscode.commands.executeCommand('hdl-helper.openDualHierarchyRegressionChecklist');
             return;
@@ -526,6 +544,16 @@ export function activate(context: vscode.ExtensionContext) {
                 label: '[Diagnostics] Debug Project Classification (View...)',
                 description: 'Run classification debug with all/overview/details preset',
                 command: 'hdl-helper.debugProjectClassificationView'
+            },
+            {
+                label: '[Diagnostics] Debug Project Classification (Overview)',
+                description: 'Run classification debug with overview preset',
+                command: 'hdl-helper.debugProjectClassificationOverview'
+            },
+            {
+                label: '[Diagnostics] Debug Project Classification (Details)',
+                description: 'Run classification debug with details-only preset',
+                command: 'hdl-helper.debugProjectClassificationDetails'
             },
             {
                 label: '[Diagnostics] Dual Hierarchy Regression Checklist',
@@ -1167,6 +1195,14 @@ export function activate(context: vscode.ExtensionContext) {
             classificationOutputChannel,
             buildClassificationRenderOptionsByPreset(picked.preset)
         );
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.debugProjectClassificationOverview', async () => {
+        await vscode.commands.executeCommand('hdl-helper.debugProjectClassificationView', 'overview');
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('hdl-helper.debugProjectClassificationDetails', async () => {
+        await vscode.commands.executeCommand('hdl-helper.debugProjectClassificationView', 'details');
     }));
 
     const targetContextOutputChannel = vscode.window.createOutputChannel('HDL Helper - Target Context');

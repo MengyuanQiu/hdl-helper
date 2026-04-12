@@ -1075,3 +1075,25 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（71 passing）。
+
+## 2026-04-12 - Iteration 5 Day 28: Preset Alias Commands
+
+- 目标: 继续推进 Iteration 5，提供 overview/details 轻量命令别名，降低 preset 调用门槛。
+- 变更文件:
+  - src/extension.ts
+  - package.json
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - 新增别名命令：
+    - `hdl-helper.debugProjectClassificationOverview`
+    - `hdl-helper.debugProjectClassificationDetails`
+  - 别名命令行为：
+    - overview 别名直接调用 `debugProjectClassificationView` 并传入 `overview`
+    - details 别名直接调用 `debugProjectClassificationView` 并传入 `details`
+  - Quick Actions 与 Hierarchy Tools 新增两个诊断入口，支持一键直达。
+  - Command Palette 命令贡献新增 Overview/Details 两个可发现入口。
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（71 passing）。
