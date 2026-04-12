@@ -1,0 +1,34 @@
+{
+  "version": "1.0",
+  "name": "pure_rtl_project",
+  "tops": {
+    "design": "dut",
+    "simulation": "dut"
+  },
+  "sourceSets": {
+    "design": {
+      "role": "design",
+      "includes": [
+        "rtl/**/*.sv"
+      ]
+    }
+  },
+  "targets": {
+    "design_default": {
+      "kind": "design",
+      "top": "dut",
+      "sourceSets": [
+        "design"
+      ]
+    },
+    "sim_default": {
+      "kind": "simulation",
+      "top": "dut",
+      "sourceSets": [
+        "design"
+      ],
+      "toolProfile": "iverilog"
+    }
+  },
+  "activeTarget": "sim_default"
+}

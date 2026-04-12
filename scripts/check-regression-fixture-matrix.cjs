@@ -21,6 +21,47 @@ const requiredChecklistTokens = [
     'diagnostics behavior'
 ];
 
+const requiredFixtureArtifacts = {
+    pure_rtl_project: [
+        'rtl/dut.sv',
+        '.hdl-helper/project.json'
+    ],
+    rtl_tb_sva_project: [
+        'rtl/dut.sv',
+        'tb/tb_top.sv',
+        'sva/handshake_sva.sv',
+        '.hdl-helper/project.json'
+    ],
+    multi_top_project: [
+        'rtl/core_a.sv',
+        'rtl/core_b.sv',
+        'tb/tb_a.sv',
+        'tb/tb_b.sv',
+        '.hdl-helper/project.json'
+    ],
+    heuristic_only_project: [
+        'rtl/dut.sv',
+        'tb/tb_top.sv'
+    ],
+    shared_file_project: [
+        'common/bus_pkg.sv',
+        'rtl/dut.sv',
+        'tb/tb_shared.sv',
+        '.hdl-helper/project.json'
+    ],
+    filelist_narrow_project: [
+        'rtl/dut.sv',
+        'rtl/debug_stub.sv',
+        'tb/tb_top.sv',
+        'sim/sim.f',
+        '.hdl-helper/project.json'
+    ]
+};
+
+const fixtureForbiddenArtifacts = {
+    heuristic_only_project: ['.hdl-helper/project.json']
+};
+
 function pushUnique(errors, message) {
     if (!errors.includes(message)) {
         errors.push(message);
@@ -62,6 +103,28 @@ function main() {
                 errors,
                 `Fixture '${fixtureName}' README missing checklist coverage tokens: ${missingTokens.join(', ')}`
             );
+        }
+
+        const requiredArtifacts = requiredFixtureArtifacts[fixtureName] || [];
+        for (const relativePath of requiredArtifacts) {
+            const artifactPath = path.join(fixtureDir, relativePath);
+            if (!fs.existsSync(artifactPath)) {
+                pushUnique(
+                    errors,
+                    `Fixture '${fixtureName}' missing required artifact: resources/regression/fixtures/${fixtureName}/${relativePath}`
+                );
+            }
+        }
+
+        const forbiddenArtifacts = fixtureForbiddenArtifacts[fixtureName] || [];
+        for (const relativePath of forbiddenArtifacts) {
+            const artifactPath = path.join(fixtureDir, relativePath);
+            if (fs.existsSync(artifactPath)) {
+                pushUnique(
+                    errors,
+                    `Fixture '${fixtureName}' should not contain artifact: resources/regression/fixtures/${fixtureName}/${relativePath}`
+                );
+            }
         }
     }
 

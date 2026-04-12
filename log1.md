@@ -1723,3 +1723,56 @@
   - npm run -s lint: 通过。
   - npm test -s: 通过（97 passing）。
   - npm run -s check:fixture-matrix: 通过。
+
+## 2026-04-12 - Iteration 6 Day 51: Seeded Runnable Fixture Matrix
+
+- 目标: 将 fixture matrix 从 README 占位升级为“最小可运行样例”基线，并增强 fixture gate 的结构完整性约束。
+- 变更文件:
+  - scripts/check-regression-fixture-matrix.cjs
+  - src/test/extension.test.ts
+  - resources/regression/README.md
+  - resources/regression/SEMANTIC_WORKBENCH_RELEASE_CHECKLIST.md
+  - resources/regression/fixtures/pure_rtl_project/README.md
+  - resources/regression/fixtures/pure_rtl_project/rtl/dut.sv
+  - resources/regression/fixtures/pure_rtl_project/.hdl-helper/project.json
+  - resources/regression/fixtures/rtl_tb_sva_project/README.md
+  - resources/regression/fixtures/rtl_tb_sva_project/rtl/dut.sv
+  - resources/regression/fixtures/rtl_tb_sva_project/tb/tb_top.sv
+  - resources/regression/fixtures/rtl_tb_sva_project/sva/handshake_sva.sv
+  - resources/regression/fixtures/rtl_tb_sva_project/.hdl-helper/project.json
+  - resources/regression/fixtures/multi_top_project/README.md
+  - resources/regression/fixtures/multi_top_project/rtl/core_a.sv
+  - resources/regression/fixtures/multi_top_project/rtl/core_b.sv
+  - resources/regression/fixtures/multi_top_project/tb/tb_a.sv
+  - resources/regression/fixtures/multi_top_project/tb/tb_b.sv
+  - resources/regression/fixtures/multi_top_project/.hdl-helper/project.json
+  - resources/regression/fixtures/heuristic_only_project/README.md
+  - resources/regression/fixtures/heuristic_only_project/rtl/dut.sv
+  - resources/regression/fixtures/heuristic_only_project/tb/tb_top.sv
+  - resources/regression/fixtures/shared_file_project/README.md
+  - resources/regression/fixtures/shared_file_project/common/bus_pkg.sv
+  - resources/regression/fixtures/shared_file_project/rtl/dut.sv
+  - resources/regression/fixtures/shared_file_project/tb/tb_shared.sv
+  - resources/regression/fixtures/shared_file_project/.hdl-helper/project.json
+  - resources/regression/fixtures/filelist_narrow_project/README.md
+  - resources/regression/fixtures/filelist_narrow_project/rtl/dut.sv
+  - resources/regression/fixtures/filelist_narrow_project/rtl/debug_stub.sv
+  - resources/regression/fixtures/filelist_narrow_project/tb/tb_top.sv
+  - resources/regression/fixtures/filelist_narrow_project/sim/sim.f
+  - resources/regression/fixtures/filelist_narrow_project/.hdl-helper/project.json
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - 六个 mandatory fixture 均补齐最小 HDL/配置实体文件，形成可执行样例基线。
+  - `check-regression-fixture-matrix` 增强：
+    - 除目录和 README token 外，新增每个 fixture 的 required artifacts 校验。
+    - 新增 heuristic-only fixture 的 no-project-config 约束校验。
+  - 脚本级测试同步增强，覆盖新的 required artifacts 校验路径。
+  - 回归文档更新：
+    - regression README 增加 fixture matrix 说明
+    - release checklist 增加 seeded baseline 自动门禁状态
+- 验证:
+  - npm run -s compile: 通过。
+  - npm run -s lint: 通过。
+  - npm test -s: 通过（97 passing）。
+  - npm run -s check:fixture-matrix: 通过。

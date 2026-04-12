@@ -1495,7 +1495,7 @@ suite('Extension Test Suite', () => {
 		fs.rmSync(tempRoot, { recursive: true, force: true });
 	});
 
-	test('Regression fixture matrix script validates required fixture directories and checklist tokens', () => {
+	test('Regression fixture matrix script validates fixture directories, checklist tokens and artifact contracts', () => {
 		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hdl-helper-fixture-matrix-'));
 		const fixtureRoot = path.join(tempRoot, 'resources', 'regression', 'fixtures');
 		const scriptPath = path.resolve(__dirname, '..', '..', 'scripts', 'check-regression-fixture-matrix.cjs');
@@ -1521,6 +1521,40 @@ suite('Extension Test Suite', () => {
 				'- diagnostics behavior'
 			].join('\n'), 'utf8');
 		}
+
+		const createFixtureFile = (fixtureName: string, relativePath: string, content: string) => {
+			const filePath = path.join(fixtureRoot, fixtureName, relativePath);
+			fs.mkdirSync(path.dirname(filePath), { recursive: true });
+			fs.writeFileSync(filePath, content, 'utf8');
+		};
+
+		createFixtureFile('pure_rtl_project', 'rtl/dut.sv', 'module dut; endmodule\n');
+		createFixtureFile('pure_rtl_project', '.hdl-helper/project.json', '{"version":"1.0"}\n');
+
+		createFixtureFile('rtl_tb_sva_project', 'rtl/dut.sv', 'module dut; endmodule\n');
+		createFixtureFile('rtl_tb_sva_project', 'tb/tb_top.sv', 'module tb_top; endmodule\n');
+		createFixtureFile('rtl_tb_sva_project', 'sva/handshake_sva.sv', 'module handshake_sva; endmodule\n');
+		createFixtureFile('rtl_tb_sva_project', '.hdl-helper/project.json', '{"version":"1.0"}\n');
+
+		createFixtureFile('multi_top_project', 'rtl/core_a.sv', 'module core_a; endmodule\n');
+		createFixtureFile('multi_top_project', 'rtl/core_b.sv', 'module core_b; endmodule\n');
+		createFixtureFile('multi_top_project', 'tb/tb_a.sv', 'module tb_a; endmodule\n');
+		createFixtureFile('multi_top_project', 'tb/tb_b.sv', 'module tb_b; endmodule\n');
+		createFixtureFile('multi_top_project', '.hdl-helper/project.json', '{"version":"1.0"}\n');
+
+		createFixtureFile('heuristic_only_project', 'rtl/dut.sv', 'module dut; endmodule\n');
+		createFixtureFile('heuristic_only_project', 'tb/tb_top.sv', 'module tb_top; endmodule\n');
+
+		createFixtureFile('shared_file_project', 'common/bus_pkg.sv', 'package bus_pkg; endpackage\n');
+		createFixtureFile('shared_file_project', 'rtl/dut.sv', 'module dut; endmodule\n');
+		createFixtureFile('shared_file_project', 'tb/tb_shared.sv', 'module tb_shared; endmodule\n');
+		createFixtureFile('shared_file_project', '.hdl-helper/project.json', '{"version":"1.0"}\n');
+
+		createFixtureFile('filelist_narrow_project', 'rtl/dut.sv', 'module dut; endmodule\n');
+		createFixtureFile('filelist_narrow_project', 'rtl/debug_stub.sv', 'module debug_stub; endmodule\n');
+		createFixtureFile('filelist_narrow_project', 'tb/tb_top.sv', 'module tb_top; endmodule\n');
+		createFixtureFile('filelist_narrow_project', 'sim/sim.f', 'rtl/dut.sv\n');
+		createFixtureFile('filelist_narrow_project', '.hdl-helper/project.json', '{"version":"1.0"}\n');
 
 		const output = cp.execFileSync(process.execPath, [scriptPath], {
 			cwd: tempRoot,

@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "name": "rtl_tb_sva_project",
+  "tops": {
+    "design": "dut",
+    "simulation": "tb_top"
+  },
+  "sourceSets": {
+    "design": {
+      "role": "design",
+      "includes": [
+        "rtl/**/*.sv"
+      ]
+    },
+    "simulation": {
+      "role": "simulation",
+      "includes": [
+        "tb/**/*.sv"
+      ]
+    },
+    "verification": {
+      "role": "verification",
+      "includes": [
+        "sva/**/*.sv"
+      ]
+    }
+  },
+  "targets": {
+    "sim_default": {
+      "kind": "simulation",
+      "top": "tb_top",
+      "sourceSets": [
+        "design",
+        "simulation",
+        "verification"
+      ],
+      "toolProfile": "iverilog"
+    }
+  },
+  "activeTarget": "sim_default"
+}

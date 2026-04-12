@@ -12,6 +12,12 @@ Scope: Iteration 6 governance gates
 
 ## 2) Fixture Pass Matrix
 
+Seeded baseline status (automated by `check:fixture-matrix`):
+
+- [x] required fixture directories exist.
+- [x] required fixture baseline artifacts exist.
+- [x] heuristic-only fixture keeps no `.hdl-helper/project.json` contract.
+
 Validate at least the following fixture projects:
 
 - [ ] `pure_rtl_project`

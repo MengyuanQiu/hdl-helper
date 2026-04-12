@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "name": "multi_top_project",
+  "tops": {
+    "design": "core_a",
+    "simulation": "tb_a"
+  },
+  "sourceSets": {
+    "design_a": {
+      "role": "design",
+      "includes": [
+        "rtl/core_a.sv"
+      ]
+    },
+    "design_b": {
+      "role": "design",
+      "includes": [
+        "rtl/core_b.sv"
+      ]
+    },
+    "sim_a": {
+      "role": "simulation",
+      "includes": [
+        "tb/tb_a.sv"
+      ]
+    },
+    "sim_b": {
+      "role": "simulation",
+      "includes": [
+        "tb/tb_b.sv"
+      ]
+    }
+  },
+  "targets": {
+    "sim_a": {
+      "kind": "simulation",
+      "top": "tb_a",
+      "sourceSets": [
+        "design_a",
+        "sim_a"
+      ]
+    },
+    "sim_b": {
+      "kind": "simulation",
+      "top": "tb_b",
+      "sourceSets": [
+        "design_b",
+        "sim_b"
+      ]
+    }
+  },
+  "activeTarget": "sim_a"
+}

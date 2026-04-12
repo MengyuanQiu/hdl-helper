@@ -264,7 +264,7 @@ This guide lists workbench-related settings that can be configured directly in V
   - missing filelist and explicit include path detection
   - source set zero-match detection
   - target empty resolved-files detection (from configured sourceSets)
-- Run `npm run check:fixture-matrix` to validate required fixture directories and per-fixture README checklist coverage under `resources/regression/fixtures`.
+- Run `npm run check:fixture-matrix` to validate required fixture directories, per-fixture README checklist coverage, baseline fixture artifacts, and the heuristic-only fixture no-project-config contract under `resources/regression/fixtures`.
 - Run `npm run ci:gate` for local pre-push quality gate (`compile + lint + project-config-integrity + fixture-matrix`).
 - GitHub Actions workflow `.github/workflows/ci.yml` runs compile/lint/test plus project-config integrity and fixture-matrix checks on `main` push and PR.
 - Use `HDL: Open Semantic Workbench Release Checklist` to open `resources/regression/SEMANTIC_WORKBENCH_RELEASE_CHECKLIST.md` for release sign-off items.
