@@ -1,4 +1,5 @@
 import * as assert from 'assert';
+import * as cp from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -1415,6 +1416,79 @@ suite('Extension Test Suite', () => {
 		assert.ok(issues.some(issue => issue.message.includes("Target 'sim_empty' references missing filelist")));
 		assert.ok(issues.some(issue => issue.message.includes("Target 'sim_empty' references unknown tool profile")));
 		assert.ok(issues.some(issue => issue.message.includes("Target 'sim_missing' has 1 missing resolved file(s)")));
+	});
+
+	test('Project config integrity script passes for valid source-set and target resolution', () => {
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hdl-helper-integrity-pass-'));
+		const configDir = path.join(tempRoot, '.hdl-helper');
+		const rtlDir = path.join(tempRoot, 'rtl');
+		const filelistDir = path.join(tempRoot, 'sim');
+		const scriptPath = path.resolve(__dirname, '..', '..', 'scripts', 'check-project-config-integrity.cjs');
+
+		fs.mkdirSync(configDir, { recursive: true });
+		fs.mkdirSync(rtlDir, { recursive: true });
+		fs.mkdirSync(filelistDir, { recursive: true });
+		fs.writeFileSync(path.join(rtlDir, 'dut.sv'), 'module dut; endmodule\n', 'utf8');
+		fs.writeFileSync(path.join(filelistDir, 'sim.f'), 'rtl/dut.sv\n', 'utf8');
+		fs.writeFileSync(path.join(configDir, 'project.json'), JSON.stringify({
+			version: '1.0',
+			name: 'repo',
+			sourceSets: {
+				design: {
+					role: 'design',
+					includes: ['rtl/**/*.sv']
+				}
+			},
+			targets: {
+				sim_default: {
+					kind: 'simulation',
+					sourceSets: ['design'],
+					filelist: 'sim/sim.f'
+				}
+			}
+		}, null, 2), 'utf8');
+
+		const output = cp.execFileSync(process.execPath, [scriptPath], {
+			cwd: tempRoot,
+			encoding: 'utf8'
+		});
+
+		assert.ok(output.includes('Integrity check passed.'));
+		fs.rmSync(tempRoot, { recursive: true, force: true });
+	});
+
+	test('Project config integrity script fails for zero-match source set and empty target files', () => {
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hdl-helper-integrity-fail-'));
+		const configDir = path.join(tempRoot, '.hdl-helper');
+		const scriptPath = path.resolve(__dirname, '..', '..', 'scripts', 'check-project-config-integrity.cjs');
+
+		fs.mkdirSync(configDir, { recursive: true });
+		fs.writeFileSync(path.join(configDir, 'project.json'), JSON.stringify({
+			version: '1.0',
+			name: 'repo',
+			sourceSets: {
+				design: {
+					role: 'design',
+					includes: ['rtl/**/*.sv']
+				}
+			},
+			targets: {
+				sim_default: {
+					kind: 'simulation',
+					sourceSets: ['design']
+				}
+			}
+		}, null, 2), 'utf8');
+
+		assert.throws(() => {
+			cp.execFileSync(process.execPath, [scriptPath], {
+				cwd: tempRoot,
+				encoding: 'utf8',
+				stdio: ['ignore', 'pipe', 'pipe']
+			});
+		}, /resolves to zero files|resolves empty files from sourceSets/);
+
+		fs.rmSync(tempRoot, { recursive: true, force: true });
 	});
 
 	test('Toolchain profile collector returns sorted deduplicated profile list', () => {

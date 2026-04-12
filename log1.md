@@ -1576,3 +1576,28 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（87 passing）。
+
+## 2026-04-12 - Iteration 6 Day 46: Integrity Gate Missing-Files Hardening
+
+- 目标: 继续推进 Iteration 6 治理门禁，增强 `check-project-config-integrity` 对 missing-files 场景的检出能力。
+- 变更文件:
+  - scripts/check-project-config-integrity.cjs
+  - src/test/extension.test.ts
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - 完整性脚本新增：
+    - source set glob 解析与 excludes 过滤
+    - source set `zero-match` 报错
+    - target 基于 sourceSets 的 resolved files 聚合
+    - target `empty resolved files` 报错
+  - 回归补充（脚本级）：
+    - 有效 project config 场景脚本通过测试
+    - zero-match / empty-target 场景脚本失败测试
+  - 文档同步：
+    - CI Governance Gate 增补 zero-match 与 empty-target 检测说明
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（89 passing）。
+  - npm run check:project-config-integrity: 通过（当前工作区无 `.hdl-helper/project.json`，按设计跳过）。

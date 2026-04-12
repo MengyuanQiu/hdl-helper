@@ -229,6 +229,8 @@ This guide lists workbench-related settings that can be configured directly in V
   - project.json required schema fields
   - source set reference integrity for targets
   - missing filelist and explicit include path detection
+  - source set zero-match detection
+  - target empty resolved-files detection (from configured sourceSets)
 - Run `npm run ci:gate` for local pre-push quality gate (`compile + lint + project-config-integrity`).
 - GitHub Actions workflow `.github/workflows/ci.yml` runs compile/lint/test plus project-config integrity checks on `main` push and PR.
 - Use `HDL: Open Semantic Workbench Release Checklist` to open `resources/regression/SEMANTIC_WORKBENCH_RELEASE_CHECKLIST.md` for release sign-off items.
