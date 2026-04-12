@@ -77,6 +77,18 @@
         "icon": "$(references)"
       },
       {
+        "command": "hdl-helper.inspectProjectClassificationSummaryProjectConfig",
+        "title": "HDL: Inspect Project Classification Summary (Project Config)",
+        "category": "HDL Helper",
+        "icon": "$(json)"
+      },
+      {
+        "command": "hdl-helper.inspectProjectClassificationSummaryHeuristic",
+        "title": "HDL: Inspect Project Classification Summary (Heuristic)",
+        "category": "HDL Helper",
+        "icon": "$(beaker)"
+      },
+      {
         "command": "hdl-helper.debugProjectClassificationAll",
         "title": "HDL: Debug Project Classification (All)",
         "category": "HDL Helper",
@@ -705,6 +717,16 @@
           "group": "navigation@10"
         },
         {
+          "command": "hdl-helper.inspectProjectClassificationSummaryProjectConfig",
+          "when": "view == hdl-hierarchy-view",
+          "group": "navigation@11"
+        },
+        {
+          "command": "hdl-helper.inspectProjectClassificationSummaryHeuristic",
+          "when": "view == hdl-hierarchy-view",
+          "group": "navigation@12"
+        },
+        {
           "command": "hdl-helper.runSimulationFromHierarchy",
           "when": "view == hdl-hierarchy-view",
           "group": "navigation@1"
@@ -815,6 +837,16 @@
           "command": "hdl-helper.inspectProjectClassificationSummaryShared",
           "when": "view == hdl-hierarchy-view && viewItem == diagnostics-root",
           "group": "inline@7"
+        },
+        {
+          "command": "hdl-helper.inspectProjectClassificationSummaryProjectConfig",
+          "when": "view == hdl-hierarchy-view && viewItem == diagnostics-root",
+          "group": "inline@8"
+        },
+        {
+          "command": "hdl-helper.inspectProjectClassificationSummaryHeuristic",
+          "when": "view == hdl-hierarchy-view && viewItem == diagnostics-root",
+          "group": "inline@9"
         },
         {
           "command": "hdl-helper.copyInstantiation",

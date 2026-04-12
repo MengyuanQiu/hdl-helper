@@ -1316,3 +1316,29 @@
   - npm run compile: 通过。
   - npm run lint: 通过。
   - npm test: 通过（77 passing）。
+
+## 2026-04-12 - Iteration 5 Day 37: Summary Project-Config and Heuristic Aliases
+
+- 目标: 继续推进 Iteration 5.5 inspector 可达性，补齐 summary 在 `project-config` 与 `heuristic` scope 下的一键别名入口。
+- 变更文件:
+  - src/extension.ts
+  - package.json
+  - docs/WORKBENCH_SETTINGS_GUIDE.md
+  - log1.md
+- 关键变更:
+  - 新增别名命令：
+    - `hdl-helper.inspectProjectClassificationSummaryProjectConfig`
+    - `hdl-helper.inspectProjectClassificationSummaryHeuristic`
+  - 命令行为：
+    - project-config 别名直接调用 `inspectProjectClassificationSummary` 并传入 `project-config`
+    - heuristic 别名直接调用 `inspectProjectClassificationSummary` 并传入 `heuristic`
+  - 快速入口接线：
+    - Quick Actions
+    - Hierarchy Tools
+    - Command Palette
+    - HDL Explorer title bar
+    - Diagnostics root 右键菜单
+- 验证:
+  - npm run compile: 通过。
+  - npm run lint: 通过。
+  - npm test: 通过（77 passing）。

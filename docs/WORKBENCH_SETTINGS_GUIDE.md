@@ -36,6 +36,10 @@ This guide lists workbench-related settings that can be configured directly in V
 - Quick Actions: `HDL: Quick Actions` -> `Inspect Project Classification Summary (Active)`
 - Command Palette: `HDL: Inspect Project Classification Summary (Shared)`
 - Quick Actions: `HDL: Quick Actions` -> `Inspect Project Classification Summary (Shared)`
+- Command Palette: `HDL: Inspect Project Classification Summary (Project Config)`
+- Quick Actions: `HDL: Quick Actions` -> `Inspect Project Classification Summary (Project Config)`
+- Command Palette: `HDL: Inspect Project Classification Summary (Heuristic)`
+- Quick Actions: `HDL: Quick Actions` -> `Inspect Project Classification Summary (Heuristic)`
 - Quick Actions: `HDL: Quick Actions` -> `Inspect Project Classification (Active Files)`
 - Quick Actions: `HDL: Quick Actions` -> `Inspect Project Classification (Shared Files)`
 - Command Palette: `HDL: Debug Project Classification (All)`
@@ -86,6 +90,8 @@ This guide lists workbench-related settings that can be configured directly in V
   - Inspect Project Classification Summary
   - Inspect Project Classification Summary (Active)
   - Inspect Project Classification Summary (Shared)
+  - Inspect Project Classification Summary (Project Config)
+  - Inspect Project Classification Summary (Heuristic)
   - Inspect Project Classification (Active Files)
   - Inspect Project Classification (Shared Files)
   - Clear Top Module
@@ -138,6 +144,8 @@ This guide lists workbench-related settings that can be configured directly in V
   - Alias commands are also available for direct summary invocation without scope picker:
     - `HDL: Inspect Project Classification Summary (Active)`
     - `HDL: Inspect Project Classification Summary (Shared)`
+    - `HDL: Inspect Project Classification Summary (Project Config)`
+    - `HDL: Inspect Project Classification Summary (Heuristic)`
   - Programmatic calls can pass scope via command argument object/string, for example: `active` / `{ scope: 'shared' }`.
   - The same command can be invoked programmatically with a preset argument (for automation/buttons), e.g. `overview` / `details` / `all`.
   - Alias commands are also available for direct invocation without arguments:
